@@ -18,6 +18,8 @@ class ZMap extends Schema<Map<String, dynamic>> {
     }
 
     final result = <String, dynamic>{};
+
+    // Só os campos definidos no schema serão processados
     for (final key in schemas.keys) {
       final schema = schemas[key]!;
       if (value.containsKey(key)) {
@@ -36,9 +38,13 @@ class ZMap extends Schema<Map<String, dynamic>> {
           ),
         );
       } else {
+        // Se for opcional e não presente, definir como null
         result[key] = null;
       }
     }
+
+    // Campos extras que não estão definidos no schema são ignorados,
+    // pois somente os campos do schema populam o "result".
 
     if (errors.isNotEmpty) {
       return null;
