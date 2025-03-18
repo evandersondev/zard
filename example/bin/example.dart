@@ -67,4 +67,26 @@ void main() {
   print(enumSchema.getErrors());
   print(enumValue);
   // Output: ['red']
+
+  final tweetSchema = z.map({
+    'title': z.string().min(3),
+    'author': z.string().min(3),
+  });
+
+  final tweet = tweetSchema.parse({
+    'title': 'Hello World',
+    'author': 'John Doe',
+    'content': 'This is a tweet', // ignored
+    'comments': [
+      // ignored
+      {'author': 'Jane Doe', 'content': 'Great tweet!'}, // ignored
+      {'author': 'John Doe', 'content': 'Thanks!'}, // ignored
+    ],
+  });
+
+  print(tweet);
+
+  final listSchema = z.list(z.string()).noempty();
+  final list = listSchema.parse(['a', 'b']);
+  print(list);
 }
