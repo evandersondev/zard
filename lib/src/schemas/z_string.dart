@@ -1,4 +1,5 @@
 import '../types/zart_error.dart';
+
 import 'schema.dart';
 
 class ZString extends Schema<String> {
@@ -15,10 +16,13 @@ class ZString extends Schema<String> {
     });
   }
 
-  /// min validation
-  ///
-  /// example:
-  /// final min = z.string().min(3, message: "Custom error message");
+  /// Min validation
+  /// Example:
+  /// ```dart
+  /// final min = z.string().min(3);
+  /// final name = min.parse('John'); // Pass
+  /// final name = min.parse('Jo'); // null
+  /// ```
   ZString min(int length, {String? message}) {
     addValidator((String? value) {
       if (value != null && value.length < length) {
@@ -33,10 +37,14 @@ class ZString extends Schema<String> {
     return this;
   }
 
-  /// max validation
-  ///
-  /// example:
-  /// final max = z.string().max(3, message: "Custom error message");
+  /// Max validation
+  /// Example:
+  /// ```dart
+  /// final max = z.string().max(3);
+  /// final name = max.parse('John'); // Pass
+  /// final name = max.parse('Jo'); // Pass
+  /// final name = max.parse('Jo'); // null
+  /// ```
   ZString max(int length, {String? message}) {
     addValidator((String? value) {
       if (value != null && value.length > length) {
@@ -51,10 +59,13 @@ class ZString extends Schema<String> {
     return this;
   }
 
-  /// email validation
-  ///
-  /// example:
-  /// final email = z.string().email(message: "Custom error message");
+  /// Email validation
+  /// Example:
+  /// ```dart
+  /// final email = z.string().email();
+  /// final email = email.parse('john@example.com'); // Pass
+  /// final email = email.parse('john@example'); // null
+  /// ```
   ZString email({String? message}) {
     addValidator((String? value) {
       if (value != null) {
@@ -72,10 +83,13 @@ class ZString extends Schema<String> {
     return this;
   }
 
-  /// url validation
-  ///
-  /// example:
-  /// final url = z.string().url(message: "Custom error message");
+  /// URL validation
+  /// Example:
+  /// ```dart
+  /// final url = z.string().url();
+  /// final url = url.parse('https://www.example.com'); // Pass
+  /// final url = url.parse('www.example.com'); // null
+  /// ```
   ZString url({String? message}) {
     addValidator((String? value) {
       if (value != null) {
@@ -95,10 +109,15 @@ class ZString extends Schema<String> {
     return this;
   }
 
-  /// length validation
-  ///
-  /// example:
-  /// final length = z.string().length(3, message: "Custom error message");
+  /// Length validation
+  /// Example:
+  /// ```dart
+  /// final length = z.string().length(3);
+  /// final name = length.parse('Doe'); // Pass
+  /// final name = length.parse('Do'); // null
+  /// final name = length.parse('D'); // null
+  /// final name = length.parse('John'); // null
+  /// ```
   ZString length(int length, {String? message}) {
     addValidator((String? value) {
       if (value != null && value.length != length) {
@@ -113,10 +132,14 @@ class ZString extends Schema<String> {
     return this;
   }
 
-  /// uuid validation
-  ///
-  /// example:
-  /// final uuid = z.string().uuid(message: "Custom error message");
+  /// UUID validation
+  /// Example:
+  /// ```dart
+  /// final uuid = z.string().uuid();
+  /// final uuid = uuid.parse('123e4567-e89b-12d3-a456-426614174000'); // Pass
+  /// final uuid = uuid.parse('123e4567-e89b-12d3-a456-42661417400'); // null
+  /// final uuid = uuid.parse('123e4567-e89b-12d3-a456-4266141740000'); // null
+  /// ```
   ZString uuid({String? message}) {
     addValidator((String? value) {
       if (value != null) {
@@ -136,10 +159,14 @@ class ZString extends Schema<String> {
     return this;
   }
 
-  /// cuid validation
-  ///
-  /// example:
-  /// final cuid = z.string().cuid(message: "Custom error message");
+  /// CUID validation
+  /// Example:
+  /// ```dart
+  /// final cuid = z.string().cuid();
+  /// final cuid = cuid.parse('123e4567-e89b-12d3-a456-426614174000'); // Pass
+  /// final cuid = cuid.parse('123e4567-e89b-12d3-a456-42661417400'); // null
+  /// final cuid = cuid.parse('123e4567-e89b-12d3-a456-4266141740000'); // null
+  /// ```
   ZString cuid({String? message}) {
     addValidator((String? value) {
       if (value != null) {
@@ -157,10 +184,14 @@ class ZString extends Schema<String> {
     return this;
   }
 
-  /// cuid2 validation
-  ///
-  /// example:
-  /// final cuid2 = z.string().cuid2(message: "Custom error message");
+  /// CUID2 validation
+  /// Example:
+  /// ```dart
+  /// final cuid2 = z.string().cuid2();
+  /// final cuid2 = cuid2.parse('123e4567-e89b-12d3-a456-426614174000'); // Pass
+  /// final cuid2 = cuid2.parse('123e4567-e89b-12d3-a456-42661417400'); // null
+  /// final cuid2 = cuid2.parse('123e4567-e89b-12d3-a456-4266141740000'); // null
+  /// ```
   ZString cuid2({String? message}) {
     addValidator((String? value) {
       if (value != null) {
@@ -178,10 +209,13 @@ class ZString extends Schema<String> {
     return this;
   }
 
-  /// regex validation
-  ///
-  /// example:
-  /// final regex = z.string().regex(RegExp(r'^[a-z0-9]{20}$'), message: "Custom error message");
+  /// Regex validation
+  /// Example:
+  /// ```dart
+  /// final regex = z.string().regex(RegExp(r'^[a-zA-Z]+$'));
+  /// final name = regex.parse('John'); // Pass
+  /// final name = regex.parse('123'); // null
+  /// ```
   ZString regex(RegExp regex, {String? message}) {
     addValidator((String? value) {
       if (value != null && !regex.hasMatch(value)) {
@@ -196,10 +230,13 @@ class ZString extends Schema<String> {
     return this;
   }
 
-  /// endsWith validation
-  ///
-  /// example:
-  /// final endsWith = z.string().endsWith('test', message: "Custom error message");
+  /// EndsWith validation
+  /// Example:
+  /// ```dart
+  /// final endsWith = z.string().endsWith('test');
+  /// final name = endsWith.parse('John Doe'); // Pass
+  /// final name = endsWith.parse('John'); // null
+  /// ```
   ZString endsWith(String suffix, {String? message}) {
     addValidator((String? value) {
       if (value != null && !value.endsWith(suffix)) {
@@ -214,10 +251,13 @@ class ZString extends Schema<String> {
     return this;
   }
 
-  /// startsWith validation
-  ///
-  /// example:
-  /// final startsWith = z.string().startsWith('test', message: "Custom error message");
+  /// StartsWith validation
+  /// Example:
+  /// ```dart
+  /// final startsWith = z.string().startsWith('John');
+  /// final name = startsWith.parse('John Doe'); // Pass
+  /// final name = startsWith.parse('Doe'); // null
+  /// ```
   ZString startsWith(String prefix, {String? message}) {
     addValidator((String? value) {
       if (value != null && !value.startsWith(prefix)) {
@@ -232,10 +272,13 @@ class ZString extends Schema<String> {
     return this;
   }
 
-  /// contains validation
-  ///
-  /// example:
-  /// final contains = z.string().contains('test', message: "Custom error message");
+  /// Contains validation
+  /// Example:
+  /// ```dart
+  /// final contains = z.string().contains('test');
+  /// final name = contains.parse('test a string'); // Pass
+  /// final name = contains.parse('Jane Doe'); // null
+  /// ```
   ZString contains(String substring, {String? message}) {
     addValidator((String? value) {
       if (value != null && !value.contains(substring)) {
@@ -250,10 +293,13 @@ class ZString extends Schema<String> {
     return this;
   }
 
-  /// datetime validation
-  ///
-  /// example:
-  /// final datetime = z.string().datetime(message: "Custom error message");
+  /// Date validation
+  /// Example:
+  /// ```dart
+  /// final date = z.string().date();
+  /// final date = date.parse('2021-01-01'); // Pass
+  /// final date = date.parse('2021-01-01 12:00:00'); // null
+  /// ```
   ZString datetime({String? message}) {
     addValidator((String? value) {
       if (value != null) {
@@ -273,10 +319,13 @@ class ZString extends Schema<String> {
     return this;
   }
 
-  /// date validation
-  ///
-  /// example:
-  /// final date = z.string().date(message: "Custom error message"); // (YYYY-MM-DD)
+  /// Date validation
+  /// Example:
+  /// ```dart
+  /// final date = z.string().date();
+  /// final date = date.parse('2021-01-01'); // Pass
+  /// final date = date.parse('2021-01-01 12:00:00'); // null
+  /// ```
   ZString date({String? message}) {
     addValidator((String? value) {
       if (value != null) {
@@ -294,10 +343,13 @@ class ZString extends Schema<String> {
     return this;
   }
 
-  /// time validation
-  ///
-  /// example:
-  /// final time = z.string().time(message: "Custom error message"); // (HH:MM:SS[.SSSSSS])
+  /// Time validation
+  /// Example:
+  /// ```dart
+  /// final time = z.string().time();
+  /// final time = time.parse('12:00:00'); // Pass
+  /// final time = time.parse('12:00:00.000'); // null
+  /// ```
   ZString time({String? message}) {
     addValidator((String? value) {
       if (value != null) {

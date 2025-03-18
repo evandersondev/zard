@@ -1,4 +1,5 @@
 import '../types/zart_error.dart';
+
 import 'schema.dart';
 
 class ZInt extends Schema<int> {
@@ -15,6 +16,13 @@ class ZInt extends Schema<int> {
     });
   }
 
+  /// Min validation for int values.
+  /// Example:
+  /// ```dart
+  /// final schema = z.int().min(10);
+  /// schema.parse(5); // returns null
+  /// schema.parse(15); // returns 15
+  /// ```
   ZInt min(int length, {String? message}) {
     addValidator((int? value) {
       if (value != null && value < length) {
@@ -29,6 +37,13 @@ class ZInt extends Schema<int> {
     return this;
   }
 
+  /// Max validation for int values.
+  /// Example:
+  /// ```dart
+  /// final schema = z.int().max(10);
+  /// schema.parse(5); // returns 5
+  /// schema.parse(15); // returns null
+  /// ```
   ZInt max(int length, {String? message}) {
     addValidator((int? value) {
       if (value != null && value > length) {
@@ -43,7 +58,14 @@ class ZInt extends Schema<int> {
     return this;
   }
 
-  // Ensures the value is positive (> 0).
+  /// Ensures the value is positive (> 0).
+  /// Example:
+  /// ```dart
+  /// final schema = z.int().positive();
+  /// schema.parse(5); // returns 5
+  /// schema.parse(-5); // returns null
+  /// schema.parse(0); // returns null
+  /// ```
   ZInt positive({String? message}) {
     addValidator((int? value) {
       if (value != null && value <= 0) {
@@ -58,7 +80,14 @@ class ZInt extends Schema<int> {
     return this;
   }
 
-  // Ensures the value is nonnegative (>= 0).
+  /// Ensures the value is nonnegative (>= 0).
+  /// Example:
+  /// ```dart
+  /// final schema = z.int().nonnegative();
+  /// schema.parse(5); // returns 5
+  /// schema.parse(-5); // returns null
+  /// schema.parse(0); // returns 0
+  /// ```
   ZInt nonnegative({String? message}) {
     addValidator((int? value) {
       if (value != null && value < 0) {
@@ -73,7 +102,14 @@ class ZInt extends Schema<int> {
     return this;
   }
 
-  // Ensures the value is negative (< 0).
+  ///  Ensures the value is negative (< 0).
+  /// Example:
+  /// ```dart
+  /// final schema = z.int().negative();
+  /// schema.parse(5); // returns null
+  /// schema.parse(-5); // returns -5
+  /// schema.parse(0); // returns null
+  /// ```
   ZInt negative({String? message}) {
     addValidator((int? value) {
       if (value != null && value >= 0) {
@@ -88,7 +124,15 @@ class ZInt extends Schema<int> {
     return this;
   }
 
-  // Ensures the value is a multiple of the given divisor.
+  /// Ensures the value is a multiple of a given divisor.
+  /// Example:
+  /// ```dart
+  /// final schema = z.int().multipleOf(3);
+  /// schema.parse(6); // returns 6
+  /// schema.parse(7); // returns null
+  /// schema.parse(9); // returns 9
+  /// schema.parse(10); // returns null
+  /// ```
   ZInt multipleOf(int divisor, {String? message}) {
     addValidator((int? value) {
       if (value != null && value % divisor != 0) {
@@ -103,7 +147,15 @@ class ZInt extends Schema<int> {
     return this;
   }
 
-  // Alias for multipleOf.
+  /// Ensures the value is a step of a given step value.
+  /// Example:
+  /// ```dart
+  /// final schema = z.int().step(3);
+  /// schema.parse(6); // returns 6
+  /// schema.parse(7); // returns null
+  /// schema.parse(9); // returns 9
+  /// schema.parse(10); // returns null
+  /// ```
   ZInt step(int stepValue, {String? message}) {
     return multipleOf(stepValue, message: message);
   }

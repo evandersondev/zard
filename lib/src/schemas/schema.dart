@@ -1,4 +1,3 @@
-
 import '../types/zart_error.dart';
 
 typedef Validator<T> = ZardError? Function(T value);
@@ -8,9 +7,11 @@ abstract class Schema<T> {
   final List<Validator<T>> _validators = [];
   final List<T Function(T)> _transforms = [];
   bool _isOptional = false;
+  bool _nullable = false;
   final List<ZardError> errors = [];
 
   bool get isOptional => _isOptional;
+  bool get isNullable => _nullable;
 
   /// Adds a validator function.
   void addValidator(Validator<T> validator) {
@@ -22,9 +23,27 @@ abstract class Schema<T> {
     return this;
   }
 
-  /// Marks the schema as optional. If the value is null,
+  /// Optional field. If the field is optional, it will not be validated.
+  /// Example:
+  /// ```dart
+  /// final schema = z.string().optional();
+  /// schema.parse('hello'); // returns 'hello'
+  /// schema.parse(null); // returns null
+  /// ```
   Schema<T> optional() {
     _isOptional = true;
+    return this;
+  }
+
+  /// Nullable field. If the field is nullable, it will not be validated.
+  /// Example:
+  /// ```dart
+  /// final schema = z.string().nullable();
+  /// schema.parse('hello'); // returns 'hello'
+  /// schema.parse(null); // returns null
+  /// ```
+  Schema<T> nullable() {
+    _nullable = true;
     return this;
   }
 
@@ -40,7 +59,7 @@ abstract class Schema<T> {
   T? parse(dynamic value) {
     clearErrors();
 
-    if (_isOptional && value == null) {
+    if ((_isOptional || _nullable) && value == null) {
       return null;
     }
 

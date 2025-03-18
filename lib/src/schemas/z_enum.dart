@@ -1,4 +1,5 @@
 import '../types/zart_error.dart';
+
 import 'schema.dart';
 
 class ZEnum extends Schema<List<String>> {
@@ -27,26 +28,25 @@ class ZEnum extends Schema<List<String>> {
     });
   }
 
-  /// extract value from enum transform
-  ///
+  /// Extract value from enum transform
   /// example:
-  /// final extract = z.enum(['a', 'b', 'c']);
-  /// final value = extract.extract(['a']);
-  /// print(value); // ['a']
+  /// ```dart
+  /// final value = z.enum(['a', 'b', 'c']).extract(['a', 'b']);
+  /// print(value); // ['a', 'b']
+  /// ```
   ZEnum extract(List<String> list) {
-    // extract all values from enum
     addTransform((value) {
       return list.where((e) => value.contains(e)).toList();
     });
     return this;
   }
 
-  /// exclude value from enum transform
-  ///
+  /// Exclude value from enum transform
   /// example:
-  /// final exclude = z.enum(['a', 'b', 'c']);
-  /// final value = exclude.exclude(['a']);
-  /// print(value); // ['b', 'c']
+  /// ```dart
+  /// final value = z.enum(['a', 'b', 'c']).exclude(['a', 'b']);
+  /// print(value); // ['c']
+  /// ```
   ZEnum exclude(List<String> list) {
     addTransform((value) {
       return value.where((e) => !list.contains(e)).toList();
@@ -92,7 +92,6 @@ class ZEnum extends Schema<List<String>> {
     return value;
   }
 
-  // toString()
   @override
   String toString() {
     return 'ZEnum($_allowedValues)';

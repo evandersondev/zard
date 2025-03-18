@@ -1,4 +1,5 @@
 import '../types/zart_error.dart';
+
 import 'schema.dart';
 
 typedef ListValidator = ZardError? Function(List<dynamic> value);
@@ -36,8 +37,6 @@ class ZList extends Schema<List<dynamic>> {
       }
     }
 
-    // Executa os validadores registrados. Se algum retornar erro,
-    // esse erro é adicionado à lista de erros.
     for (final validator in _validators) {
       final error = validator(result);
       if (error != null) {
@@ -57,15 +56,15 @@ class ZList extends Schema<List<dynamic>> {
     return {'success': true, 'data': parsed};
   }
 
-  /// Validação que garante que a lista não esteja vazia.
-  ///
-  /// Exemplo:
+  /// Noempty validation
+  /// Example:
+  /// ```dart
   /// final listSchema = z.list(z.string()).noempty();
-  /// final list = listSchema.parse(['a', 'b', 2]);
-  /// print(list); // Output: ['a', 'b', 2]
-  ///
+  /// final list = listSchema.parse(['a', 'b', '2']);
+  /// print(list); // Output: ['a', 'b', '2']
   /// final listEmpty = listSchema.parse([]);
   /// print(listEmpty); // Output: null
+  /// ```
   ZList noempty({String? message}) {
     addValidator((List<dynamic> value) {
       if (value.isEmpty) {
@@ -80,15 +79,15 @@ class ZList extends Schema<List<dynamic>> {
     return this;
   }
 
-  /// min validation
-  ///
+  /// Min validation
   /// Example:
+  /// ```dart
   /// final listSchema = z.list(z.string()).min(2);
   /// final list = listSchema.parse(['a', 'b', '2']);
   /// print(list); // Output: ['a', 'b', '2']
-  ///
   /// final listEmpty = listSchema.parse([]);
   /// print(listEmpty); // Output: null
+  /// ```
   ZList min(int min, {String? message}) {
     addValidator((List<dynamic> value) {
       if (value.length < min) {
@@ -103,15 +102,15 @@ class ZList extends Schema<List<dynamic>> {
     return this;
   }
 
-  /// max validation
-  ///
+  /// Max validation
   /// Example:
+  /// ```dart
   /// final listSchema = z.list(z.string()).max(2);
   /// final list = listSchema.parse(['a', 'b', '2']);
-  /// print(list); // Output: null
-  ///
+  /// print(list); // Output: ['a', 'b', '2']
   /// final listEmpty = listSchema.parse([]);
-  /// print(listEmpty); // Output: []
+  /// print(listEmpty); // Output: null
+  /// ```
   ZList max(int max, {String? message}) {
     addValidator((List<dynamic> value) {
       if (value.length > max) {
@@ -126,18 +125,15 @@ class ZList extends Schema<List<dynamic>> {
     return this;
   }
 
-  /// length validation
-  ///
+  /// Length validation
   /// Example:
+  /// ```dart
   /// final listSchema = z.list(z.string()).length(2);
   /// final list = listSchema.parse(['a', 'b', '2']);
-  /// print(list); // Output: null
-  ///
+  /// print(list); // Output: ['a', 'b', '2']
   /// final listEmpty = listSchema.parse([]);
   /// print(listEmpty); // Output: null
-  ///
-  /// final listEmpty = listSchema.parse(['a', 'b']);
-  /// print(listEmpty); // Output: ['a', 'b']
+  /// ```
   ZList lenght(int length, {String? message}) {
     addValidator((List<dynamic> value) {
       if (value.length != length) {

@@ -1,5 +1,6 @@
+import 'package:zard/src/schemas/schemas.dart';
+
 import '../types/zart_error.dart';
-import 'schema.dart';
 
 class ZMap extends Schema<Map<String, dynamic>> {
   final Map<String, Schema> schemas;
@@ -7,47 +8,53 @@ class ZMap extends Schema<Map<String, dynamic>> {
   ZMap(this.schemas);
 
   @override
-  Map<String, dynamic>? parse(dynamic value, {String fieldName = ''}) {
+  Map<String, dynamic> parse(dynamic value) {
     clearErrors();
 
-    if (value is! Map<String, dynamic>) {
+    if (value is! Map) {
       addError(
-        ZardError(message: 'Expected a map', type: 'type_error', value: value),
+        ZardError(
+          message: 'Expected a Map',
+          type: 'type_error',
+          value: value,
+        ),
       );
-      return null;
+      throw Exception(
+          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
     }
 
-    final result = <String, dynamic>{};
+    Map<String, dynamic> result = {};
 
-    // Só os campos definidos no schema serão processados
-    for (final key in schemas.keys) {
-      final schema = schemas[key]!;
-      if (value.containsKey(key)) {
-        final parsedValue = schema.parse(value[key]);
-        if (parsedValue == null && schema.getErrors().isNotEmpty) {
-          errors.addAll(schema.getErrors());
+    schemas.forEach((key, schema) {
+      dynamic fieldValue = value[key];
+      try {
+        // Se o valor do campo for null e o schema permitir nulo (optional ou nullable)
+        if (fieldValue == null) {
+          if (schema.isOptional || schema.isNullable) {
+            result[key] = null;
+          } else {
+            schema.addError(
+              ZardError(
+                message: 'Field "$key" is required',
+                type: 'required_error',
+                value: fieldValue,
+              ),
+            );
+          }
         } else {
-          result[key] = parsedValue;
+          // Valida o campo utilizando o schema específico
+          result[key] = schema.parse(fieldValue);
         }
-      } else if (!schema.isOptional) {
-        addError(
-          ZardError(
-            message: 'Missing key: $key',
-            type: 'missing_key',
-            value: null,
-          ),
-        );
-      } else {
-        // Se for opcional e não presente, definir como null
-        result[key] = null;
+      } catch (e) {
+        // Se ocorrer exceção na validação/parsing, os erros já estarão acumulados no schema
       }
-    }
-
-    // Campos extras que não estão definidos no schema são ignorados,
-    // pois somente os campos do schema populam o "result".
+      // Coleta os erros de cada sub-schema
+      errors.addAll(schema.getErrors());
+    });
 
     if (errors.isNotEmpty) {
-      return null;
+      throw Exception(
+          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
     }
 
     return result;
@@ -56,9 +63,66 @@ class ZMap extends Schema<Map<String, dynamic>> {
   @override
   Map<String, dynamic> safeParse(dynamic value) {
     final parsed = parse(value);
-    if (parsed == null) {
-      return {'success': false, 'errors': getErrors()};
-    }
     return {'success': true, 'data': parsed};
+  }
+
+  /// Use .keyof to create a ZodEnum schema from the keys of an object schema.
+  /// Example:
+  /// ```dart
+  /// final schema = z.object({
+  /// 'name': z.string(),
+  /// 'age': z.int(),
+  /// 'email': z.string().email(),
+  /// }).keyof();
+  /// ```
+  /// schema // ZodEnum<["name", "age"]>
+  ZEnum keyof() {
+    return ZEnum(schemas.keys.toList());
+  }
+
+  /// Use .pick to create a new schema that only includes the specified maps.
+  /// Example:
+  /// ```dart
+  /// final schema = z.object({
+  /// 'name': z.string(),
+  /// 'age': z.int(),
+  /// 'email': z.string().email(),
+  /// });
+  /// final schema = schema.pick(['name']); // ZMap<String, Schema>
+  /// ```
+  ZMap pick(List<String> keys) {
+    final newSchemas = <String, Schema>{};
+    for (final key in keys) {
+      if (schemas.containsKey(key)) {
+        newSchemas[key] = schemas[key]!;
+      }
+    }
+    return ZMap(newSchemas);
+  }
+
+  /// Use .omit to create a new schema that excludes the specified maps.
+  /// Example:
+  /// ```dart
+  /// final schema = z.object({
+  /// 'name': z.string(),
+  /// 'age': z.int(),
+  /// 'email': z.string().email(),
+  /// });
+  /// final schema = schema.omit(['name']); // ZMap<String, Schema>
+  /// ```
+  ZMap omit(List<String> keys) {
+    final newSchemas = <String, Schema>{};
+    for (final key in schemas.keys) {
+      if (!keys.contains(key)) {
+        newSchemas[key] = schemas[key]!;
+      }
+    }
+    return ZMap(newSchemas);
+  }
+
+  @override
+  String toString() {
+    // ZMap({'name': z.string()})
+    return 'ZMap(${schemas.toString()})';
   }
 }

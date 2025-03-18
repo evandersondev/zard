@@ -1,4 +1,5 @@
 import '../types/zart_error.dart';
+
 import 'schemas.dart';
 
 class ZDate extends Schema<DateTime> {
@@ -8,19 +9,8 @@ class ZDate extends Schema<DateTime> {
 
   /// Validates a datetime.
   /// Success:
-  /// 2021-01-01
-  /// 1/10/23
-  /// 2021-01-01T00:00:00
-  /// 2021-01-01T00:00:00.000
-  /// 2021-01-01T00:00:00.000Z
-  /// 2021-01-01T00:00:00.000+00:00
-  /// 2021-01-01T00:00:00.000-00:00
-  /// 2021-01-01T00:00:00.000+00:00Z
+
   ///
-  /// Failure:
-  /// 2023-13-12
-  /// 0000-00-00
-  /// 20130725
 
   ZDate datetime() {
     addValidator((dynamic value) {
