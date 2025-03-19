@@ -8,7 +8,7 @@ class ZMap extends Schema<Map<String, dynamic>> {
   ZMap(this.schemas);
 
   @override
-  Map<String, dynamic> parse(dynamic value) {
+  Map<String, dynamic>? parse(dynamic value) {
     clearErrors();
 
     if (value is! Map) {
@@ -53,8 +53,7 @@ class ZMap extends Schema<Map<String, dynamic>> {
     });
 
     if (errors.isNotEmpty) {
-      throw Exception(
-          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
+      return null;
     }
 
     return result;

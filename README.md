@@ -6,7 +6,7 @@ Zard is a schema validation and transformation library for Dart, inspired by the
 
 ### Support 💖
 
-If you find Darto useful, please consider supporting its development 🌟[Buy Me a Coffee](https://buymeacoffee.com/evandersondev).🌟 Your support helps us improve the framework and make it even better!
+If you find Zard useful, please consider supporting its development 🌟[Buy Me a Coffee](https://buymeacoffee.com/evandersondev).🌟 Your support helps us improve the framework and make it even better!
 
 <br>
 
@@ -16,7 +16,7 @@ Add the following line to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  zard: ^0.0.3
+  zard: ^0.0.4
 ```
 
 Then, run:

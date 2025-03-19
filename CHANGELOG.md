@@ -1,3 +1,7 @@
+## 0.0.4
+
+- ZMap updated.
+
 ## 0.0.3
 
 - Update README.md
