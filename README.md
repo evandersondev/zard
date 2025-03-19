@@ -16,7 +16,7 @@ Add the following line to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  zard: ^0.0.1
+  zard: ^0.0.3
 ```
 
 Then, run:
@@ -48,7 +48,7 @@ import 'package:zard/zard.dart';
 
 void main() {
   // String validations
-  final schema = z.string().min(3).max(10).email(message: "Invalid email address").optional();
+  final schema = z.string().min(3).max(10).email(message: "Invalid email address");
 
   final result = schema.parse("example@example.com");
   print(result); // example@example.com
@@ -67,13 +67,14 @@ import 'package:zard/zard.dart';
 
 void main() {
   // Integer validations
-  final schema = z.int().min(1).max(100).optional();
+  final schema = z.int().min(1).max(100);
 
   final result = schema.parse(50);
   print(result); // 50
 
   final nullResult = schema.parse(null);
   print(nullResult); // null
+  print(schema.getErrors()); // {'success': false, 'error': [ZardError(message: 'Value must be at least 1', type: 'min_error', value: null)]}
 }
 ```
 
@@ -86,13 +87,14 @@ import 'package:zard/zard.dart';
 
 void main() {
   // Double validations
-  final schema = z.doubleType().min(1.0).max(100.0).optional();
+  final schema = z.doubleType().min(1.0).max(100.0);
 
   final result = schema.parse(50.5);
   print(result); // 50.5
 
   final nullResult = schema.parse(null);
   print(nullResult); // null
+  print(schema.getErrors()); // {'success': false, 'error': [ZardError(message: 'Value must be at least 1.0', type: 'min_error', value: null)]}
 }
 ```
 
@@ -105,17 +107,19 @@ import 'package:zard/zard.dart';
 
 void main() {
   // Boolean validations
-  final schema = z.boolean().optional();
+  final schema = z.boolean();
 
   final result = schema.parse(true);
   print(result); // true
 
   final nullResult = schema.parse(null);
   print(nullResult); // null
+  print(schema.getErrors()); // {'success': false, 'error': [ZardError(message: 'Value must be true', type: 'boolean_error', value: null)]}
 }
 ```
 
 <br>
+
 #### List
 
 ```dart
@@ -123,13 +127,14 @@ import 'package:zard/zard.dart';
 
 void main() {
   // List validations
-  final schema = z.list(z.string().min(3)).optional();
+  final schema = z.list(z.string().min(3));
 
   final result = schema.parse(["abc", "def"]);
   print(result); // [abc, def]
 
   final nullResult = schema.parse(null);
   print(nullResult); // null
+  print(schema.getErrors()); // {'success': false, 'error': [ZardError(message: 'Value must be at least 3 characters long', type: 'min_error', value: null)]}
 }
 ```
 
@@ -143,8 +148,8 @@ import 'package:zard/zard.dart';
 void main() {
   // Map validations
   final schema = z.map({
-    'name': z.string().min(3).optional(),
-    'age': z.int().min(1).optional(),
+    'name': z.string().min(3).nullable(),
+    'age': z.int().min(1).nullable(),
   });
 
   final result = schema.parse({
@@ -186,18 +191,135 @@ void main() {
 
   if (!result['success']) {
     for (var error in result['errors']) {
-      print('Error: ${error.message}, Type: ${error.type}, Value: ${error.value}');
+      print('Error: $error');
     }
   }
 
   // or
-  print
   print(schema.getErrors());
-  // [ZardError(message: Value must be at least 10, type: min_error, value: 5)]
+  // [{'success': false, 'error': [ZardError(message: 'Value must be at least 10', type: 'min_error', value: 5)]}]
 }
 ```
 
-In this example, if the value `5` does not meet the minimum requirement of `10`, Zard will return a `ZardError` object containing the error details.
+<br>
+
+### New Methods & Functionality
+
+In addition to the already available API, Zard now includes several new methods that provide increased flexibility when validating and transforming data. These methods allow you to control the behavior of a schema regarding null values, as well as manipulate object schemas.
+
+#### .nullable()
+
+Allows the schema to accept `null` values. When a schema is marked as nullable, if the parsed value is null, the validation and transformation steps are skipped and `null` is returned.
+
+Example with primitive types:
+
+```dart
+final boolSchema = z.boolean().nullable();
+final result = boolSchema.parse(null);
+print(result); // Outputs: null
+```
+
+Example with Map schemas:
+
+```dart
+final userSchema = z.map({
+  'name': z.string().min(3),
+  'age': z.int().min(18).nullable(),
+});
+
+final user = userSchema.parse({
+  'name': 'John Doe',
+  'age': null,
+});
+print(user); // {name: "John Doe", age: null}
+```
+
+<br>
+
+#### .optional()
+
+Marks the schema as optional. When a schema is optional and the value is null, the validations are skipped and `null` is returned.
+
+Example:
+
+```dart
+final userSchema = z.map({
+  'name': z.string().min(3),
+  'age': z.int().min(18).optional(),
+});
+final user = userSchema.parse({
+  'name': 'John Doe',
+});
+print(user); // {name: "John Doe", age: null}
+```
+
+<br>
+
+#### .omit()
+
+Allows you to remove (or ignore) specific keys from a Map schema. This is useful when you want to validate an object but intentionally ignore certain fields.
+
+Example:
+
+```dart
+final userSchema = z.map({
+  'name': z.string().min(3),
+  'age': z.int().min(18),
+  'password': z.string().min(6),
+}).omit(['password']);
+
+final user = userSchema.parse({
+  'name': 'John Doe',
+  'age': 30,
+  'password': 'secret123',
+});
+print(user); // ZMMap({name: "John Doe", age: 30})
+```
+
+<br>
+
+#### .pick()
+
+Allows you to select specific keys from a Map schema, effectively creating a new schema that only validates a subset of the original object's properties.
+
+Example:
+
+```dart
+final userSchema = z.map({
+  'name': z.string().min(3),
+  'age': z.int().min(18),
+  'password': z.string().min(6),
+}).pick(['name', 'age']);
+
+final user = userSchema.parse({
+  'name': 'John Doe',
+  'age': 30,
+  'password': 'secret123',
+});
+print(user); // ZMap({name: "John Doe", age: 30})
+```
+
+<br>
+
+#### .length()
+
+For string and list schemas, the `.length()` method allows you to validate the exact length of the value. For strings, it ensures the string has exactly the specified number of characters; for lists, it ensures the list has exactly the specified number of items.
+
+Example for string:
+
+```dart
+final schema = z.string().length(5, message: "String must be exactly 5 characters long");
+final result = schema.parse("Hello");
+print(result); // Hello
+```
+
+Example for list:
+
+```dart
+final schema = z.list(z.int()).length(3, message: "List must have 3 items");
+final result = schema.parse([1, 2, 3]);
+print(result); // [1, 2, 3]
+```
 
 <br>
 
@@ -209,9 +331,9 @@ Here is a list of all the currently available methods in Zard:
 
 - `min(int length, {String? message})`
 - `max(int length, {String? message})`
+- `length(int length, {String? message})`
 - `email({String? message})`
 - `url({String? message})`
-- `length(int length, {String? message})`
 - `uuid({String? message})`
 - `cuid({String? message})`
 - `cuid2({String? message})`
@@ -227,32 +349,35 @@ Here is a list of all the currently available methods in Zard:
 - `toUpperCase()`
 - `capitalize()`
 - `optional()`
+- `nullable()`
 
 <br>
 
 #### ZInt
 
-- `min(int length, {String? message})`
-- `max(int length, {String? message})`
+- `min(int value, {String? message})`
+- `max(int value, {String? message})`
 - `positive({String? message})`
 - `nonnegative({String? message})`
 - `negative({String? message})`
 - `multipleOf(int divisor, {String? message})`
 - `step(int stepValue, {String? message})`
 - `optional()`
+- `nullable()`
 
 <br>
 
 #### ZDouble
 
-- `min(double length, {String? message})`
-- `max(double length, {String? message})`
+- `min(double value, {String? message})`
+- `max(double value, {String? message})`
 - `positive({String? message})`
 - `nonnegative({String? message})`
 - `negative({String? message})`
 - `multipleOf(double divisor, {String? message})`
 - `step(double stepValue, {String? message})`
 - `optional()`
+- `nullable()`
 
 <br>
 
@@ -260,13 +385,19 @@ Here is a list of all the currently available methods in Zard:
 
 - `boolean({String? message})`
 - `optional()`
+- `nullable()`
 
 <br>
 
 #### ZList
 
 - `list(Schema itemSchema)`
+- `min(int length, {String? message})`
+- `max(int length, {String? message})`
+- `length(int length, {String? message})`
+- `noempty({String? message})`
 - `optional()`
+- `nullable()`
 
 <br>
 
@@ -274,6 +405,10 @@ Here is a list of all the currently available methods in Zard:
 
 - `map(Map<String, Schema> schemas)`
 - `optional()`
+- `nullable()`
+- `omit(List<String> keys)`
+- `pick(List<String> keys)`
+- `keyOf()` ZodEnum<["name", "age"]>
 
 <br>
 
@@ -283,6 +418,7 @@ Here is a list of all the currently available methods in Zard:
 - `extract(List<String> list)`
 - `exclude(List<String> list)`
 - `optional()`
+- `nullable()`
 
 <br>
 
