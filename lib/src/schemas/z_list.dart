@@ -1,5 +1,4 @@
 import '../types/zart_error.dart';
-
 import 'schema.dart';
 
 typedef ListValidator = ZardError? Function(List<dynamic> value);
@@ -23,17 +22,19 @@ class ZList extends Schema<List<dynamic>> {
       addError(
         ZardError(message: 'Must be a list', type: 'type_error', value: value),
       );
-      return null;
+      throw Exception(
+          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
     }
 
     final result = <dynamic>[];
     for (var i = 0; i < value.length; i++) {
       final item = value[i];
-      final parsedItem = _itemSchema.parse(item);
-      if (parsedItem == null && _itemSchema.getErrors().isNotEmpty) {
-        errors.addAll(_itemSchema.getErrors());
-      } else {
+      try {
+        final parsedItem = _itemSchema.parse(item);
         result.add(parsedItem);
+      } catch (e) {
+        // Acumula os erros do item
+        errors.addAll(_itemSchema.getErrors());
       }
     }
 
@@ -44,16 +45,31 @@ class ZList extends Schema<List<dynamic>> {
       }
     }
 
-    return errors.isNotEmpty ? null : result;
+    if (errors.isNotEmpty) {
+      throw Exception(
+          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
+    }
+
+    // Aplica as transformações (caso existam) no resultado final
+    var transformedResult = result;
+    for (final transform in getTransforms()) {
+      transformedResult = transform(transformedResult);
+    }
+
+    return transformedResult;
   }
 
   @override
   Map<String, dynamic> safeParse(dynamic value) {
-    final parsed = parse(value);
-    if (parsed == null) {
-      return {'success': false, 'errors': getErrors()};
+    try {
+      final parsed = parse(value);
+      return {'success': true, 'data': parsed};
+    } catch (e) {
+      return {
+        'success': false,
+        'errors': errors.map((e) => e.toString()).toList()
+      };
     }
-    return {'success': true, 'data': parsed};
   }
 
   /// Noempty validation
@@ -63,7 +79,7 @@ class ZList extends Schema<List<dynamic>> {
   /// final list = listSchema.parse(['a', 'b', '2']);
   /// print(list); // Output: ['a', 'b', '2']
   /// final listEmpty = listSchema.parse([]);
-  /// print(listEmpty); // Output: null
+  /// // Throws with error details
   /// ```
   ZList noempty({String? message}) {
     addValidator((List<dynamic> value) {
@@ -85,8 +101,8 @@ class ZList extends Schema<List<dynamic>> {
   /// final listSchema = z.list(z.string()).min(2);
   /// final list = listSchema.parse(['a', 'b', '2']);
   /// print(list); // Output: ['a', 'b', '2']
-  /// final listEmpty = listSchema.parse([]);
-  /// print(listEmpty); // Output: null
+  /// final listShort = listSchema.parse(['a']);
+  /// // Throws with error details
   /// ```
   ZList min(int min, {String? message}) {
     addValidator((List<dynamic> value) {
@@ -106,10 +122,10 @@ class ZList extends Schema<List<dynamic>> {
   /// Example:
   /// ```dart
   /// final listSchema = z.list(z.string()).max(2);
-  /// final list = listSchema.parse(['a', 'b', '2']);
-  /// print(list); // Output: ['a', 'b', '2']
-  /// final listEmpty = listSchema.parse([]);
-  /// print(listEmpty); // Output: null
+  /// final list = listSchema.parse(['a', 'b']);
+  /// print(list); // Output: ['a', 'b']
+  /// final listLong = listSchema.parse(['a', 'b', 'c']);
+  /// // Throws with error details
   /// ```
   ZList max(int max, {String? message}) {
     addValidator((List<dynamic> value) {
@@ -128,11 +144,11 @@ class ZList extends Schema<List<dynamic>> {
   /// Length validation
   /// Example:
   /// ```dart
-  /// final listSchema = z.list(z.string()).length(2);
-  /// final list = listSchema.parse(['a', 'b', '2']);
-  /// print(list); // Output: ['a', 'b', '2']
-  /// final listEmpty = listSchema.parse([]);
-  /// print(listEmpty); // Output: null
+  /// final listSchema = z.list(z.string()).lenght(2);
+  /// final list = listSchema.parse(['a', 'b']);
+  /// print(list); // Output: ['a', 'b']
+  /// final listInvalid = listSchema.parse(['a', 'b', 'c']);
+  /// // Throws with error details
   /// ```
   ZList lenght(int length, {String? message}) {
     addValidator((List<dynamic> value) {

@@ -1,3 +1,7 @@
+## 0.0.5
+
+- Update .parse validation rules.
+
 ## 0.0.4
 
 - ZMap updated.

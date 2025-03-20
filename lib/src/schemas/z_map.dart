@@ -53,7 +53,8 @@ class ZMap extends Schema<Map<String, dynamic>> {
     });
 
     if (errors.isNotEmpty) {
-      return null;
+      throw Exception(
+          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
     }
 
     return result;
@@ -61,33 +62,40 @@ class ZMap extends Schema<Map<String, dynamic>> {
 
   @override
   Map<String, dynamic> safeParse(dynamic value) {
-    final parsed = parse(value);
-    return {'success': true, 'data': parsed};
+    try {
+      final parsed = parse(value);
+      return {'success': true, 'data': parsed};
+    } catch (e) {
+      return {
+        'success': false,
+        'errors': errors.map((e) => e.toString()).toList()
+      };
+    }
   }
 
-  /// Use .keyof to create a ZodEnum schema from the keys of an object schema.
+  /// Use .keyOf to create a ZodEnum schema from the keys of an object schema.
   /// Example:
   /// ```dart
-  /// final schema = z.object({
+  /// final schema = z.map({
   /// 'name': z.string(),
   /// 'age': z.int(),
   /// 'email': z.string().email(),
   /// }).keyof();
   /// ```
-  /// schema // ZodEnum<["name", "age"]>
+  /// schema // ZodEnum<["name", "age", "email"]>
   ZEnum keyof() {
     return ZEnum(schemas.keys.toList());
   }
 
-  /// Use .pick to create a new schema that only includes the specified maps.
+  /// Use .pick to create a new schema that only includes the specified keys.
   /// Example:
   /// ```dart
-  /// final schema = z.object({
+  /// final schema = z.map({
   /// 'name': z.string(),
   /// 'age': z.int(),
   /// 'email': z.string().email(),
   /// });
-  /// final schema = schema.pick(['name']); // ZMap<String, Schema>
+  /// final pickedSchema = schema.pick(['name', 'age']); // ZMap<String, Schema>
   /// ```
   ZMap pick(List<String> keys) {
     final newSchemas = <String, Schema>{};
@@ -99,15 +107,15 @@ class ZMap extends Schema<Map<String, dynamic>> {
     return ZMap(newSchemas);
   }
 
-  /// Use .omit to create a new schema that excludes the specified maps.
+  /// Use .omit to create a new schema that excludes the specified keys.
   /// Example:
   /// ```dart
-  /// final schema = z.object({
+  /// final schema = z.map({
   /// 'name': z.string(),
   /// 'age': z.int(),
   /// 'email': z.string().email(),
   /// });
-  /// final schema = schema.omit(['name']); // ZMap<String, Schema>
+  /// final omittedSchema = schema.omit(['email']); // ZMap<String, Schema>
   /// ```
   ZMap omit(List<String> keys) {
     final newSchemas = <String, Schema>{};

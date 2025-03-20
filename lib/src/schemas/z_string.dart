@@ -1,9 +1,9 @@
 import '../types/zart_error.dart';
-
 import 'schema.dart';
 
 class ZString extends Schema<String> {
   ZString({String? message}) {
+    // Validação inicial para garantir que o valor não seja nulo.
     addValidator((String? value) {
       if (value == null) {
         return ZardError(
@@ -19,9 +19,9 @@ class ZString extends Schema<String> {
   /// Min validation
   /// Example:
   /// ```dart
-  /// final min = z.string().min(3);
-  /// final name = min.parse('John'); // Pass
-  /// final name = min.parse('Jo'); // null
+  /// final minSchema = z.string().min(3);
+  /// final name = minSchema.parse('John'); // returns 'John'
+  /// final name = minSchema.parse('Jo'); // throws with error details
   /// ```
   ZString min(int length, {String? message}) {
     addValidator((String? value) {
@@ -40,10 +40,9 @@ class ZString extends Schema<String> {
   /// Max validation
   /// Example:
   /// ```dart
-  /// final max = z.string().max(3);
-  /// final name = max.parse('John'); // Pass
-  /// final name = max.parse('Jo'); // Pass
-  /// final name = max.parse('Jo'); // null
+  /// final maxSchema = z.string().max(10);
+  /// final name = maxSchema.parse('short'); // returns 'short'
+  /// final name = maxSchema.parse('this string is too long'); // throws with error details
   /// ```
   ZString max(int length, {String? message}) {
     addValidator((String? value) {
@@ -62,9 +61,9 @@ class ZString extends Schema<String> {
   /// Email validation
   /// Example:
   /// ```dart
-  /// final email = z.string().email();
-  /// final email = email.parse('john@example.com'); // Pass
-  /// final email = email.parse('john@example'); // null
+  /// final emailSchema = z.string().email();
+  /// final email = emailSchema.parse('john@example.com'); // returns 'john@example.com'
+  /// final email = emailSchema.parse('john@example'); // throws with error details
   /// ```
   ZString email({String? message}) {
     addValidator((String? value) {
@@ -86,15 +85,15 @@ class ZString extends Schema<String> {
   /// URL validation
   /// Example:
   /// ```dart
-  /// final url = z.string().url();
-  /// final url = url.parse('https://www.example.com'); // Pass
-  /// final url = url.parse('www.example.com'); // null
+  /// final urlSchema = z.string().url();
+  /// final url = urlSchema.parse('https://www.example.com'); // returns the URL
+  /// final url = urlSchema.parse('www.example.com'); // throws with error details
   /// ```
   ZString url({String? message}) {
     addValidator((String? value) {
       if (value != null) {
         final urlRegExp = RegExp(
-          r'^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$',
+          r'^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.-]*)*\/?$',
         );
         if (!urlRegExp.hasMatch(value)) {
           return ZardError(
@@ -109,14 +108,12 @@ class ZString extends Schema<String> {
     return this;
   }
 
-  /// Length validation
+  /// Length validation (exact length)
   /// Example:
   /// ```dart
-  /// final length = z.string().length(3);
-  /// final name = length.parse('Doe'); // Pass
-  /// final name = length.parse('Do'); // null
-  /// final name = length.parse('D'); // null
-  /// final name = length.parse('John'); // null
+  /// final lengthSchema = z.string().length(5);
+  /// final value = lengthSchema.parse('Hello'); // returns 'Hello'
+  /// final value = lengthSchema.parse('Hi'); // throws with error details
   /// ```
   ZString length(int length, {String? message}) {
     addValidator((String? value) {
@@ -135,10 +132,9 @@ class ZString extends Schema<String> {
   /// UUID validation
   /// Example:
   /// ```dart
-  /// final uuid = z.string().uuid();
-  /// final uuid = uuid.parse('123e4567-e89b-12d3-a456-426614174000'); // Pass
-  /// final uuid = uuid.parse('123e4567-e89b-12d3-a456-42661417400'); // null
-  /// final uuid = uuid.parse('123e4567-e89b-12d3-a456-4266141740000'); // null
+  /// final uuidSchema = z.string().uuid();
+  /// final uuid = uuidSchema.parse('123e4567-e89b-12d3-a456-426614174000'); // returns valid uuid
+  /// final uuid = uuidSchema.parse('invalid-uuid'); // throws with error details
   /// ```
   ZString uuid({String? message}) {
     addValidator((String? value) {
@@ -162,10 +158,9 @@ class ZString extends Schema<String> {
   /// CUID validation
   /// Example:
   /// ```dart
-  /// final cuid = z.string().cuid();
-  /// final cuid = cuid.parse('123e4567-e89b-12d3-a456-426614174000'); // Pass
-  /// final cuid = cuid.parse('123e4567-e89b-12d3-a456-42661417400'); // null
-  /// final cuid = cuid.parse('123e4567-e89b-12d3-a456-4266141740000'); // null
+  /// final cuidSchema = z.string().cuid();
+  /// final cuid = cuidSchema.parse('abcdefghijklmnopqrst'); // returns valid cuid
+  /// final cuid = cuidSchema.parse('short'); // throws with error details
   /// ```
   ZString cuid({String? message}) {
     addValidator((String? value) {
@@ -187,10 +182,9 @@ class ZString extends Schema<String> {
   /// CUID2 validation
   /// Example:
   /// ```dart
-  /// final cuid2 = z.string().cuid2();
-  /// final cuid2 = cuid2.parse('123e4567-e89b-12d3-a456-426614174000'); // Pass
-  /// final cuid2 = cuid2.parse('123e4567-e89b-12d3-a456-42661417400'); // null
-  /// final cuid2 = cuid2.parse('123e4567-e89b-12d3-a456-4266141740000'); // null
+  /// final cuid2Schema = z.string().cuid2();
+  /// final cuid2 = cuid2Schema.parse('abcdefghijklmnopqrstuvwxxy'); // returns valid cuid2
+  /// final cuid2 = cuid2Schema.parse('invalid'); // throws with error details
   /// ```
   ZString cuid2({String? message}) {
     addValidator((String? value) {
@@ -212,9 +206,9 @@ class ZString extends Schema<String> {
   /// Regex validation
   /// Example:
   /// ```dart
-  /// final regex = z.string().regex(RegExp(r'^[a-zA-Z]+$'));
-  /// final name = regex.parse('John'); // Pass
-  /// final name = regex.parse('123'); // null
+  /// final regexSchema = z.string().regex(RegExp(r'^[a-zA-Z]+$'));
+  /// final value = regexSchema.parse('John'); // returns 'John'
+  /// final value = regexSchema.parse('John123'); // throws with error details
   /// ```
   ZString regex(RegExp regex, {String? message}) {
     addValidator((String? value) {
@@ -233,9 +227,9 @@ class ZString extends Schema<String> {
   /// EndsWith validation
   /// Example:
   /// ```dart
-  /// final endsWith = z.string().endsWith('test');
-  /// final name = endsWith.parse('John Doe'); // Pass
-  /// final name = endsWith.parse('John'); // null
+  /// final endsWithSchema = z.string().endsWith('test');
+  /// final value = endsWithSchema.parse('this is a test'); // returns value
+  /// final value = endsWithSchema.parse('no match'); // throws with error details
   /// ```
   ZString endsWith(String suffix, {String? message}) {
     addValidator((String? value) {
@@ -254,9 +248,9 @@ class ZString extends Schema<String> {
   /// StartsWith validation
   /// Example:
   /// ```dart
-  /// final startsWith = z.string().startsWith('John');
-  /// final name = startsWith.parse('John Doe'); // Pass
-  /// final name = startsWith.parse('Doe'); // null
+  /// final startsWithSchema = z.string().startsWith('Hello');
+  /// final value = startsWithSchema.parse('Hello world'); // returns value
+  /// final value = startsWithSchema.parse('World Hello'); // throws with error details
   /// ```
   ZString startsWith(String prefix, {String? message}) {
     addValidator((String? value) {
@@ -275,9 +269,9 @@ class ZString extends Schema<String> {
   /// Contains validation
   /// Example:
   /// ```dart
-  /// final contains = z.string().contains('test');
-  /// final name = contains.parse('test a string'); // Pass
-  /// final name = contains.parse('Jane Doe'); // null
+  /// final containsSchema = z.string().contains('test');
+  /// final value = containsSchema.parse('this is a test'); // returns value
+  /// final value = containsSchema.parse('no match here'); // throws with error details
   /// ```
   ZString contains(String substring, {String? message}) {
     addValidator((String? value) {
@@ -293,12 +287,12 @@ class ZString extends Schema<String> {
     return this;
   }
 
-  /// Date validation
+  /// Datetime validation
   /// Example:
   /// ```dart
-  /// final date = z.string().date();
-  /// final date = date.parse('2021-01-01'); // Pass
-  /// final date = date.parse('2021-01-01 12:00:00'); // null
+  /// final datetimeSchema = z.string().datetime();
+  /// final value = datetimeSchema.parse('2021-01-01T12:30:00Z'); // returns value
+  /// final value = datetimeSchema.parse('2021-01-01 12:30:00'); // throws with error details
   /// ```
   ZString datetime({String? message}) {
     addValidator((String? value) {
@@ -322,9 +316,9 @@ class ZString extends Schema<String> {
   /// Date validation
   /// Example:
   /// ```dart
-  /// final date = z.string().date();
-  /// final date = date.parse('2021-01-01'); // Pass
-  /// final date = date.parse('2021-01-01 12:00:00'); // null
+  /// final dateSchema = z.string().date();
+  /// final value = dateSchema.parse('2021-01-01'); // returns value
+  /// final value = dateSchema.parse('2021-01-01T12:30:00'); // throws with error details
   /// ```
   ZString date({String? message}) {
     addValidator((String? value) {
@@ -346,9 +340,9 @@ class ZString extends Schema<String> {
   /// Time validation
   /// Example:
   /// ```dart
-  /// final time = z.string().time();
-  /// final time = time.parse('12:00:00'); // Pass
-  /// final time = time.parse('12:00:00.000'); // null
+  /// final timeSchema = z.string().time();
+  /// final value = timeSchema.parse('12:00:00'); // returns value
+  /// final value = timeSchema.parse('12:00'); // throws with error details
   /// ```
   ZString time({String? message}) {
     addValidator((String? value) {
@@ -368,7 +362,7 @@ class ZString extends Schema<String> {
   }
 
   @override
-  String? parse(dynamic value, {String fieldName = ''}) {
+  String parse(dynamic value, {String fieldName = ''}) {
     clearErrors();
 
     if (value is! String) {
@@ -379,7 +373,10 @@ class ZString extends Schema<String> {
           value: value,
         ),
       );
-      return null;
+
+      throw Exception(
+        'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}',
+      );
     }
 
     for (final validator in getValidators()) {
@@ -392,7 +389,9 @@ class ZString extends Schema<String> {
     }
 
     if (errors.isNotEmpty) {
-      return null;
+      throw Exception(
+        'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}',
+      );
     }
 
     for (final transform in getTransforms()) {

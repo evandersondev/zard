@@ -1,5 +1,4 @@
 import '../types/zart_error.dart';
-
 import 'schema.dart';
 
 class ZEnum extends Schema<List<String>> {
@@ -28,24 +27,24 @@ class ZEnum extends Schema<List<String>> {
     });
   }
 
-  /// Extract value from enum transform
-  /// example:
+  /// Extract value from enum transform.
+  /// Example:
   /// ```dart
   /// final value = z.enum(['a', 'b', 'c']).extract(['a', 'b']);
-  /// print(value); // ['a', 'b']
+  /// print(value); // Prints: ['a', 'b']
   /// ```
   ZEnum extract(List<String> list) {
     addTransform((value) {
-      return list.where((e) => value.contains(e)).toList();
+      return value.where((e) => list.contains(e)).toList();
     });
     return this;
   }
 
-  /// Exclude value from enum transform
-  /// example:
+  /// Exclude value from enum transform.
+  /// Example:
   /// ```dart
   /// final value = z.enum(['a', 'b', 'c']).exclude(['a', 'b']);
-  /// print(value); // ['c']
+  /// print(value); // Prints: ['c']
   /// ```
   ZEnum exclude(List<String> list) {
     addTransform((value) {
@@ -55,7 +54,7 @@ class ZEnum extends Schema<List<String>> {
   }
 
   @override
-  List<String>? parse(dynamic value, {String fieldName = ''}) {
+  List<String> parse(dynamic value, {String fieldName = ''}) {
     clearErrors();
 
     if (value is! List<String>) {
@@ -66,7 +65,9 @@ class ZEnum extends Schema<List<String>> {
           value: value,
         ),
       );
-      return null;
+      throw Exception(
+        'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}',
+      );
     }
 
     for (final element in value) {
@@ -82,7 +83,9 @@ class ZEnum extends Schema<List<String>> {
     }
 
     if (errors.isNotEmpty) {
-      return null;
+      throw Exception(
+        'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}',
+      );
     }
 
     for (final transform in getTransforms()) {

@@ -1,5 +1,4 @@
 import '../types/zart_error.dart';
-
 import 'schemas.dart';
 
 class ZDate extends Schema<DateTime> {
@@ -7,28 +6,25 @@ class ZDate extends Schema<DateTime> {
 
   ZDate({this.message});
 
-  /// Validates a datetime.
-  /// Success:
-
-  ///
-
+  /// Adds a validator that checks for a valid datetime format.
   ZDate datetime() {
     addValidator((dynamic value) {
       return _validate(value);
     });
-
     return this;
   }
 
+  /// Performs validation on the provided value to ensure it represents a valid datetime.
   ZardError? _validate(dynamic value) {
-    if (value is DateTime) {
-      value = value.toIso8601String();
-    }
+    // If value is a DateTime instance, convert it to ISO8601 string for validation.
+    String valueStr =
+        value is DateTime ? value.toIso8601String() : value.toString();
 
+    // Regex pattern supporting various date formats.
     final dateRegExp = RegExp(
       r'^(\d{4})-(\d{2})-(\d{2})$|^(\d{1,2})/(\d{1,2})/(\d{2,4})$|^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)((?:[+-](\d{2}):(\d{2})|Z)?)$',
     );
-    if (!dateRegExp.hasMatch(value.toString())) {
+    if (!dateRegExp.hasMatch(valueStr)) {
       return ZardError(
         message: message ?? 'Invalid datetime format',
         type: 'datetime',
@@ -36,8 +32,9 @@ class ZDate extends Schema<DateTime> {
       );
     }
 
-    final date = DateTime.tryParse(value.toString());
-    if (date == null) {
+    // Try to parse the date.
+    final parsedDate = DateTime.tryParse(valueStr);
+    if (parsedDate == null) {
       return ZardError(
         message: message ?? 'Invalid datetime format',
         type: 'datetime',
@@ -45,12 +42,15 @@ class ZDate extends Schema<DateTime> {
       );
     }
 
-    // Additional checks to ensure the date is valid
-    final components = value.toString().split(RegExp(r'[-T:/\.Z+]'));
+    // Additional validation: Check individual date components.
+    final components = valueStr
+        .split(RegExp(r'[-T:/\.Z+]'))
+        .where((c) => c.isNotEmpty)
+        .toList();
     if (components.length >= 3) {
-      final year = int.parse(components[0]);
-      final month = int.parse(components[1]);
-      final day = int.parse(components[2]);
+      final year = int.tryParse(components[0]) ?? 0;
+      final month = int.tryParse(components[1]) ?? 0;
+      final day = int.tryParse(components[2]) ?? 0;
 
       if (year < 1 || month < 1 || month > 12 || day < 1 || day > 31) {
         return ZardError(
@@ -65,7 +65,9 @@ class ZDate extends Schema<DateTime> {
   }
 
   @override
-  DateTime? parse(dynamic value) {
+  DateTime? parse(dynamic value, {String fieldName = ''}) {
+    clearErrors();
+
     if (value == null && isOptional) {
       return null;
     }
@@ -79,31 +81,40 @@ class ZDate extends Schema<DateTime> {
           value: value,
         ),
       );
-      return null;
+      throw Exception(
+          'Validation failed with errors: ${getErrors().map((e) => e.toString()).toList()}');
     }
 
     if (value is String) {
       try {
         final date = DateTime.parse(value);
-        return date;
+        // Optionally, process transformations if any exist.
+        DateTime transformedValue = date;
+        for (final transform in getTransforms()) {
+          transformedValue = transform(transformedValue);
+        }
+        return transformedValue;
       } catch (e) {
         addError(
           ZardError(
-            message: 'Invalid date format',
+            message: message ?? 'Invalid date format',
             type: 'datetime',
             value: value,
           ),
         );
-        return null;
+        throw Exception(
+            'Validation failed with errors: ${getErrors().map((e) => e.toString()).toList()}');
       }
     }
-    return super.parse(value) as DateTime;
+    // If the value is already a DateTime, defer to the base implementation.
+    final result = super.parse(value);
+    return result as DateTime;
   }
 
   @override
   Map<String, dynamic> safeParse(dynamic value, {String fieldName = ''}) {
     try {
-      final parsed = parse(value);
+      final parsed = parse(value, fieldName: fieldName);
       return {'success': true, 'data': parsed};
     } catch (e) {
       return {'success': false, 'errors': getErrors()};

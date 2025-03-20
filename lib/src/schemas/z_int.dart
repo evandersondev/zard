@@ -1,5 +1,4 @@
 import '../types/zart_error.dart';
-
 import 'schema.dart';
 
 class ZInt extends Schema<int> {
@@ -20,14 +19,14 @@ class ZInt extends Schema<int> {
   /// Example:
   /// ```dart
   /// final schema = z.int().min(10);
-  /// schema.parse(5); // returns null
+  /// schema.parse(5); // throws error
   /// schema.parse(15); // returns 15
   /// ```
-  ZInt min(int length, {String? message}) {
+  ZInt min(int minValue, {String? message}) {
     addValidator((int? value) {
-      if (value != null && value < length) {
+      if (value != null && value < minValue) {
         return ZardError(
-          message: message ?? 'Value must be at least $length',
+          message: message ?? 'Value must be at least $minValue',
           type: 'min_error',
           value: value,
         );
@@ -42,13 +41,13 @@ class ZInt extends Schema<int> {
   /// ```dart
   /// final schema = z.int().max(10);
   /// schema.parse(5); // returns 5
-  /// schema.parse(15); // returns null
+  /// schema.parse(15); // throws error
   /// ```
-  ZInt max(int length, {String? message}) {
+  ZInt max(int maxValue, {String? message}) {
     addValidator((int? value) {
-      if (value != null && value > length) {
+      if (value != null && value > maxValue) {
         return ZardError(
-          message: message ?? 'Value must be at most $length',
+          message: message ?? 'Value must be at most $maxValue',
           type: 'max_error',
           value: value,
         );
@@ -63,8 +62,8 @@ class ZInt extends Schema<int> {
   /// ```dart
   /// final schema = z.int().positive();
   /// schema.parse(5); // returns 5
-  /// schema.parse(-5); // returns null
-  /// schema.parse(0); // returns null
+  /// schema.parse(-5); // throws error
+  /// schema.parse(0); // throws error
   /// ```
   ZInt positive({String? message}) {
     addValidator((int? value) {
@@ -85,7 +84,7 @@ class ZInt extends Schema<int> {
   /// ```dart
   /// final schema = z.int().nonnegative();
   /// schema.parse(5); // returns 5
-  /// schema.parse(-5); // returns null
+  /// schema.parse(-5); // throws error
   /// schema.parse(0); // returns 0
   /// ```
   ZInt nonnegative({String? message}) {
@@ -102,13 +101,13 @@ class ZInt extends Schema<int> {
     return this;
   }
 
-  ///  Ensures the value is negative (< 0).
+  /// Ensures the value is negative (< 0).
   /// Example:
   /// ```dart
   /// final schema = z.int().negative();
-  /// schema.parse(5); // returns null
+  /// schema.parse(5); // throws error
   /// schema.parse(-5); // returns -5
-  /// schema.parse(0); // returns null
+  /// schema.parse(0); // throws error
   /// ```
   ZInt negative({String? message}) {
     addValidator((int? value) {
@@ -129,9 +128,9 @@ class ZInt extends Schema<int> {
   /// ```dart
   /// final schema = z.int().multipleOf(3);
   /// schema.parse(6); // returns 6
-  /// schema.parse(7); // returns null
+  /// schema.parse(7); // throws error
   /// schema.parse(9); // returns 9
-  /// schema.parse(10); // returns null
+  /// schema.parse(10); // throws error
   /// ```
   ZInt multipleOf(int divisor, {String? message}) {
     addValidator((int? value) {
@@ -152,9 +151,9 @@ class ZInt extends Schema<int> {
   /// ```dart
   /// final schema = z.int().step(3);
   /// schema.parse(6); // returns 6
-  /// schema.parse(7); // returns null
+  /// schema.parse(7); // throws error
   /// schema.parse(9); // returns 9
-  /// schema.parse(10); // returns null
+  /// schema.parse(10); // throws error
   /// ```
   ZInt step(int stepValue, {String? message}) {
     return multipleOf(stepValue, message: message);
@@ -172,7 +171,9 @@ class ZInt extends Schema<int> {
           value: value,
         ),
       );
-      return null;
+      throw Exception(
+        'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}',
+      );
     }
 
     for (final validator in getValidators()) {
@@ -185,9 +186,16 @@ class ZInt extends Schema<int> {
     }
 
     if (errors.isNotEmpty) {
-      return null;
+      throw Exception(
+        'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}',
+      );
     }
 
-    return value;
+    var result = value;
+    for (final transform in getTransforms()) {
+      result = transform(result);
+    }
+
+    return result;
   }
 }

@@ -6,7 +6,7 @@ Zard is a schema validation and transformation library for Dart, inspired by the
 
 ### Support 💖
 
-If you find Zard useful, please consider supporting its development 🌟[Buy Me a Coffee](https://buymeacoffee.com/evandersondev).🌟 Your support helps us improve the framework and make it even better!
+If you find Zard useful, please consider supporting its development 🌟 [Buy Me a Coffee](https://buymeacoffee.com/evandersondev) 🌟. Your support helps us improve the framework and make it even better!
 
 <br>
 
@@ -16,7 +16,7 @@ Add the following line to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  zard: ^0.0.4
+  zard: ^0.0.5
 ```
 
 Then, run:
@@ -35,72 +35,98 @@ dart pub add zard
 
 ## Usage 🚀
 
+Zard allows you to define schemas for various data types. Below are several examples of how to use Zard, including handling errors either by using `parse` (which throws errors) or `safeParse` (which returns a success flag and error details).
+
+<br>
+
 ### Defining Schemas
 
-Zard allows you to define schemas for various data types. Here are some examples of how to use Zard:
-
-<br>
-
-#### String
+#### String Example
 
 ```dart
 import 'package:zard/zard.dart';
 
 void main() {
-  // String validations
+  // String validations with minimum and maximum length and email format check.
   final schema = z.string().min(3).max(10).email(message: "Invalid email address");
 
-  final result = schema.parse("example@example.com");
-  print(result); // example@example.com
+  // Using parse (throws if there is an error)
+  try {
+    final result = schema.parse("example@example.com");
+    print("Parsed Value: $result"); // example@example.com
+  } catch (e) {
+    print("Errors (parse): ${schema.getErrors()}");
+  }
 
-  final nullResult = schema.parse(null);
-  print(nullResult); // null
+  // Using safeParse (doesn't throw; returns error info in result object)
+  final safeResult = schema.safeParse("Hi"); // "Hi" is too short
+  if (!safeResult['success']) {
+    safeResult['errors'].forEach((error) => print("Safe Error: $error")); // Output error messages 😱
+  } else {
+    print("Safe Parsed Value: ${safeResult['data']}");
+  }
 }
 ```
 
 <br>
 
-#### Int
+#### Int Example
 
 ```dart
 import 'package:zard/zard.dart';
 
 void main() {
-  // Integer validations
+  // Integer validations with minimum and maximum checks.
   final schema = z.int().min(1).max(100);
 
-  final result = schema.parse(50);
-  print(result); // 50
+  // Using parse
+  try {
+    final result = schema.parse(50);
+    print("Parsed Value: $result"); // 50
+  } catch (e) {
+    print("Errors (parse): ${schema.getErrors()}");
+  }
 
-  final nullResult = schema.parse(null);
-  print(nullResult); // null
-  print(schema.getErrors()); // {'success': false, 'error': [ZardError(message: 'Value must be at least 1', type: 'min_error', value: null)]}
+  // Using safeParse with error handling
+  final safeResult = schema.safeParse(5); // example: if 5 is below the minimum, it returns errors
+  if (!safeResult['success']) {
+    safeResult['errors'].forEach((error) => print("Safe Error: $error")); // Output error messages
+  } else {
+    print("Safe Parsed Value: ${safeResult['data']}");
+  }
 }
 ```
 
 <br>
 
-#### Double
+#### Double Example
 
 ```dart
 import 'package:zard/zard.dart';
 
 void main() {
-  // Double validations
+  // Double validations with minimum and maximum checks.
   final schema = z.doubleType().min(1.0).max(100.0);
 
-  final result = schema.parse(50.5);
-  print(result); // 50.5
+  try {
+    final result = schema.parse(50.5);
+    print("Parsed Value: $result"); // 50.5
+  } catch (e) {
+    print("Errors (parse): ${schema.getErrors()}");
+  }
 
-  final nullResult = schema.parse(null);
-  print(nullResult); // null
-  print(schema.getErrors()); // {'success': false, 'error': [ZardError(message: 'Value must be at least 1.0', type: 'min_error', value: null)]}
+  final safeResult = schema.safeParse(0.5);
+  if (!safeResult['success']) {
+    safeResult['errors'].forEach((error) => print("Safe Error: $error")); // Outputs error message if invalid
+  } else {
+    print("Safe Parsed Value: ${safeResult['data']}");
+  }
 }
 ```
 
 <br>
 
-#### Boolean
+#### Boolean Example
 
 ```dart
 import 'package:zard/zard.dart';
@@ -109,322 +135,116 @@ void main() {
   // Boolean validations
   final schema = z.boolean();
 
-  final result = schema.parse(true);
-  print(result); // true
+  try {
+    final result = schema.parse(true);
+    print("Parsed Value: $result"); // true
+  } catch (e) {
+    print("Errors (parse): ${schema.getErrors()}");
+  }
 
-  final nullResult = schema.parse(null);
-  print(nullResult); // null
-  print(schema.getErrors()); // {'success': false, 'error': [ZardError(message: 'Value must be true', type: 'boolean_error', value: null)]}
+  final safeResult = schema.safeParse(false);
+  if (!safeResult['success']) {
+    safeResult['errors'].forEach((error) => print("Safe Error: $error"));
+  } else {
+    print("Safe Parsed Value: ${safeResult['data']}");
+  }
 }
 ```
 
 <br>
 
-#### List
+#### List Example
 
 ```dart
 import 'package:zard/zard.dart';
 
 void main() {
-  // List validations
+  // List validations with inner string schema validations.
   final schema = z.list(z.string().min(3));
 
-  final result = schema.parse(["abc", "def"]);
-  print(result); // [abc, def]
+  try {
+    final result = schema.parse(["abc", "def"]);
+    print("Parsed Value: $result"); // [abc, def]
+  } catch (e) {
+    print("Errors (parse): ${schema.getErrors()}");
+  }
 
-  final nullResult = schema.parse(null);
-  print(nullResult); // null
-  print(schema.getErrors()); // {'success': false, 'error': [ZardError(message: 'Value must be at least 3 characters long', type: 'min_error', value: null)]}
+  final safeResult = schema.safeParse(["ab", "def"]); // "ab" is too short
+  if (!safeResult['success']) {
+    safeResult['errors'].forEach((error) => print("Safe Error: $error"));
+  } else {
+    print("Safe Parsed Value: ${safeResult['data']}");
+  }
 }
 ```
 
 <br>
 
-#### Map
+#### Map Example
 
 ```dart
 import 'package:zard/zard.dart';
 
 void main() {
-  // Map validations
+  // Map validations combining multiple schemas
   final schema = z.map({
     'name': z.string().min(3).nullable(),
     'age': z.int().min(1).nullable(),
   });
 
-  final result = schema.parse({
-    'name': 'John Doe',
-    'age': 30,
-  });
-  print(result); // {name: John Doe, age: 30}
+  try {
+    final result = schema.parse({
+      'name': 'John Doe',
+      'age': 30,
+    });
+    print("Parsed Value: $result"); // {name: John Doe, age: 30}
+  } catch (e) {
+    print("Errors (parse): ${schema.getErrors()}");
+  }
 
-  final nullResult = schema.parse({
+  final safeResult = schema.safeParse({
     'name': null,
-    'age': null,
+    'age': 0, // 0 might be invalid if min is greater than 0
   });
-  print(nullResult); // {name: null, age: null}
+  if (!safeResult['success']) {
+    safeResult['errors'].forEach((error) => print("Safe Error: $error"));
+  } else {
+    print("Safe Parsed Value: ${safeResult['data']}");
+  }
 }
 ```
 
 <br>
 
-### Error Handling with ZardError
+### Error Handling with ZardError 😵‍💫
 
-Zard provides comprehensive error handling through the `ZardError` class. When a validation fails, Zard returns a `ZardError` object that contains detailed information about the error.
+When a validation fails, Zard provides detailed error information via the `ZardError` class. Each error object contains:
 
-#### ZardError Fields
+- **message**: A descriptive message about what went wrong.
+- **type**: The type of error (e.g., `min_error`, `max_error`, `type_error`).
+- **value**: The unexpected value that failed validation.
 
-- `message`: A descriptive message about the error.
-- `type`: The type of error (e.g., `min_error`, `max_error`, `type_error`).
-- `value`: The value that caused the error.
+Zard supports two methods for validation:
 
-#### Example of Handling Errors
-
-```dart
-import 'package:zard/zard.dart';
-
-void main() {
-  // Integer validations
-  final schema = z.int().min(10, message: 'Value must be at least 10');
-
-  final result = schema.safeParse(5);
-
-  if (!result['success']) {
-    for (var error in result['errors']) {
-      print('Error: $error');
-    }
-  }
-
-  // or
-  print(schema.getErrors());
-  // [{'success': false, 'error': [ZardError(message: 'Value must be at least 10', type: 'min_error', value: 5)]}]
-}
-```
+1. **`parse()`**: Throws an exception if any validation fails.
+2. **`safeParse()`**: Returns an object with a `success` flag and a list of errors without throwing exceptions.
 
 <br>
 
 ### New Methods & Functionality
 
-In addition to the already available API, Zard now includes several new methods that provide increased flexibility when validating and transforming data. These methods allow you to control the behavior of a schema regarding null values, as well as manipulate object schemas.
+Zard now supports additional methods to handle optional and nullable values as well as partial map validations using `.omit()` and `.pick()`.
 
-#### .nullable()
-
-Allows the schema to accept `null` values. When a schema is marked as nullable, if the parsed value is null, the validation and transformation steps are skipped and `null` is returned.
-
-Example with primitive types:
-
-```dart
-final boolSchema = z.boolean().nullable();
-final result = boolSchema.parse(null);
-print(result); // Outputs: null
-```
-
-Example with Map schemas:
-
-```dart
-final userSchema = z.map({
-  'name': z.string().min(3),
-  'age': z.int().min(18).nullable(),
-});
-
-final user = userSchema.parse({
-  'name': 'John Doe',
-  'age': null,
-});
-print(user); // {name: "John Doe", age: null}
-```
-
-<br>
-
-#### .optional()
-
-Marks the schema as optional. When a schema is optional and the value is null, the validations are skipped and `null` is returned.
-
-Example:
-
-```dart
-final userSchema = z.map({
-  'name': z.string().min(3),
-  'age': z.int().min(18).optional(),
-});
-final user = userSchema.parse({
-  'name': 'John Doe',
-});
-print(user); // {name: "John Doe", age: null}
-```
-
-<br>
-
-#### .omit()
-
-Allows you to remove (or ignore) specific keys from a Map schema. This is useful when you want to validate an object but intentionally ignore certain fields.
-
-Example:
-
-```dart
-final userSchema = z.map({
-  'name': z.string().min(3),
-  'age': z.int().min(18),
-  'password': z.string().min(6),
-}).omit(['password']);
-
-final user = userSchema.parse({
-  'name': 'John Doe',
-  'age': 30,
-  'password': 'secret123',
-});
-print(user); // ZMMap({name: "John Doe", age: 30})
-```
-
-<br>
-
-#### .pick()
-
-Allows you to select specific keys from a Map schema, effectively creating a new schema that only validates a subset of the original object's properties.
-
-Example:
-
-```dart
-final userSchema = z.map({
-  'name': z.string().min(3),
-  'age': z.int().min(18),
-  'password': z.string().min(6),
-}).pick(['name', 'age']);
-
-final user = userSchema.parse({
-  'name': 'John Doe',
-  'age': 30,
-  'password': 'secret123',
-});
-print(user); // ZMap({name: "John Doe", age: 30})
-```
-
-<br>
-
-#### .length()
-
-For string and list schemas, the `.length()` method allows you to validate the exact length of the value. For strings, it ensures the string has exactly the specified number of characters; for lists, it ensures the list has exactly the specified number of items.
-
-Example for string:
-
-```dart
-final schema = z.string().length(5, message: "String must be exactly 5 characters long");
-final result = schema.parse("Hello");
-print(result); // Hello
-```
-
-Example for list:
-
-```dart
-final schema = z.list(z.int()).length(3, message: "List must have 3 items");
-final result = schema.parse([1, 2, 3]);
-print(result); // [1, 2, 3]
-```
-
-<br>
-
-### Available Methods
-
-Here is a list of all the currently available methods in Zard:
-
-#### ZString
-
-- `min(int length, {String? message})`
-- `max(int length, {String? message})`
-- `length(int length, {String? message})`
-- `email({String? message})`
-- `url({String? message})`
-- `uuid({String? message})`
-- `cuid({String? message})`
-- `cuid2({String? message})`
-- `regex(RegExp regex, {String? message})`
-- `endsWith(String suffix, {String? message})`
-- `startsWith(String prefix, {String? message})`
-- `contains(String substring, {String? message})`
-- `datetime({String? message})`
-- `date({String? message})`
-- `time({String? message})`
-- `trim()`
-- `toLowerCase()`
-- `toUpperCase()`
-- `capitalize()`
-- `optional()`
-- `nullable()`
-
-<br>
-
-#### ZInt
-
-- `min(int value, {String? message})`
-- `max(int value, {String? message})`
-- `positive({String? message})`
-- `nonnegative({String? message})`
-- `negative({String? message})`
-- `multipleOf(int divisor, {String? message})`
-- `step(int stepValue, {String? message})`
-- `optional()`
-- `nullable()`
-
-<br>
-
-#### ZDouble
-
-- `min(double value, {String? message})`
-- `max(double value, {String? message})`
-- `positive({String? message})`
-- `nonnegative({String? message})`
-- `negative({String? message})`
-- `multipleOf(double divisor, {String? message})`
-- `step(double stepValue, {String? message})`
-- `optional()`
-- `nullable()`
-
-<br>
-
-#### ZBoolean
-
-- `boolean({String? message})`
-- `optional()`
-- `nullable()`
-
-<br>
-
-#### ZList
-
-- `list(Schema itemSchema)`
-- `min(int length, {String? message})`
-- `max(int length, {String? message})`
-- `length(int length, {String? message})`
-- `noempty({String? message})`
-- `optional()`
-- `nullable()`
-
-<br>
-
-#### ZMap
-
-- `map(Map<String, Schema> schemas)`
-- `optional()`
-- `nullable()`
-- `omit(List<String> keys)`
-- `pick(List<String> keys)`
-- `keyOf()` ZodEnum<["name", "age"]>
-
-<br>
-
-#### ZEnum
-
-- `ZEnum(List<String> list, {String? message})`
-- `extract(List<String> list)`
-- `exclude(List<String> list)`
-- `optional()`
-- `nullable()`
+- **`.nullable()`**: Accepts `null` values and bypasses further validations.
+- **`.optional()`**: Marks the schema as optional; if a value is missing, validations are skipped.
+- **`.omit()`**: Excludes specific keys from being validated in a Map schema.
+- **`.pick()`**: Validates only a selected subset of keys in a Map schema.
 
 <br>
 
 ### Similarity to Zod
 
-Zard was inspired by Zod, a schema validation library for JavaScript. Just like Zod, Zard provides an easy-to-use API for defining validation and transformation schemas. The main difference is that Zard is specifically designed for Dart and Flutter, leveraging the features and syntax of the Dart language.
+Zard was inspired by Zod, a powerful schema validation library for JavaScript. Just like Zod, Zard provides an easy-to-use API for defining and transforming schemas. The main difference is that Zard is built specifically for Dart and Flutter, harnessing the power of Dart's language features.
 
 <br>
 
@@ -440,4 +260,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ---
 
-Made with ❤️ for Dart/Flutter developers! 🎯
+Made with ❤️ for Dart/Flutter developers! 🎯✨

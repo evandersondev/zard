@@ -1,13 +1,10 @@
-// ignore_for_file: unnecessary_type_check
-
 import '../types/zart_error.dart';
-
 import 'schema.dart';
 
 class ZDouble extends Schema<double> {
   ZDouble({String? message}) {
     addValidator((double? value) {
-      if (value == null || value is! double) {
+      if (value == null) {
         return ZardError(
           message: message ?? 'Expected a double value',
           type: 'type_error',
@@ -22,14 +19,14 @@ class ZDouble extends Schema<double> {
   /// Example:
   /// ```dart
   /// final schema = z.double().min(10);
-  /// schema.parse(5.0); // returns null
-  /// schema.parse(15.0); // returns 15
+  /// schema.parse(5.0); // throws error
+  /// schema.parse(15.0); // returns 15.0
   /// ```
-  ZDouble min(int length, {String? message}) {
+  ZDouble min(num minValue, {String? message}) {
     addValidator((double? value) {
-      if (value != null && value < double.parse(length.toString())) {
+      if (value != null && value < minValue) {
         return ZardError(
-          message: message ?? 'Value must be at least $length',
+          message: message ?? 'Value must be at least $minValue',
           type: 'min_error',
           value: value,
         );
@@ -43,14 +40,14 @@ class ZDouble extends Schema<double> {
   /// Example:
   /// ```dart
   /// final schema = z.double().max(10);
-  /// schema.parse(5.0); // returns 5
-  /// schema.parse(15.0); // returns null
+  /// schema.parse(5.0); // returns 5.0
+  /// schema.parse(15.0); // throws error
   /// ```
-  ZDouble max(int length, {String? message}) {
+  ZDouble max(num maxValue, {String? message}) {
     addValidator((double? value) {
-      if (value != null && value > double.parse(length.toString())) {
+      if (value != null && value > maxValue) {
         return ZardError(
-          message: message ?? 'Value must be at most $length',
+          message: message ?? 'Value must be at most $maxValue',
           type: 'max_error',
           value: value,
         );
@@ -64,9 +61,9 @@ class ZDouble extends Schema<double> {
   /// Example:
   /// ```dart
   /// final schema = z.double().positive();
-  /// schema.parse(5.0); // returns 5
-  /// schema.parse(-5.0); // returns null
-  /// schema.parse(0.0); // returns null
+  /// schema.parse(5.0); // returns 5.0
+  /// schema.parse(-5.0); // throws error
+  /// schema.parse(0.0); // throws error
   /// ```
   ZDouble positive({String? message}) {
     addValidator((double? value) {
@@ -86,9 +83,9 @@ class ZDouble extends Schema<double> {
   /// Example:
   /// ```dart
   /// final schema = z.double().nonnegative();
-  /// schema.parse(5.0); // returns 5
-  /// schema.parse(-5.0); // returns null
-  /// schema.parse(0.0); // returns 0
+  /// schema.parse(5.0); // returns 5.0
+  /// schema.parse(-5.0); // throws error
+  /// schema.parse(0.0); // returns 0.0
   /// ```
   ZDouble nonnegative({String? message}) {
     addValidator((double? value) {
@@ -108,9 +105,9 @@ class ZDouble extends Schema<double> {
   /// Example:
   /// ```dart
   /// final schema = z.double().negative();
-  /// schema.parse(5.0); // returns null
-  /// schema.parse(-5.0); // returns -5
-  /// schema.parse(0.0); // returns null
+  /// schema.parse(5.0); // throws error
+  /// schema.parse(-5.0); // returns -5.0
+  /// schema.parse(0.0); // throws error
   /// ```
   ZDouble negative({String? message}) {
     addValidator((double? value) {
@@ -130,21 +127,22 @@ class ZDouble extends Schema<double> {
   /// Example:
   /// ```dart
   /// final schema = z.double().multipleOf(2);
-  /// schema.parse(4.0); // returns 4
-  /// schema.parse(5.0); // returns null
-  /// schema.parse(6.0); // returns 6
-  /// schema.parse(7.0); // returns null
+  /// schema.parse(4.0); // returns 4.0
+  /// schema.parse(5.0); // throws error
+  /// schema.parse(6.0); // returns 6.0
+  /// schema.parse(7.0); // throws error
   /// ```
   ZDouble multipleOf(double divisor, {String? message}) {
     addValidator((double? value) {
-      final remainder = value != null ? value % divisor : double.nan;
-      // Use a tolerance for floating point comparisons.
-      if (remainder.abs() > 1e-10) {
-        return ZardError(
-          message: message ?? 'Value must be a multiple of $divisor',
-          type: 'multiple_of_error',
-          value: value,
-        );
+      if (value != null) {
+        final remainder = value % divisor;
+        if (remainder.abs() > 1e-10) {
+          return ZardError(
+            message: message ?? 'Value must be a multiple of $divisor',
+            type: 'multiple_of_error',
+            value: value,
+          );
+        }
       }
       return null;
     });
@@ -155,17 +153,17 @@ class ZDouble extends Schema<double> {
   /// Example:
   /// ```dart
   /// final schema = z.double().step(2);
-  /// schema.parse(4.0); // returns 4
-  /// schema.parse(5.0); // returns null
-  /// schema.parse(6.0); // returns 6
-  /// schema.parse(7.0); // returns null
+  /// schema.parse(4.0); // returns 4.0
+  /// schema.parse(5.0); // throws error
+  /// schema.parse(6.0); // returns 6.0
+  /// schema.parse(7.0); // throws error
   /// ```
   ZDouble step(double stepValue, {String? message}) {
     return multipleOf(stepValue, message: message);
   }
 
   @override
-  double? parse(dynamic value) {
+  double parse(dynamic value, {String fieldName = ''}) {
     clearErrors();
 
     if (value is! double) {
@@ -176,22 +174,33 @@ class ZDouble extends Schema<double> {
           value: value,
         ),
       );
-      return null;
+      throw Exception(
+          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
     }
 
     for (final validator in getValidators()) {
       final error = validator(value);
       if (error != null) {
         addError(
-          ZardError(message: error.message, type: error.type, value: value),
+          ZardError(
+            message: error.message,
+            type: error.type,
+            value: value,
+          ),
         );
       }
     }
 
     if (errors.isNotEmpty) {
-      return null;
+      throw Exception(
+          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
     }
 
-    return value;
+    var result = value;
+    for (final transform in getTransforms()) {
+      result = transform(result);
+    }
+
+    return result;
   }
 }
