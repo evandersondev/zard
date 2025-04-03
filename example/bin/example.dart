@@ -1,6 +1,6 @@
 import 'package:zard/zard.dart';
 
-void main() {
+void main() async {
   // final stringSchema = z.string().min(3);
   // final hello = stringSchema.parse('he');
   // print(hello);
@@ -42,38 +42,39 @@ void main() {
   // final result = enumSchema.parse(roles);
   // print('Extract and exclude enum values: $result');
 
-  final userSchema = z.map({
-    'name': z.string().transform((value) => value.toUpperCase()),
-    'age': z.int(),
-    'sallary': z.double(),
-    'email': z.string().email(message: 'Deve ser um email válido'),
-    'tags': z.list(z.string().transform((value) => '#$value')),
-    'birthday': z.date().optional(),
-    'addresses': z.list(
-      z.map({
-        'street': z.string(),
-        'city': z.string().transform((value) => value.toUpperCase()),
-      }),
-    ),
-  });
-  final user = userSchema.parse({
-    'name': 'John Doe',
-    'age': 30,
-    'sallary': 5000.0,
-    'email': 'john.doe@example.com',
-    'tags': ['#dart', '#flutter'],
-    'birthday': DateTime.now(),
-    'addresses': [
-      {'street': '123 Main St', 'city': 'SPRINGFIELD'},
-      {'street': '456 Elm St', 'city': 'SHELBYVILLE'},
-    ],
-  });
-  print(user);
+  // final userSchema = z.map({
+  //   'name': z.string().transform((value) => value.toUpperCase()),
+  //   'age': z.int(),
+  //   'sallary': z.double(),
+  //   'email': z.string().email(message: 'Deve ser um email válido'),
+  //   'tags': z.list(z.string().transform((value) => '#$value')),
+  //   'birthday': z.date().optional(),
+  //   'addresses': z.list(
+  //     z.map({
+  //       'street': z.string(),
+  //       'city': z.string().transform((value) => value.toUpperCase()),
+  //     }),
+  //   ),
+  // });
+  // final user = userSchema.parse({
+  //   'name': 'John Doe',
+  //   'age': 30,
+  //   'sallary': 5000.0,
+  //   'email': 'john.doe@example.com',
+  //   'tags': ['#dart', '#flutter'],
+  //   'birthday': DateTime.now(),
+  //   'addresses': [
+  //     {'street': '123 Main St', 'city': 'SPRINGFIELD'},
+  //     {'street': '456 Elm St', 'city': 'SHELBYVILLE'},
+  //   ],
+  // });
+  // print(user);
 
   // final ignoreSchema = z.map({
   //   'name': z.string().min(3),
   //   'age': z.int().min(18).nullable(),
   //   'email': z.string().email(),
+  //   'isActive': z.bool().nullable(),
   // });
 
   // final ignore = ignoreSchema.parse({
@@ -81,6 +82,7 @@ void main() {
   //   'age': 30,
   //   'email': 'john.doe@example.com',
   //   'address': '123 Main St', // ignored
+  //   'isActive': true,
   // });
   // print(ignore);
 
@@ -98,4 +100,88 @@ void main() {
   //   'email': 'john.doe@example.com',
   // });
   // print(ifNullValue);
+
+  // final age = z.coerce.double().parse("25");
+  // final name = z.coerce.string().parse(123);
+  // final active = z.coerce.boolean().parse("");
+  // final amount = z.coerce.int().parse(1000);
+  // final date = z.coerce.date().parse("2021-10-05");
+
+  // print(age);
+  // print(name);
+  // print(active);
+  // print(amount);
+  // print(date);
+
+  // final person = z.map({'name': z.string()}).strict();
+  // final data = person.parse({'name': 'bob dylan', 'extraKey': 61});
+  // print(data);
+
+  //   final schema = z.list(
+  //     z.map({
+  //       'id': z.int(),
+  //       'name': z.string(),
+  //       'email': z.string().email(),
+  //       'age': z.int(),
+  //       'isActive': z.bool(),
+  //       'address': z.map({
+  //         'street': z.string(),
+  //         'city': z.string(),
+  //         'state': z.string(),
+  //         'zip': z.string(),
+  //       }),
+  //       'phoneNumbers': z.list(z.map({'type': z.string(), 'number': z.string()})),
+  //       'roles': z.list(z.string()),
+  //       'birthday': z.date(),
+  //       'createdAt': z.date(),
+  //       'updatedAt': z.date(),
+  //     }),
+  //   );
+  //   final result = await schema.parseAsync(returnListRequestBodyUser());
+  //   print(result);
+  // }
+
+  // Future<List<Map<String, dynamic>>> returnListRequestBodyUser() async {
+  //   return Future.value([
+  //     {
+  //       "id": 1,
+  //       "name": "John Doe",
+  //       "email": "john.doe@example.com",
+  //       "age": 30,
+  //       "isActive": true,
+  //       "address": {
+  //         "street": "123 Main St",
+  //         "city": "Springfield",
+  //         "state": "IL",
+  //         "zip": "62701",
+  //       },
+  //       "phoneNumbers": [
+  //         {"type": "home", "number": "555-1234"},
+  //         {"type": "work", "number": "555-5678"},
+  //       ],
+  //       "roles": ["admin", "user"],
+  //       "birthday": "1990-01-01",
+  //       "createdAt": "2021-01-01T00:00:00.000Z",
+  //       "updatedAt": "2021-01-01T00:00:00.000Z",
+  //     },
+  //   ]);
+
+  final schema = z
+      .map({'name': z.string(), 'age': z.int(), 'email': z.string().email()})
+      .refine((value) {
+        return value['age'] > 18;
+      }, message: 'Age must be greater than 18');
+
+  final result = schema.safeParse({
+    'name': 'John Doe',
+    'age': 20,
+    'email': 'john.doe@example.com',
+  });
+  print(result);
+  final result2 = schema.safeParse({
+    'name': 'John Doe',
+    'age': 10,
+    'email': 'john.doe@example.com',
+  });
+  print(result2);
 }

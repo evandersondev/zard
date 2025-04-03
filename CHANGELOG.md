@@ -1,5 +1,9 @@
 ## 0.0.5
 
+- Add more validation rules, refine, parseAsync, safeParseAsync, coerce, strict.
+
+## 0.0.5
+
 - Update .parse validation rules.
 
 ## 0.0.4

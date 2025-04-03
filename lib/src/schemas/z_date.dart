@@ -121,3 +121,45 @@ class ZDate extends Schema<DateTime> {
     }
   }
 }
+
+class ZCoerceDate extends Schema<DateTime> {
+  ZCoerceDate({String? message});
+
+  @override
+  DateTime parse(dynamic value, {String fieldName = ''}) {
+    clearErrors();
+    try {
+      DateTime result;
+      if (value is DateTime) {
+        result = value;
+      } else {
+        result = DateTime.parse(value?.toString() ?? '');
+      }
+      for (final transform in getTransforms()) {
+        result = transform(result);
+      }
+      return result;
+    } catch (e) {
+      addError(ZardError(
+        message: 'Failed to coerce value to DateTime',
+        type: 'coerce_error',
+        value: value,
+      ));
+      throw Exception(
+          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
+    }
+  }
+
+  @override
+  Map<String, dynamic> safeParse(dynamic value, {String fieldName = ''}) {
+    try {
+      final parsed = parse(value);
+      return {'success': true, 'data': parsed};
+    } catch (e) {
+      return {
+        'success': false,
+        'errors': errors.map((e) => e.toString()).toList()
+      };
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import 'schemas/schemas.dart';
+import 'schemas/z_coerce_container.dart';
 
 typedef Validator<T> = String? Function(T value);
 
@@ -185,6 +186,14 @@ class Zard {
   /// final result = enumSchema.parse(roles);
   /// ```
   ZEnum enumerate(List<String> values) => ZEnum(values);
+
+  /// Make a parse type coercion.
+  /// ```dart
+  /// final schema = z.coerce.string();
+  /// final result = schema.parse(123);
+  /// print(result); // "123"
+  /// ```
+  ZCoerce get coerce => ZCoerce();
 }
 
 final z = Zard();

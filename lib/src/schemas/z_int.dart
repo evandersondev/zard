@@ -199,3 +199,41 @@ class ZInt extends Schema<int> {
     return result;
   }
 }
+
+class ZCoerceInt extends Schema<int> {
+  ZCoerceInt({String? message});
+
+  @override
+  int parse(dynamic value, {String fieldName = ''}) {
+    clearErrors();
+    try {
+      final asString = value?.toString() ?? '';
+      int result = int.parse(asString);
+      for (final transform in getTransforms()) {
+        result = transform(result);
+      }
+      return result;
+    } catch (e) {
+      addError(ZardError(
+        message: 'Failed to coerce value to BigInt',
+        type: 'coerce_error',
+        value: value,
+      ));
+      throw Exception(
+          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
+    }
+  }
+
+  @override
+  Map<String, dynamic> safeParse(dynamic value, {String fieldName = ''}) {
+    try {
+      final parsed = parse(value);
+      return {'success': true, 'data': parsed};
+    } catch (e) {
+      return {
+        'success': false,
+        'errors': errors.map((e) => e.toString()).toList()
+      };
+    }
+  }
+}

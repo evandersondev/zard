@@ -76,7 +76,7 @@ abstract class Schema<T> {
     errors.clear();
   }
 
-  List<Validator<T?>> getValidators() {
+  List<Validator<T>> getValidators() {
     return List.unmodifiable(_validators);
   }
 
@@ -98,5 +98,46 @@ abstract class Schema<T> {
         'errors': errors.map((e) => e.toString()).toList()
       };
     }
+  }
+
+  // Asynchronous version of parse.
+  Future<T?> parseAsync(dynamic value) async {
+    clearErrors();
+    try {
+      // Se o valor for um Future, aguarda a sua resolução.
+      final resolvedValue = value is Future ? await value : value;
+      final result = parse(resolvedValue);
+      return result;
+    } catch (e) {
+      return Future.error(Exception(
+          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}'));
+    }
+  }
+
+  // Asynchronous version of safeParse.
+  Future<Map<String, dynamic>> safeParseAsync(dynamic value) async {
+    try {
+      final parsed = await parseAsync(value);
+      return {'success': true, 'data': parsed};
+    } catch (e) {
+      return {
+        'success': false,
+        'errors': errors.map((e) => e.toString()).toList()
+      };
+    }
+  }
+
+  Schema<T> refine(bool Function(T value) predicate, {String? message}) {
+    addValidator((T value) {
+      if (!predicate(value)) {
+        return ZardError(
+          message: message ?? "Refinement failed",
+          type: "refine_error",
+          value: value,
+        );
+      }
+      return null;
+    });
+    return this;
   }
 }

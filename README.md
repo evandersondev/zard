@@ -1,8 +1,15 @@
-# Zard 🧩
+<p align="center">
+  <img src="./assets/logo.png" width="200px" align="center" alt="Zard logo" />
+  <h1 align="center">Zard</h1>
+  <br>
+  <p align="center">
+  <a href="https://github.com/evandersondev/darto">🛡️ Zard Github</a>
+  <br/>
+    Zard is a schema validation and transformation library for Dart, inspired by the popular  <a href="https://github.com/colinhacks/zod">Zod</a> library for JavaScript. With Zard, you can define schemas to validate and transform data easily and intuitively.
+  </p>
+</p>
 
-Zard is a schema validation and transformation library for Dart, inspired by the popular [Zod](https://github.com/colinhacks/zod) library for JavaScript. With Zard, you can define schemas to validate and transform data easily and intuitively.
-
-<br>
+<br/>
 
 ### Support 💖
 
@@ -16,7 +23,7 @@ Add the following line to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  zard: ^0.0.5
+  zard: ^0.0.6
 ```
 
 Then, run:
@@ -190,27 +197,24 @@ void main() {
   final schema = z.map({
     'name': z.string().min(3).nullable(),
     'age': z.int().min(1).nullable(),
-  });
+    'email': z.string().email()
+  }).refine((value) {
+    return value['age'] > 18;
+  }, message: 'Age must be greater than 18');
 
-  try {
-    final result = schema.parse({
-      'name': 'John Doe',
-      'age': 30,
-    });
-    print("Parsed Value: $result"); // {name: John Doe, age: 30}
-  } catch (e) {
-    print("Errors (parse): ${schema.getErrors()}");
-  }
-
-  final safeResult = schema.safeParse({
-    'name': null,
-    'age': 0, // 0 might be invalid if min is greater than 0
+  final result = schema.safeParse({
+    'name': 'John Doe',
+    'age': 20,
+    'email': 'john.doe@example.com',
   });
-  if (!safeResult['success']) {
-    safeResult['errors'].forEach((error) => print("Safe Error: $error"));
-  } else {
-    print("Safe Parsed Value: ${safeResult['data']}");
-  }
+  print(result);
+
+  final result2 = schema.safeParse({
+    'name': 'John Doe',
+    'age': 10,
+    'email': 'john.doe@example.com',
+  });
+  print(result2);
 }
 ```
 
@@ -231,14 +235,46 @@ Zard supports two methods for validation:
 
 <br>
 
-### New Methods & Functionality
+### New Methods & Functionality 💡
 
-Zard now supports additional methods to handle optional and nullable values as well as partial map validations using `.omit()` and `.pick()`.
+Zard now supports additional methods to handle asynchronous validations and custom refine checks for Map schemas. These new methods help you integrate asynchronous operations and write custom validations easily!
 
-- **`.nullable()`**: Accepts `null` values and bypasses further validations.
-- **`.optional()`**: Marks the schema as optional; if a value is missing, validations are skipped.
-- **`.omit()`**: Excludes specific keys from being validated in a Map schema.
-- **`.pick()`**: Validates only a selected subset of keys in a Map schema.
+- **Asynchronous Validation**
+
+  - **`parseAsync()`**: Returns a `Future` that resolves with the parsed value or throws an error if validation fails.
+  - **`safeParseAsync()`**: Works like `safeParse()`, but returns a `Future` with a success flag and error details.
+  - These methods ensure that if your input is a `Future`, Zard waits for its resolution before parsing.
+
+- **Refine Method on Map Schemas**
+  - **`refine()`**: Allows you to add custom validation logic on `Map` schemas.
+  - It accepts a function that receives the parsed value and returns a boolean. If the function returns `false`, a `refine_error` is added with a custom message.
+  - This feature is especially useful for validating inter-dependent fields—for example, ensuring that an `age` field is greater than 18 in a user profile map.
+
+Example usage of `refine()` in a Map schema:
+
+```dart
+final schema = z.map({
+  'name': z.string(),
+  'age': z.int(),
+  'email': z.string().email()
+}).refine((value) {
+  return value['age'] > 18;
+}, message: 'Age must be greater than 18');
+
+final result = schema.safeParse({
+  'name': 'John Doe',
+  'age': 20,
+  'email': 'john.doe@example.com',
+});
+print(result); // {success: true, data: {...}}
+
+final result2 = schema.safeParse({
+  'name': 'John Doe',
+  'age': 10,
+  'email': 'john.doe@example.com',
+});
+print(result2); // {success: false, errors: [...]}
+```
 
 <br>
 
