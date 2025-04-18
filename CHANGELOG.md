@@ -1,3 +1,7 @@
+## 0.0.7
+
+- Export ZardError type.
+
 ## 0.0.6
 
 - Export schema types.
