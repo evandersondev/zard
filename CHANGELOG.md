@@ -1,3 +1,7 @@
+## 0.0.6
+
+- Export schema types.
+
 ## 0.0.5
 
 - Add more validation rules, refine, parseAsync, safeParseAsync, coerce, strict.
