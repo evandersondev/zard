@@ -362,7 +362,7 @@ class ZString extends Schema<String> {
   }
 
   @override
-  String parse(dynamic value, {String fieldName = ''}) {
+  String parse(dynamic value) {
     clearErrors();
 
     if (value is! String) {
@@ -408,7 +408,7 @@ class ZCoerceString extends Schema<String> {
   }
 
   @override
-  String parse(dynamic value, {String fieldName = ''}) {
+  String parse(dynamic value) {
     clearErrors();
     try {
       // Converte qualquer valor para string, inclusive null (convertido em "null")
@@ -429,7 +429,7 @@ class ZCoerceString extends Schema<String> {
   }
 
   @override
-  Map<String, dynamic> safeParse(dynamic value, {String fieldName = ''}) {
+  Map<String, dynamic> safeParse(dynamic value) {
     try {
       final parsed = parse(value);
       return {'success': true, 'data': parsed};

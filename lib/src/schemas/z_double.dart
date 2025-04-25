@@ -163,7 +163,7 @@ class ZDouble extends Schema<double> {
   }
 
   @override
-  double parse(dynamic value, {String fieldName = ''}) {
+  double parse(dynamic value) {
     clearErrors();
 
     if (value is! double) {
@@ -209,7 +209,7 @@ class ZCoerceDouble extends Schema<double> {
   ZCoerceDouble({String? message});
 
   @override
-  double parse(dynamic value, {String fieldName = ''}) {
+  double parse(dynamic value) {
     clearErrors();
     try {
       final asString = value?.toString() ?? '';
@@ -233,7 +233,7 @@ class ZCoerceDouble extends Schema<double> {
   }
 
   @override
-  Map<String, dynamic> safeParse(dynamic value, {String fieldName = ''}) {
+  Map<String, dynamic> safeParse(dynamic value) {
     try {
       final parsed = parse(value);
       return {'success': true, 'data': parsed};

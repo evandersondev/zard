@@ -15,7 +15,7 @@ class ZList extends Schema<List<dynamic>> {
   }
 
   @override
-  List<dynamic>? parse(dynamic value, {String fieldName = ''}) {
+  List<dynamic>? parse(dynamic value) {
     clearErrors();
 
     if (value is! List) {

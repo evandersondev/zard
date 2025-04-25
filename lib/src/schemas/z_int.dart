@@ -160,7 +160,7 @@ class ZInt extends Schema<int> {
   }
 
   @override
-  int? parse(dynamic value, {String fieldName = ''}) {
+  int? parse(dynamic value) {
     clearErrors();
 
     if (value is! int) {
@@ -204,7 +204,7 @@ class ZCoerceInt extends Schema<int> {
   ZCoerceInt({String? message});
 
   @override
-  int parse(dynamic value, {String fieldName = ''}) {
+  int parse(dynamic value) {
     clearErrors();
     try {
       final asString = value?.toString() ?? '';
@@ -225,7 +225,7 @@ class ZCoerceInt extends Schema<int> {
   }
 
   @override
-  Map<String, dynamic> safeParse(dynamic value, {String fieldName = ''}) {
+  Map<String, dynamic> safeParse(dynamic value) {
     try {
       final parsed = parse(value);
       return {'success': true, 'data': parsed};

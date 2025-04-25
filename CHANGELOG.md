@@ -1,3 +1,7 @@
+## 0.0.9
+
+- Update validation .optional and .nullable.
+
 ## 0.0.7
 
 - Export ZardError type.

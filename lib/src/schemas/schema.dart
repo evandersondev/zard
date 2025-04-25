@@ -22,11 +22,14 @@ abstract class Schema<T> {
     return this;
   }
 
+  // O método .optional() não altera o comportamento de parse() diretamente,
+  // pois a omissão (campo não fornecido) deve ser tratada por schemas contêiner, como ZMap.
   Schema<T> optional() {
     _isOptional = true;
     return this;
   }
 
+  // O método .nullable() permite que valores null sejam aceitos.
   Schema<T> nullable() {
     _nullable = true;
     return this;
@@ -39,8 +42,18 @@ abstract class Schema<T> {
   T? parse(dynamic value) {
     clearErrors();
 
-    if ((_isOptional || _nullable) && value == null) {
-      return null;
+    if (value == null) {
+      if (_nullable) {
+        return null;
+      } else {
+        addError(ZardError(
+          message: 'Value is required and cannot be null',
+          type: 'required_error',
+          value: value,
+        ));
+        throw Exception(
+            'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
+      }
     }
 
     T result = value as T;
@@ -104,7 +117,6 @@ abstract class Schema<T> {
   Future<T?> parseAsync(dynamic value) async {
     clearErrors();
     try {
-      // Se o valor for um Future, aguarda a sua resolução.
       final resolvedValue = value is Future ? await value : value;
       final result = parse(resolvedValue);
       return result;

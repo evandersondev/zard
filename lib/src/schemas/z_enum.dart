@@ -54,7 +54,7 @@ class ZEnum extends Schema<List<String>> {
   }
 
   @override
-  List<String> parse(dynamic value, {String fieldName = ''}) {
+  List<String> parse(dynamic value) {
     clearErrors();
 
     if (value is! List<String>) {

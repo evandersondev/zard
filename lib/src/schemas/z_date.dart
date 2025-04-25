@@ -65,7 +65,7 @@ class ZDate extends Schema<DateTime> {
   }
 
   @override
-  DateTime? parse(dynamic value, {String fieldName = ''}) {
+  DateTime? parse(dynamic value) {
     clearErrors();
 
     if (value == null && isOptional) {
@@ -112,9 +112,9 @@ class ZDate extends Schema<DateTime> {
   }
 
   @override
-  Map<String, dynamic> safeParse(dynamic value, {String fieldName = ''}) {
+  Map<String, dynamic> safeParse(dynamic value) {
     try {
-      final parsed = parse(value, fieldName: fieldName);
+      final parsed = parse(value);
       return {'success': true, 'data': parsed};
     } catch (e) {
       return {'success': false, 'errors': getErrors()};
@@ -126,7 +126,7 @@ class ZCoerceDate extends Schema<DateTime> {
   ZCoerceDate({String? message});
 
   @override
-  DateTime parse(dynamic value, {String fieldName = ''}) {
+  DateTime parse(dynamic value) {
     clearErrors();
     try {
       DateTime result;
@@ -151,7 +151,7 @@ class ZCoerceDate extends Schema<DateTime> {
   }
 
   @override
-  Map<String, dynamic> safeParse(dynamic value, {String fieldName = ''}) {
+  Map<String, dynamic> safeParse(dynamic value) {
     try {
       final parsed = parse(value);
       return {'success': true, 'data': parsed};

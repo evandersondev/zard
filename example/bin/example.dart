@@ -1,6 +1,18 @@
 import 'package:zard/zard.dart';
 
 void main() async {
+  final ignoreSchema = z.map({
+    'name': z.string().min(3),
+    'age': z.int().min(18).nullable(),
+    'email': z.string().email(),
+    'isActive': z.bool().optional(),
+  });
+  final ifNullValue = ignoreSchema.parse({
+    'name': 'John Doe',
+    'age': null,
+    'email': 'john.doe@example.com',
+  });
+  print(ifNullValue);
   // final stringSchema = z.string().min(3);
   // final hello = stringSchema.parse('he');
   // print(hello);
@@ -166,22 +178,24 @@ void main() async {
   //     },
   //   ]);
 
-  final schema = z
-      .map({'name': z.string(), 'age': z.int(), 'email': z.string().email()})
-      .refine((value) {
-        return value['age'] > 18;
-      }, message: 'Age must be greater than 18');
+  // final schema = z.map({
+  //   'name': z.string(),
+  //   'age': z.int(),
+  //   'email': z.string().email()
+  // }).refine((value) {
+  //   return value['age'] > 18;
+  // }, message: 'Age must be greater than 18');
 
-  final result = schema.safeParse({
-    'name': 'John Doe',
-    'age': 20,
-    'email': 'john.doe@example.com',
-  });
-  print(result);
-  final result2 = schema.safeParse({
-    'name': 'John Doe',
-    'age': 10,
-    'email': 'john.doe@example.com',
-  });
-  print(result2);
+  // final result = schema.safeParse({
+  //   'name': 'John Doe',
+  //   'age': 20,
+  //   'email': 'john.doe@example.com',
+  // });
+  // print(result);
+  // final result2 = schema.safeParse({
+  //   'name': 'John Doe',
+  //   'age': 10,
+  //   'email': 'john.doe@example.com',
+  // });
+  // print(result2);
 }

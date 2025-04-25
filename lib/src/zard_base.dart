@@ -21,7 +21,7 @@ class Zard {
   /// final stringSchema = z.string().min(3);
   /// final hello = stringSchema.parse('hello');
   /// ```
-  ZString string() => ZString();
+  ZString string({String? message}) => ZString(message: message);
 
   /// A schema for validating integers.
   /// ```md
@@ -40,7 +40,7 @@ class Zard {
   /// final intSchema = z.int().min(0).max(10);
   /// final age = intSchema.parse(5);
   /// ```
-  ZInt int() => ZInt();
+  ZInt int({String? message}) => ZInt(message: message);
 
   /// A schema for validating doubles.
   /// ```md
@@ -59,7 +59,7 @@ class Zard {
   /// final doubleSchema = z.double().min(0).max(10);
   /// final sallary = doubleSchema.parse(5.5);
   /// ```
-  ZDouble double() => ZDouble();
+  ZDouble double({String? message}) => ZDouble(message: message);
 
   /// A schema for validating maps.
   /// ```md
@@ -124,7 +124,7 @@ class Zard {
   /// final boolSchema = z.bool();
   /// final boolValue = boolSchema.parse(true);
   /// ```
-  ZBool bool() => ZBool();
+  ZBool bool({String? message}) => ZBool(message: message);
 
   ///  A schema for validating dates.
   ///
@@ -165,7 +165,7 @@ class Zard {
   ///
   /// final date = dateSchema.parse('2021-01-01');
   /// ```
-  ZDate date() => ZDate();
+  ZDate date({String? message}) => ZDate(message: message);
 
   /// A schema for validating enums.
   /// ```md
@@ -185,7 +185,8 @@ class Zard {
   /// final roles = ['red', 'green', 'blue'];
   /// final result = enumSchema.parse(roles);
   /// ```
-  ZEnum enumerate(List<String> values) => ZEnum(values);
+  ZEnum enumerate(List<String> values, {String? message}) =>
+      ZEnum(values, message: message);
 
   /// Make a parse type coercion.
   /// ```dart
