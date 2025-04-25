@@ -1,16 +1,18 @@
-class ZardError {
-  final String message;
-  final String type;
-  final dynamic value;
+import 'zard_issue.dart';
 
-  ZardError({
-    required this.message,
-    required this.type,
-    required this.value,
-  });
+class ZardError implements Exception {
+  final List<ZardIssue> issues;
+
+  ZardError(this.issues);
+
+  String get messages => issues.map((issue) => '${issue.message}').join(', ');
+
+  List<String> format() {
+    return issues.map((issue) => issue.message).toList();
+  }
 
   @override
   String toString() {
-    return '{message: $message, type: $type, value: $value}';
+    return 'ZardError: ${issues.map((issue) => issue.toString()).join(', ')}';
   }
 }

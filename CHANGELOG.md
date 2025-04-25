@@ -1,3 +1,7 @@
+## 0.0.10
+
+- Update ZardError type to Exception.
+
 ## 0.0.9
 
 - Update validation .optional and .nullable.

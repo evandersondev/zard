@@ -1,6 +1,8 @@
 import 'package:zard/src/types/zart_error.dart';
 
-typedef Validator<T> = ZardError? Function(T value);
+import '../types/zard_issue.dart';
+
+typedef Validator<T> = ZardIssue? Function(T value);
 typedef Transformer<T> = T Function(T value);
 
 abstract class Schema<T> {
@@ -8,7 +10,7 @@ abstract class Schema<T> {
   final List<Transformer<T>> _transforms = [];
   bool _isOptional = false;
   bool _nullable = false;
-  final List<ZardError> errors = [];
+  final List<ZardIssue> issues = [];
 
   bool get isOptional => _isOptional;
   bool get isNullable => _nullable;
@@ -46,13 +48,12 @@ abstract class Schema<T> {
       if (_nullable) {
         return null;
       } else {
-        addError(ZardError(
+        addError(ZardIssue(
           message: 'Value is required and cannot be null',
           type: 'required_error',
           value: value,
         ));
-        throw Exception(
-            'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
+        throw ZardError(issues);
       }
     }
 
@@ -61,7 +62,7 @@ abstract class Schema<T> {
     for (final validator in _validators) {
       final error = validator(result);
       if (error != null) {
-        addError(ZardError(
+        addError(ZardIssue(
           message: error.message,
           type: error.type,
           value: value,
@@ -73,28 +74,27 @@ abstract class Schema<T> {
       result = transform(result);
     }
 
-    if (errors.isNotEmpty) {
-      throw Exception(
-          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
+    if (issues.isNotEmpty) {
+      throw ZardError(issues);
     }
 
     return result;
   }
 
-  void addError(ZardError error) {
-    errors.add(error);
+  void addError(ZardIssue error) {
+    issues.add(error);
   }
 
   void clearErrors() {
-    errors.clear();
+    issues.clear();
   }
 
   List<Validator<T>> getValidators() {
     return List.unmodifiable(_validators);
   }
 
-  List<ZardError> getErrors() {
-    return List.unmodifiable(errors);
+  List<ZardIssue> getErrors() {
+    return List.unmodifiable(issues);
   }
 
   List<Transformer<T>> getTransforms() {
@@ -108,7 +108,7 @@ abstract class Schema<T> {
     } catch (e) {
       return {
         'success': false,
-        'errors': errors.map((e) => e.toString()).toList()
+        'errors': issues.map((e) => e.toString()).toList()
       };
     }
   }
@@ -121,8 +121,7 @@ abstract class Schema<T> {
       final result = parse(resolvedValue);
       return result;
     } catch (e) {
-      return Future.error(Exception(
-          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}'));
+      return Future.error(ZardError(issues));
     }
   }
 
@@ -134,7 +133,7 @@ abstract class Schema<T> {
     } catch (e) {
       return {
         'success': false,
-        'errors': errors.map((e) => e.toString()).toList()
+        'errors': issues.map((e) => e.toString()).toList()
       };
     }
   }
@@ -142,7 +141,7 @@ abstract class Schema<T> {
   Schema<T> refine(bool Function(T value) predicate, {String? message}) {
     addValidator((T value) {
       if (!predicate(value)) {
-        return ZardError(
+        return ZardIssue(
           message: message ?? "Refinement failed",
           type: "refine_error",
           value: value,

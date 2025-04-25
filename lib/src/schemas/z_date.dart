@@ -1,3 +1,5 @@
+import 'package:zard/src/types/zard_issue.dart';
+
 import '../types/zart_error.dart';
 import 'schemas.dart';
 
@@ -15,7 +17,7 @@ class ZDate extends Schema<DateTime> {
   }
 
   /// Performs validation on the provided value to ensure it represents a valid datetime.
-  ZardError? _validate(dynamic value) {
+  ZardIssue? _validate(dynamic value) {
     // If value is a DateTime instance, convert it to ISO8601 string for validation.
     String valueStr =
         value is DateTime ? value.toIso8601String() : value.toString();
@@ -25,7 +27,7 @@ class ZDate extends Schema<DateTime> {
       r'^(\d{4})-(\d{2})-(\d{2})$|^(\d{1,2})/(\d{1,2})/(\d{2,4})$|^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)((?:[+-](\d{2}):(\d{2})|Z)?)$',
     );
     if (!dateRegExp.hasMatch(valueStr)) {
-      return ZardError(
+      return ZardIssue(
         message: message ?? 'Invalid datetime format',
         type: 'datetime',
         value: value,
@@ -35,7 +37,7 @@ class ZDate extends Schema<DateTime> {
     // Try to parse the date.
     final parsedDate = DateTime.tryParse(valueStr);
     if (parsedDate == null) {
-      return ZardError(
+      return ZardIssue(
         message: message ?? 'Invalid datetime format',
         type: 'datetime',
         value: value,
@@ -53,7 +55,7 @@ class ZDate extends Schema<DateTime> {
       final day = int.tryParse(components[2]) ?? 0;
 
       if (year < 1 || month < 1 || month > 12 || day < 1 || day > 31) {
-        return ZardError(
+        return ZardIssue(
           message: message ?? 'Invalid datetime format',
           type: 'datetime',
           value: value,
@@ -75,14 +77,13 @@ class ZDate extends Schema<DateTime> {
     final validationResult = _validate(value);
     if (validationResult != null) {
       addError(
-        ZardError(
+        ZardIssue(
           message: validationResult.message,
           type: validationResult.type,
           value: value,
         ),
       );
-      throw Exception(
-          'Validation failed with errors: ${getErrors().map((e) => e.toString()).toList()}');
+      throw ZardError(issues);
     }
 
     if (value is String) {
@@ -96,14 +97,13 @@ class ZDate extends Schema<DateTime> {
         return transformedValue;
       } catch (e) {
         addError(
-          ZardError(
+          ZardIssue(
             message: message ?? 'Invalid date format',
             type: 'datetime',
             value: value,
           ),
         );
-        throw Exception(
-            'Validation failed with errors: ${getErrors().map((e) => e.toString()).toList()}');
+        throw ZardError(issues);
       }
     }
     // If the value is already a DateTime, defer to the base implementation.
@@ -140,13 +140,12 @@ class ZCoerceDate extends Schema<DateTime> {
       }
       return result;
     } catch (e) {
-      addError(ZardError(
+      addError(ZardIssue(
         message: 'Failed to coerce value to DateTime',
         type: 'coerce_error',
         value: value,
       ));
-      throw Exception(
-          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
+      throw ZardError(issues);
     }
   }
 
@@ -158,7 +157,7 @@ class ZCoerceDate extends Schema<DateTime> {
     } catch (e) {
       return {
         'success': false,
-        'errors': errors.map((e) => e.toString()).toList()
+        'errors': issues.map((e) => e.toString()).toList()
       };
     }
   }

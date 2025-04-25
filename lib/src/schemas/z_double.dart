@@ -1,3 +1,5 @@
+import 'package:zard/src/types/zard_issue.dart';
+
 import '../types/zart_error.dart';
 import 'schema.dart';
 
@@ -5,7 +7,7 @@ class ZDouble extends Schema<double> {
   ZDouble({String? message}) {
     addValidator((double? value) {
       if (value == null) {
-        return ZardError(
+        return ZardIssue(
           message: message ?? 'Expected a double value',
           type: 'type_error',
           value: value,
@@ -25,7 +27,7 @@ class ZDouble extends Schema<double> {
   ZDouble min(num minValue, {String? message}) {
     addValidator((double? value) {
       if (value != null && value < minValue) {
-        return ZardError(
+        return ZardIssue(
           message: message ?? 'Value must be at least $minValue',
           type: 'min_error',
           value: value,
@@ -46,7 +48,7 @@ class ZDouble extends Schema<double> {
   ZDouble max(num maxValue, {String? message}) {
     addValidator((double? value) {
       if (value != null && value > maxValue) {
-        return ZardError(
+        return ZardIssue(
           message: message ?? 'Value must be at most $maxValue',
           type: 'max_error',
           value: value,
@@ -68,7 +70,7 @@ class ZDouble extends Schema<double> {
   ZDouble positive({String? message}) {
     addValidator((double? value) {
       if (value != null && value <= 0.0) {
-        return ZardError(
+        return ZardIssue(
           message: message ?? 'Value must be greater than 0',
           type: 'positive_error',
           value: value,
@@ -90,7 +92,7 @@ class ZDouble extends Schema<double> {
   ZDouble nonnegative({String? message}) {
     addValidator((double? value) {
       if (value != null && value < 0.0) {
-        return ZardError(
+        return ZardIssue(
           message: message ?? 'Value must be nonnegative (>= 0)',
           type: 'nonnegative_error',
           value: value,
@@ -112,7 +114,7 @@ class ZDouble extends Schema<double> {
   ZDouble negative({String? message}) {
     addValidator((double? value) {
       if (value != null && value >= 0.0) {
-        return ZardError(
+        return ZardIssue(
           message: message ?? 'Value must be negative (< 0)',
           type: 'negative_error',
           value: value,
@@ -137,7 +139,7 @@ class ZDouble extends Schema<double> {
       if (value != null) {
         final remainder = value % divisor;
         if (remainder.abs() > 1e-10) {
-          return ZardError(
+          return ZardIssue(
             message: message ?? 'Value must be a multiple of $divisor',
             type: 'multiple_of_error',
             value: value,
@@ -168,21 +170,20 @@ class ZDouble extends Schema<double> {
 
     if (value is! double) {
       addError(
-        ZardError(
+        ZardIssue(
           message: 'Expected a double value',
           type: 'type_error',
           value: value,
         ),
       );
-      throw Exception(
-          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
+      throw ZardError(issues);
     }
 
     for (final validator in getValidators()) {
       final error = validator(value);
       if (error != null) {
         addError(
-          ZardError(
+          ZardIssue(
             message: error.message,
             type: error.type,
             value: value,
@@ -191,9 +192,8 @@ class ZDouble extends Schema<double> {
       }
     }
 
-    if (errors.isNotEmpty) {
-      throw Exception(
-          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
+    if (issues.isNotEmpty) {
+      throw ZardError(issues);
     }
 
     var result = value;
@@ -215,20 +215,26 @@ class ZCoerceDouble extends Schema<double> {
       final asString = value?.toString() ?? '';
       double? result = double.tryParse(asString);
       if (result == null) {
-        throw Exception();
+        throw ZardError([
+          ZardIssue(
+            message: 'Value is not a valid number',
+            type: 'type_error',
+            value: value,
+          ),
+          ...issues,
+        ]);
       }
       for (final transform in getTransforms()) {
         result = transform(result!);
       }
       return result!;
     } catch (e) {
-      addError(ZardError(
+      addError(ZardIssue(
         message: 'Failed to coerce value to number',
         type: 'coerce_error',
         value: value,
       ));
-      throw Exception(
-          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
+      throw ZardError(issues);
     }
   }
 
@@ -240,7 +246,7 @@ class ZCoerceDouble extends Schema<double> {
     } catch (e) {
       return {
         'success': false,
-        'errors': errors.map((e) => e.toString()).toList()
+        'errors': issues.map((e) => e.toString()).toList()
       };
     }
   }

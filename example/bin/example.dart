@@ -7,12 +7,22 @@ void main() async {
     'email': z.string().email(),
     'isActive': z.bool().optional(),
   });
-  final ifNullValue = ignoreSchema.parse({
-    'name': 'John Doe',
-    'age': null,
-    'email': 'john.doe@example.com',
-  });
-  print(ifNullValue);
+
+  try {
+    final ignore = ignoreSchema.parse({
+      'name': 'John Doe',
+      'age': 30,
+      'isActive': true,
+    });
+    print(ignore);
+  } catch (e) {
+    if (e is ZardError) {
+      print(e.messages);
+      return;
+    }
+
+    print(e);
+  }
   // final stringSchema = z.string().min(3);
   // final hello = stringSchema.parse('he');
   // print(hello);

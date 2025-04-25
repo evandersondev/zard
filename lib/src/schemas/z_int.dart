@@ -1,3 +1,4 @@
+import '../types/zard_issue.dart';
 import '../types/zart_error.dart';
 import 'schema.dart';
 
@@ -5,7 +6,7 @@ class ZInt extends Schema<int> {
   ZInt({String? message}) {
     addValidator((int? value) {
       if (value == null) {
-        return ZardError(
+        return ZardIssue(
           message: message ?? 'Expected an integer value',
           type: 'type_error',
           value: value,
@@ -25,7 +26,7 @@ class ZInt extends Schema<int> {
   ZInt min(int minValue, {String? message}) {
     addValidator((int? value) {
       if (value != null && value < minValue) {
-        return ZardError(
+        return ZardIssue(
           message: message ?? 'Value must be at least $minValue',
           type: 'min_error',
           value: value,
@@ -46,7 +47,7 @@ class ZInt extends Schema<int> {
   ZInt max(int maxValue, {String? message}) {
     addValidator((int? value) {
       if (value != null && value > maxValue) {
-        return ZardError(
+        return ZardIssue(
           message: message ?? 'Value must be at most $maxValue',
           type: 'max_error',
           value: value,
@@ -68,7 +69,7 @@ class ZInt extends Schema<int> {
   ZInt positive({String? message}) {
     addValidator((int? value) {
       if (value != null && value <= 0) {
-        return ZardError(
+        return ZardIssue(
           message: message ?? 'Value must be greater than 0',
           type: 'positive_error',
           value: value,
@@ -90,7 +91,7 @@ class ZInt extends Schema<int> {
   ZInt nonnegative({String? message}) {
     addValidator((int? value) {
       if (value != null && value < 0) {
-        return ZardError(
+        return ZardIssue(
           message: message ?? 'Value must be nonnegative (>= 0)',
           type: 'nonnegative_error',
           value: value,
@@ -112,7 +113,7 @@ class ZInt extends Schema<int> {
   ZInt negative({String? message}) {
     addValidator((int? value) {
       if (value != null && value >= 0) {
-        return ZardError(
+        return ZardIssue(
           message: message ?? 'Value must be negative (< 0)',
           type: 'negative_error',
           value: value,
@@ -135,7 +136,7 @@ class ZInt extends Schema<int> {
   ZInt multipleOf(int divisor, {String? message}) {
     addValidator((int? value) {
       if (value != null && value % divisor != 0) {
-        return ZardError(
+        return ZardIssue(
           message: message ?? 'Value must be a multiple of $divisor',
           type: 'multiple_of_error',
           value: value,
@@ -165,30 +166,26 @@ class ZInt extends Schema<int> {
 
     if (value is! int) {
       addError(
-        ZardError(
+        ZardIssue(
           message: 'Expected an integer value',
           type: 'type_error',
           value: value,
         ),
       );
-      throw Exception(
-        'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}',
-      );
+      throw ZardError(issues);
     }
 
     for (final validator in getValidators()) {
       final error = validator(value);
       if (error != null) {
         addError(
-          ZardError(message: error.message, type: error.type, value: value),
+          ZardIssue(message: error.message, type: error.type, value: value),
         );
       }
     }
 
-    if (errors.isNotEmpty) {
-      throw Exception(
-        'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}',
-      );
+    if (issues.isNotEmpty) {
+      throw ZardError(issues);
     }
 
     var result = value;
@@ -214,13 +211,12 @@ class ZCoerceInt extends Schema<int> {
       }
       return result;
     } catch (e) {
-      addError(ZardError(
+      addError(ZardIssue(
         message: 'Failed to coerce value to BigInt',
         type: 'coerce_error',
         value: value,
       ));
-      throw Exception(
-          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
+      throw ZardError(issues);
     }
   }
 
@@ -232,7 +228,7 @@ class ZCoerceInt extends Schema<int> {
     } catch (e) {
       return {
         'success': false,
-        'errors': errors.map((e) => e.toString()).toList()
+        'errors': issues.map((e) => e.toString()).toList()
       };
     }
   }

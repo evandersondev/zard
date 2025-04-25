@@ -1,5 +1,6 @@
 import 'package:zard/src/schemas/schemas.dart';
 
+import '../types/zard_issue.dart';
 import '../types/zart_error.dart';
 
 class ZMap extends Schema<Map<String, dynamic>> {
@@ -28,13 +29,12 @@ class ZMap extends Schema<Map<String, dynamic>> {
     clearErrors();
 
     if (value is! Map) {
-      addError(ZardError(
+      addError(ZardIssue(
         message: 'Expected a Map',
         type: 'type_error',
         value: value,
       ));
-      throw Exception(
-          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
+      throw ZardError(issues);
     }
 
     Map<String, dynamic> result = {};
@@ -45,7 +45,7 @@ class ZMap extends Schema<Map<String, dynamic>> {
       if (!value.containsKey(key)) {
         // Campo omitido: se for optional, NÃO adicione o campo no resultado; caso contrário, gere erro.
         if (!schema.isOptional) {
-          addError(ZardError(
+          addError(ZardIssue(
             message: 'Field "$key" is required',
             type: 'required_error',
             value: null,
@@ -59,7 +59,7 @@ class ZMap extends Schema<Map<String, dynamic>> {
             if (schema.isNullable) {
               result[key] = null;
             } else {
-              addError(ZardError(
+              addError(ZardIssue(
                 message: 'Field "$key" cannot be null',
                 type: 'null_error',
                 value: fieldValue,
@@ -78,7 +78,7 @@ class ZMap extends Schema<Map<String, dynamic>> {
     if (_strict) {
       for (var key in value.keys) {
         if (!schemas.containsKey(key)) {
-          addError(ZardError(
+          addError(ZardIssue(
             message: 'Unexpected key "$key" found in object',
             type: 'strict_error',
             value: value[key],
@@ -89,7 +89,7 @@ class ZMap extends Schema<Map<String, dynamic>> {
 
     if (_refineValidator != null) {
       if (!_refineValidator!(result)) {
-        addError(ZardError(
+        addError(ZardIssue(
           message: _refineMessage ?? "Refinement failed",
           type: "refine_error",
           value: result,
@@ -97,9 +97,8 @@ class ZMap extends Schema<Map<String, dynamic>> {
       }
     }
 
-    if (errors.isNotEmpty) {
-      throw Exception(
-          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
+    if (issues.isNotEmpty) {
+      throw ZardError(issues);
     }
 
     return result;
@@ -113,7 +112,7 @@ class ZMap extends Schema<Map<String, dynamic>> {
     } catch (e) {
       return {
         'success': false,
-        'errors': errors.map((e) => e.toString()).toList(),
+        'errors': issues.map((e) => e.toString()).toList(),
       };
     }
   }
@@ -126,13 +125,12 @@ class ZMap extends Schema<Map<String, dynamic>> {
       final resolvedValue = value is Future ? await value : value;
 
       if (resolvedValue is! Map) {
-        addError(ZardError(
+        addError(ZardIssue(
           message: 'Expected a Map',
           type: 'type_error',
           value: resolvedValue,
         ));
-        throw Exception(
-            'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
+        throw ZardError(issues);
       }
 
       Map<String, dynamic> result = {};
@@ -141,7 +139,7 @@ class ZMap extends Schema<Map<String, dynamic>> {
         final schema = schemas[key]!;
         if (!resolvedValue.containsKey(key)) {
           if (!schema.isOptional) {
-            addError(ZardError(
+            addError(ZardIssue(
               message: 'Field "$key" is required',
               type: 'required_error',
               value: null,
@@ -154,7 +152,7 @@ class ZMap extends Schema<Map<String, dynamic>> {
               if (schema.isNullable) {
                 result[key] = null;
               } else {
-                addError(ZardError(
+                addError(ZardIssue(
                   message: 'Field "$key" cannot be null',
                   type: 'null_error',
                   value: fieldValue,
@@ -186,7 +184,7 @@ class ZMap extends Schema<Map<String, dynamic>> {
       if (_strict) {
         for (var key in resolvedValue.keys) {
           if (!schemas.containsKey(key)) {
-            addError(ZardError(
+            addError(ZardIssue(
               message: 'Unexpected key "$key" found in object',
               type: 'strict_error',
               value: resolvedValue[key],
@@ -195,15 +193,13 @@ class ZMap extends Schema<Map<String, dynamic>> {
         }
       }
 
-      if (errors.isNotEmpty) {
-        throw Exception(
-            'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
+      if (issues.isNotEmpty) {
+        throw ZardError(issues);
       }
 
       return result;
     } catch (e) {
-      return Future.error(Exception(
-          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}'));
+      return Future.error(ZardError(issues));
     }
   }
 
@@ -215,7 +211,7 @@ class ZMap extends Schema<Map<String, dynamic>> {
     } catch (e) {
       return {
         'success': false,
-        'errors': errors.map((e) => e.toString()).toList(),
+        'errors': issues.map((e) => e.toString()).toList(),
       };
     }
   }

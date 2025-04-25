@@ -1,7 +1,8 @@
+import '../types/zard_issue.dart';
 import '../types/zart_error.dart';
 import 'schema.dart';
 
-typedef ListValidator = ZardError? Function(List<dynamic> value);
+typedef ListValidator = ZardIssue? Function(List<dynamic> value);
 
 class ZList extends Schema<List<dynamic>> {
   final Schema _itemSchema;
@@ -20,10 +21,9 @@ class ZList extends Schema<List<dynamic>> {
 
     if (value is! List) {
       addError(
-        ZardError(message: 'Must be a list', type: 'type_error', value: value),
+        ZardIssue(message: 'Must be a list', type: 'type_error', value: value),
       );
-      throw Exception(
-          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
+      throw ZardError(issues);
     }
 
     final result = <dynamic>[];
@@ -34,7 +34,7 @@ class ZList extends Schema<List<dynamic>> {
         result.add(parsedItem);
       } catch (e) {
         // Acumula os erros do item
-        errors.addAll(_itemSchema.getErrors());
+        issues.addAll(_itemSchema.getErrors());
       }
     }
 
@@ -45,9 +45,8 @@ class ZList extends Schema<List<dynamic>> {
       }
     }
 
-    if (errors.isNotEmpty) {
-      throw Exception(
-          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
+    if (issues.isNotEmpty) {
+      throw ZardError(issues);
     }
 
     // Aplica as transformações (caso existam) no resultado final
@@ -67,7 +66,7 @@ class ZList extends Schema<List<dynamic>> {
     } catch (e) {
       return {
         'success': false,
-        'errors': errors.map((e) => e.toString()).toList()
+        'errors': issues.map((e) => e.toString()).toList()
       };
     }
   }
@@ -84,7 +83,7 @@ class ZList extends Schema<List<dynamic>> {
   ZList noempty({String? message}) {
     addValidator((List<dynamic> value) {
       if (value.isEmpty) {
-        return ZardError(
+        return ZardIssue(
           message: message ?? 'List must not be empty',
           type: 'noempty_error',
           value: value,
@@ -107,7 +106,7 @@ class ZList extends Schema<List<dynamic>> {
   ZList min(int min, {String? message}) {
     addValidator((List<dynamic> value) {
       if (value.length < min) {
-        return ZardError(
+        return ZardIssue(
           message: message ?? 'List must have at least $min items',
           type: 'min_error',
           value: value,
@@ -130,7 +129,7 @@ class ZList extends Schema<List<dynamic>> {
   ZList max(int max, {String? message}) {
     addValidator((List<dynamic> value) {
       if (value.length > max) {
-        return ZardError(
+        return ZardIssue(
           message: message ?? 'List must have at most $max items',
           type: 'max_error',
           value: value,
@@ -153,7 +152,7 @@ class ZList extends Schema<List<dynamic>> {
   ZList lenght(int length, {String? message}) {
     addValidator((List<dynamic> value) {
       if (value.length != length) {
-        return ZardError(
+        return ZardIssue(
           message: message ?? 'List must have exactly $length items',
           type: 'length_error',
           value: value,

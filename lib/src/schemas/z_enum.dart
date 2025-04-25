@@ -1,3 +1,4 @@
+import '../types/zard_issue.dart';
 import '../types/zart_error.dart';
 import 'schema.dart';
 
@@ -7,7 +8,7 @@ class ZEnum extends Schema<List<String>> {
   ZEnum(this._allowedValues, {String? message}) {
     addValidator((List<String>? value) {
       if (value == null) {
-        return ZardError(
+        return ZardIssue(
           message: message ?? 'Expected a list of strings',
           type: 'type_error',
           value: value,
@@ -16,7 +17,7 @@ class ZEnum extends Schema<List<String>> {
 
       for (var element in value) {
         if (!_allowedValues.contains(element)) {
-          return ZardError(
+          return ZardIssue(
             message: message ?? 'Value must be one of $_allowedValues',
             type: 'enum_error',
             value: element,
@@ -59,21 +60,19 @@ class ZEnum extends Schema<List<String>> {
 
     if (value is! List<String>) {
       addError(
-        ZardError(
+        ZardIssue(
           message: 'Expected a list of strings',
           type: 'type_error',
           value: value,
         ),
       );
-      throw Exception(
-        'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}',
-      );
+      throw ZardError(issues);
     }
 
     for (final element in value) {
       if (!_allowedValues.contains(element)) {
         addError(
-          ZardError(
+          ZardIssue(
             message: 'Value must be one of $_allowedValues',
             type: 'enum_error',
             value: element,
@@ -82,10 +81,8 @@ class ZEnum extends Schema<List<String>> {
       }
     }
 
-    if (errors.isNotEmpty) {
-      throw Exception(
-        'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}',
-      );
+    if (issues.isNotEmpty) {
+      throw ZardError(issues);
     }
 
     for (final transform in getTransforms()) {

@@ -1,3 +1,5 @@
+import 'package:zard/src/types/zard_issue.dart';
+
 import '../types/zart_error.dart';
 import 'schema.dart';
 
@@ -5,7 +7,7 @@ class ZBool extends Schema<bool> {
   ZBool({String? message}) {
     addValidator((value) {
       if (value != true && value != false) {
-        return ZardError(
+        return ZardIssue(
           message: message ?? 'Expected a boolean value',
           type: 'type_error',
           value: value,
@@ -21,14 +23,13 @@ class ZBool extends Schema<bool> {
 
     if (value is! bool) {
       addError(
-        ZardError(
+        ZardIssue(
           message: 'Expected a boolean value',
           type: 'type_error',
           value: value,
         ),
       );
-      throw Exception(
-          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
+      throw ZardError(issues);
     }
 
     for (final validator in getValidators()) {
@@ -38,9 +39,8 @@ class ZBool extends Schema<bool> {
       }
     }
 
-    if (errors.isNotEmpty) {
-      throw Exception(
-          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
+    if (issues.isNotEmpty) {
+      throw ZardError(issues);
     }
 
     var transformedValue = value;
@@ -59,7 +59,7 @@ class ZBool extends Schema<bool> {
     } catch (e) {
       return {
         'success': false,
-        'errors': errors.map((e) => e.toString()).toList()
+        'errors': issues.map((e) => e.toString()).toList()
       };
     }
   }
@@ -79,8 +79,8 @@ class ZBool extends Schema<bool> {
       final parsed = await parseAsync(value);
       return {'success': true, 'data': parsed};
     } catch (e) {
-      final errorMessages = errors.isNotEmpty
-          ? errors.map((e) => e.toString()).toList()
+      final errorMessages = issues.isNotEmpty
+          ? issues.map((e) => e.toString()).toList()
           : [e.toString()];
       return {'success': false, 'errors': errorMessages};
     }
@@ -104,13 +104,12 @@ class ZCoerceBoolean extends Schema<bool> {
       }
       return true;
     } catch (e) {
-      addError(ZardError(
+      addError(ZardIssue(
         message: 'Failed to coerce value to boolean',
         type: 'coerce_error',
         value: value,
       ));
-      throw Exception(
-          'Validation failed with errors: ${errors.map((e) => e.toString()).toList()}');
+      throw ZardError(issues);
     }
   }
 
@@ -122,7 +121,7 @@ class ZCoerceBoolean extends Schema<bool> {
     } catch (e) {
       return {
         'success': false,
-        'errors': errors.map((e) => e.toString()).toList()
+        'errors': issues.map((e) => e.toString()).toList()
       };
     }
   }
