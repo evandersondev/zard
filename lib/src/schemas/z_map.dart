@@ -41,9 +41,8 @@ class ZMap extends Schema<Map<String, dynamic>> {
 
     // Itera sobre as chaves definidas no schema
     schemas.forEach((key, schema) {
-      // Verifica se a chave está presente explicitamente
       if (!value.containsKey(key)) {
-        // Campo omitido: se for optional, NÃO adicione o campo no resultado; caso contrário, gere erro.
+        // Campo omitido: se for opcional, não adicione ao resultado.
         if (!schema.isOptional) {
           addError(ZardIssue(
             message: 'Field "$key" is required',
@@ -70,7 +69,12 @@ class ZMap extends Schema<Map<String, dynamic>> {
             result[key] = schema.parse(fieldValue);
           }
         } catch (e) {
-          // Se ocorrer exceção, os erros já estão acumulados no schema
+          if (e is ZardError) {
+            // Propaga os erros específicos do sub-schema
+            issues.addAll(e.issues);
+          } else {
+            rethrow;
+          }
         }
       }
     });
@@ -110,10 +114,13 @@ class ZMap extends Schema<Map<String, dynamic>> {
       final parsed = parse(value);
       return {'success': true, 'data': parsed};
     } catch (e) {
-      return {
-        'success': false,
-        'errors': issues.map((e) => e.toString()).toList(),
-      };
+      if (e is ZardError) {
+        return {
+          'success': false,
+          'errors': e.issues.map((issue) => issue.toString()).toList(),
+        };
+      }
+      rethrow;
     }
   }
 
@@ -121,7 +128,6 @@ class ZMap extends Schema<Map<String, dynamic>> {
   Future<Map<String, dynamic>?> parseAsync(dynamic value) async {
     clearErrors();
     try {
-      // Se o valor for um Future, aguarda a resolução
       final resolvedValue = value is Future ? await value : value;
 
       if (resolvedValue is! Map) {
@@ -159,24 +165,14 @@ class ZMap extends Schema<Map<String, dynamic>> {
                 ));
               }
             } else {
-              if (schema is ZMap ||
-                  schema is ZList ||
-                  schema is ZString ||
-                  schema is ZInt ||
-                  schema is ZDouble ||
-                  schema is ZBool ||
-                  schema is ZDate) {
-                try {
-                  result[key] = await schema.parseAsync(fieldValue);
-                } catch (e) {
-                  // Erros já são acumulados no schema
-                }
-              } else {
-                result[key] = schema.parse(fieldValue);
-              }
+              result[key] = await schema.parseAsync(fieldValue);
             }
           } catch (e) {
-            // Erros já foram acumulados no schema
+            if (e is ZardError) {
+              issues.addAll(e.issues);
+            } else {
+              rethrow;
+            }
           }
         }
       }
@@ -209,10 +205,13 @@ class ZMap extends Schema<Map<String, dynamic>> {
       final parsed = await parseAsync(value);
       return {'success': true, 'data': parsed};
     } catch (e) {
-      return {
-        'success': false,
-        'errors': issues.map((e) => e.toString()).toList(),
-      };
+      if (e is ZardError) {
+        return {
+          'success': false,
+          'errors': e.issues.map((issue) => issue.toString()).toList(),
+        };
+      }
+      rethrow;
     }
   }
 

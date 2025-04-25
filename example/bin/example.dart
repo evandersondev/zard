@@ -2,8 +2,8 @@ import 'package:zard/zard.dart';
 
 void main() async {
   final ignoreSchema = z.map({
-    'name': z.string().min(3),
-    'age': z.int().min(18).nullable(),
+    'name': z.string().min(3).max(20),
+    'age': z.int().min(18).max(80).nullable(),
     'email': z.string().email(),
     'isActive': z.bool().optional(),
   });
@@ -11,13 +11,14 @@ void main() async {
   try {
     final ignore = ignoreSchema.parse({
       'name': 'John Doe',
-      'age': 30,
+      'age': 90,
+      'email': 'john.doe@example.com',
       'isActive': true,
     });
     print(ignore);
   } catch (e) {
     if (e is ZardError) {
-      print(e.messages);
+      print(e.format());
       return;
     }
 

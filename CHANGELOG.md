@@ -1,3 +1,7 @@
+## 0.0.11
+
+- Update ZMap Validation.
+
 ## 0.0.10
 
 - Update ZardError type to Exception.
