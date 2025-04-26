@@ -8,8 +8,9 @@ class ZMap extends Schema<Map<String, dynamic>> {
   bool _strict = false;
   bool Function(Map<String, dynamic> value)? _refineValidator;
   String? _refineMessage;
+  final String? message;
 
-  ZMap(this.schemas);
+  ZMap(this.schemas, {this.message});
 
   ZMap strict() {
     _strict = true;
@@ -30,7 +31,7 @@ class ZMap extends Schema<Map<String, dynamic>> {
 
     if (value is! Map) {
       addError(ZardIssue(
-        message: 'Expected a Map',
+        message: message ?? 'Expected a Map',
         type: 'type_error',
         value: value,
       ));
@@ -39,10 +40,8 @@ class ZMap extends Schema<Map<String, dynamic>> {
 
     Map<String, dynamic> result = {};
 
-    // Itera sobre as chaves definidas no schema
     schemas.forEach((key, schema) {
       if (!value.containsKey(key)) {
-        // Campo omitido: se for opcional, não adicione ao resultado.
         if (!schema.isOptional) {
           addError(ZardIssue(
             message: 'Field "$key" is required',
@@ -54,7 +53,6 @@ class ZMap extends Schema<Map<String, dynamic>> {
         dynamic fieldValue = value[key];
         try {
           if (fieldValue == null) {
-            // A chave foi enviada com valor null
             if (schema.isNullable) {
               result[key] = null;
             } else {
@@ -65,12 +63,10 @@ class ZMap extends Schema<Map<String, dynamic>> {
               ));
             }
           } else {
-            // Valida o campo utilizando o schema específico
             result[key] = schema.parse(fieldValue);
           }
         } catch (e) {
           if (e is ZardError) {
-            // Propaga os erros específicos do sub-schema
             issues.addAll(e.issues);
           } else {
             rethrow;
@@ -109,22 +105,6 @@ class ZMap extends Schema<Map<String, dynamic>> {
   }
 
   @override
-  Map<String, dynamic> safeParse(dynamic value) {
-    try {
-      final parsed = parse(value);
-      return {'success': true, 'data': parsed};
-    } catch (e) {
-      if (e is ZardError) {
-        return {
-          'success': false,
-          'errors': e.issues.map((issue) => issue.toString()).toList(),
-        };
-      }
-      rethrow;
-    }
-  }
-
-  @override
   Future<Map<String, dynamic>?> parseAsync(dynamic value) async {
     clearErrors();
     try {
@@ -132,7 +112,7 @@ class ZMap extends Schema<Map<String, dynamic>> {
 
       if (resolvedValue is! Map) {
         addError(ZardIssue(
-          message: 'Expected a Map',
+          message: message ?? 'Expected a Map',
           type: 'type_error',
           value: resolvedValue,
         ));
@@ -196,22 +176,6 @@ class ZMap extends Schema<Map<String, dynamic>> {
       return result;
     } catch (e) {
       return Future.error(ZardError(issues));
-    }
-  }
-
-  @override
-  Future<Map<String, dynamic>> safeParseAsync(dynamic value) async {
-    try {
-      final parsed = await parseAsync(value);
-      return {'success': true, 'data': parsed};
-    } catch (e) {
-      if (e is ZardError) {
-        return {
-          'success': false,
-          'errors': e.issues.map((issue) => issue.toString()).toList(),
-        };
-      }
-      rethrow;
     }
   }
 

@@ -4,8 +4,9 @@ import 'schema.dart';
 
 class ZEnum extends Schema<List<String>> {
   final List<String> _allowedValues;
+  final String? message;
 
-  ZEnum(this._allowedValues, {String? message}) {
+  ZEnum(this._allowedValues, {this.message}) {
     addValidator((List<String>? value) {
       if (value == null) {
         return ZardIssue(
@@ -61,7 +62,7 @@ class ZEnum extends Schema<List<String>> {
     if (value is! List<String>) {
       addError(
         ZardIssue(
-          message: 'Expected a list of strings',
+          message: message ?? 'Expected a list of strings',
           type: 'type_error',
           value: value,
         ),

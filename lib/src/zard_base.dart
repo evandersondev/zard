@@ -86,7 +86,8 @@ class Zard {
   /// 'sallary': 1000.0,
   /// });
   /// ```
-  ZMap map(Map<String, Schema> schema) => ZMap(schema);
+  ZMap map(Map<String, Schema> schema, {String? message}) =>
+      ZMap(schema, message: message);
 
   /// A schema for validating lists.
   /// ```md
@@ -105,7 +106,8 @@ class Zard {
   /// final listSchema = z.list(z.string());
   /// final list = listSchema.parse(['a', 'b', 'c']);
   /// ```
-  ZList list(Schema itemSchema) => ZList(itemSchema);
+  ZList list(Schema itemSchema, {String? message}) =>
+      ZList(itemSchema, message: message);
 
   /// A schema for validating booleans.
   /// ```md

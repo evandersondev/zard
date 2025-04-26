@@ -1,3 +1,7 @@
+## 0.0.12
+
+- Add ZardResult type and update custom message.
+
 ## 0.0.11
 
 - Update ZMap Validation.

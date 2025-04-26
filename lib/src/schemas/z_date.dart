@@ -110,16 +110,6 @@ class ZDate extends Schema<DateTime> {
     final result = super.parse(value);
     return result as DateTime;
   }
-
-  @override
-  Map<String, dynamic> safeParse(dynamic value) {
-    try {
-      final parsed = parse(value);
-      return {'success': true, 'data': parsed};
-    } catch (e) {
-      return {'success': false, 'errors': getErrors()};
-    }
-  }
 }
 
 class ZCoerceDate extends Schema<DateTime> {
@@ -146,19 +136,6 @@ class ZCoerceDate extends Schema<DateTime> {
         value: value,
       ));
       throw ZardError(issues);
-    }
-  }
-
-  @override
-  Map<String, dynamic> safeParse(dynamic value) {
-    try {
-      final parsed = parse(value);
-      return {'success': true, 'data': parsed};
-    } catch (e) {
-      return {
-        'success': false,
-        'errors': issues.map((e) => e.toString()).toList()
-      };
     }
   }
 }

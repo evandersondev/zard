@@ -1,44 +1,39 @@
 import 'package:zard/zard.dart';
 
 void main() async {
-  final ignoreSchema = z.map({
-    'name': z.string().min(3).max(20),
-    'age': z.int().min(18).max(80).nullable(),
-    'email': z.string().email(),
-    'isActive': z.bool().optional(),
-  });
+  // final ignoreSchema = z.map({
+  //   'name': z.string().min(3).max(20),
+  //   'age': z.int().min(18).max(80).nullable(),
+  //   'email': z.string().email(),
+  //   'isActive': z.bool().optional(),
+  // });
 
-  try {
-    final ignore = ignoreSchema.parse({
-      'name': 'John Doe',
-      'age': 90,
-      'email': 'john.doe@example.com',
-      'isActive': true,
-    });
-    print(ignore);
-  } catch (e) {
-    if (e is ZardError) {
-      print(e.format());
-      return;
-    }
-
-    print(e);
-  }
+  // final ignore = ignoreSchema.safeParse({
+  //   'name': 'John Doe',
+  //   'age': 50,
+  //   'email': 'john.doe@example.com',
+  //   'isActive': true,
+  // });
+  // if (ignore.success) {
+  //   print(ignore.data);
+  // } else {
+  //   print(ignore.error);
+  // }
   // final stringSchema = z.string().min(3);
-  // final hello = stringSchema.parse('he');
+  // final hello = stringSchema.parse('hello');
   // print(hello);
 
   // final intSchema = z.int().min(0).max(10);
   // final age = intSchema.parse(5);
   // print(age);
 
-  // final doubleSchema = z.double().min(0).max(10);
-  // final sallary = doubleSchema.parse(5.5);
+  // final doubleSchema = z.double(message: 'Deve ser um double').min(0).max(10);
+  // final sallary = doubleSchema.parse('3');
   // print(sallary);
 
-  // final emailSchema = z.string().email();
-  // final email = emailSchema.parse('john.doe@example.com');
-  // print(email);
+  final emailSchema = z.string(message: 'Deve ser uma string').email();
+  final email = emailSchema.parse(2);
+  print(email);
 
   // final tagsSchema = z.list(z.string().transform((value) => '#$value'));
   // final tags = tagsSchema.parse(['#dart', '#flutter']);

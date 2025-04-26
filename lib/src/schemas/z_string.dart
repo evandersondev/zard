@@ -3,8 +3,9 @@ import '../types/zart_error.dart';
 import 'schema.dart';
 
 class ZString extends Schema<String> {
-  ZString({String? message}) {
-    // Validação inicial para garantir que o valor não seja nulo.
+  final String? message;
+
+  ZString({this.message}) {
     addValidator((String? value) {
       if (value == null) {
         return ZardIssue(
@@ -369,7 +370,7 @@ class ZString extends Schema<String> {
     if (value is! String) {
       addError(
         ZardIssue(
-          message: 'Expected a string value',
+          message: message ?? 'Expected a string value',
           type: 'type_error',
           value: value,
         ),
@@ -400,15 +401,13 @@ class ZString extends Schema<String> {
 }
 
 class ZCoerceString extends Schema<String> {
-  ZCoerceString({String? message}) {
-    // Podemos adicionar transformações adicionais se necessário.
-  }
+  ZCoerceString({String? message}) {}
 
   @override
   String parse(dynamic value) {
     clearErrors();
+
     try {
-      // Converte qualquer valor para string, inclusive null (convertido em "null")
       String result = value?.toString() ?? "null";
       for (final transform in getTransforms()) {
         result = transform(result);
@@ -421,19 +420,6 @@ class ZCoerceString extends Schema<String> {
         value: value,
       ));
       throw ZardError(issues);
-    }
-  }
-
-  @override
-  Map<String, dynamic> safeParse(dynamic value) {
-    try {
-      final parsed = parse(value);
-      return {'success': true, 'data': parsed};
-    } catch (e) {
-      return {
-        'success': false,
-        'errors': issues.map((e) => e.toString()).toList()
-      };
     }
   }
 }

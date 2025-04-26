@@ -7,8 +7,9 @@ typedef ListValidator = ZardIssue? Function(List<dynamic> value);
 class ZList extends Schema<List<dynamic>> {
   final Schema _itemSchema;
   final List<ListValidator> _validators = [];
+  final String? message;
 
-  ZList(this._itemSchema);
+  ZList(this._itemSchema, {this.message});
 
   @override
   void addValidator(ListValidator validator) {
@@ -21,7 +22,10 @@ class ZList extends Schema<List<dynamic>> {
 
     if (value is! List) {
       addError(
-        ZardIssue(message: 'Must be a list', type: 'type_error', value: value),
+        ZardIssue(
+            message: message ?? 'Must be a list',
+            type: 'type_error',
+            value: value),
       );
       throw ZardError(issues);
     }
@@ -33,7 +37,6 @@ class ZList extends Schema<List<dynamic>> {
         final parsedItem = _itemSchema.parse(item);
         result.add(parsedItem);
       } catch (e) {
-        // Acumula os erros do item
         issues.addAll(_itemSchema.getErrors());
       }
     }
@@ -49,7 +52,6 @@ class ZList extends Schema<List<dynamic>> {
       throw ZardError(issues);
     }
 
-    // Aplica as transformações (caso existam) no resultado final
     var transformedResult = result;
     for (final transform in getTransforms()) {
       transformedResult = transform(transformedResult);
@@ -58,18 +60,18 @@ class ZList extends Schema<List<dynamic>> {
     return transformedResult;
   }
 
-  @override
-  Map<String, dynamic> safeParse(dynamic value) {
-    try {
-      final parsed = parse(value);
-      return {'success': true, 'data': parsed};
-    } catch (e) {
-      return {
-        'success': false,
-        'errors': issues.map((e) => e.toString()).toList()
-      };
-    }
-  }
+  // @override
+  // Map<String, dynamic> safeParse(dynamic value) {
+  //   try {
+  //     final parsed = parse(value);
+  //     return {'success': true, 'data': parsed};
+  //   } catch (e) {
+  //     return {
+  //       'success': false,
+  //       'errors': issues.map((e) => e.toString()).toList()
+  //     };
+  //   }
+  // }
 
   /// Noempty validation
   /// Example:

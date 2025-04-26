@@ -4,8 +4,10 @@ import '../types/zart_error.dart';
 import 'schema.dart';
 
 class ZBool extends Schema<bool> {
-  ZBool({String? message}) {
-    addValidator((value) {
+  final String? message;
+
+  ZBool({this.message}) {
+    addValidator((bool? value) {
       if (value != true && value != false) {
         return ZardIssue(
           message: message ?? 'Expected a boolean value',
@@ -24,7 +26,7 @@ class ZBool extends Schema<bool> {
     if (value is! bool) {
       addError(
         ZardIssue(
-          message: 'Expected a boolean value',
+          message: message ?? 'Expected a boolean value',
           type: 'type_error',
           value: value,
         ),
@@ -52,38 +54,10 @@ class ZBool extends Schema<bool> {
   }
 
   @override
-  Map<String, dynamic> safeParse(dynamic value) {
-    try {
-      final parsed = parse(value);
-      return {'success': true, 'data': parsed};
-    } catch (e) {
-      return {
-        'success': false,
-        'errors': issues.map((e) => e.toString()).toList()
-      };
-    }
-  }
-
-  @override
   Future<bool> parseAsync(dynamic value) async {
     clearErrors();
     final resolvedValue = value is Future ? await value : value;
     return parse(resolvedValue);
-  }
-
-  @override
-  Future<Map<String, dynamic>> safeParseAsync(
-    dynamic value,
-  ) async {
-    try {
-      final parsed = await parseAsync(value);
-      return {'success': true, 'data': parsed};
-    } catch (e) {
-      final errorMessages = issues.isNotEmpty
-          ? issues.map((e) => e.toString()).toList()
-          : [e.toString()];
-      return {'success': false, 'errors': errorMessages};
-    }
   }
 }
 
@@ -94,7 +68,6 @@ class ZCoerceBoolean extends Schema<bool> {
   bool parse(dynamic value) {
     clearErrors();
     try {
-      // Considera false se o valor for: 0, '0', "", false ou null; caso contrário, true.
       if (value == 0 ||
           value == '0' ||
           value == '' ||
@@ -110,19 +83,6 @@ class ZCoerceBoolean extends Schema<bool> {
         value: value,
       ));
       throw ZardError(issues);
-    }
-  }
-
-  @override
-  Map<String, dynamic> safeParse(dynamic value) {
-    try {
-      final parsed = parse(value);
-      return {'success': true, 'data': parsed};
-    } catch (e) {
-      return {
-        'success': false,
-        'errors': issues.map((e) => e.toString()).toList()
-      };
     }
   }
 }

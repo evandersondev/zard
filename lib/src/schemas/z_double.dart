@@ -4,7 +4,9 @@ import '../types/zart_error.dart';
 import 'schema.dart';
 
 class ZDouble extends Schema<double> {
-  ZDouble({String? message}) {
+  final String? message;
+
+  ZDouble({this.message}) {
     addValidator((double? value) {
       if (value == null) {
         return ZardIssue(
@@ -171,7 +173,7 @@ class ZDouble extends Schema<double> {
     if (value is! double) {
       addError(
         ZardIssue(
-          message: 'Expected a double value',
+          message: message ?? 'Expected a double value',
           type: 'type_error',
           value: value,
         ),
@@ -235,19 +237,6 @@ class ZCoerceDouble extends Schema<double> {
         value: value,
       ));
       throw ZardError(issues);
-    }
-  }
-
-  @override
-  Map<String, dynamic> safeParse(dynamic value) {
-    try {
-      final parsed = parse(value);
-      return {'success': true, 'data': parsed};
-    } catch (e) {
-      return {
-        'success': false,
-        'errors': issues.map((e) => e.toString()).toList()
-      };
     }
   }
 }

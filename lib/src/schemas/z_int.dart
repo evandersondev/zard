@@ -3,7 +3,9 @@ import '../types/zart_error.dart';
 import 'schema.dart';
 
 class ZInt extends Schema<int> {
-  ZInt({String? message}) {
+  final String? message;
+
+  ZInt({this.message}) {
     addValidator((int? value) {
       if (value == null) {
         return ZardIssue(
@@ -167,7 +169,7 @@ class ZInt extends Schema<int> {
     if (value is! int) {
       addError(
         ZardIssue(
-          message: 'Expected an integer value',
+          message: message ?? 'Expected an integer value',
           type: 'type_error',
           value: value,
         ),
@@ -217,19 +219,6 @@ class ZCoerceInt extends Schema<int> {
         value: value,
       ));
       throw ZardError(issues);
-    }
-  }
-
-  @override
-  Map<String, dynamic> safeParse(dynamic value) {
-    try {
-      final parsed = parse(value);
-      return {'success': true, 'data': parsed};
-    } catch (e) {
-      return {
-        'success': false,
-        'errors': issues.map((e) => e.toString()).toList()
-      };
     }
   }
 }

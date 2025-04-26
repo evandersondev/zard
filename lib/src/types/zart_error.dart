@@ -11,6 +11,10 @@ class ZardError implements Exception {
     return issues.map((issue) => issue.message).toList();
   }
 
+  factory ZardError.empty() {
+    return ZardError([]);
+  }
+
   @override
   String toString() {
     return 'ZardError: ${issues.map((issue) => issue.toString()).join(', ')}';

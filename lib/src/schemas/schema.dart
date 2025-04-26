@@ -1,6 +1,7 @@
 import 'package:zard/src/types/zart_error.dart';
 
 import '../types/zard_issue.dart';
+import '../types/zard_result.dart';
 
 typedef Validator<T> = ZardIssue? Function(T value);
 typedef Transformer<T> = T Function(T value);
@@ -101,15 +102,18 @@ abstract class Schema<T> {
     return List.unmodifiable(_transforms);
   }
 
-  Map<String, dynamic> safeParse(dynamic value) {
+  ZardResult safeParse(dynamic value) {
     try {
       final parsed = parse(value);
-      return {'success': true, 'data': parsed};
+      return ZardResult(
+        success: true,
+        data: parsed,
+      );
     } catch (e) {
-      return {
-        'success': false,
-        'errors': issues.map((e) => e.toString()).toList()
-      };
+      return ZardResult(
+        success: false,
+        error: ZardError(issues),
+      );
     }
   }
 
@@ -126,15 +130,18 @@ abstract class Schema<T> {
   }
 
   // Asynchronous version of safeParse.
-  Future<Map<String, dynamic>> safeParseAsync(dynamic value) async {
+  Future<ZardResult> safeParseAsync(dynamic value) async {
     try {
       final parsed = await parseAsync(value);
-      return {'success': true, 'data': parsed};
+      return ZardResult(
+        success: true,
+        data: parsed,
+      );
     } catch (e) {
-      return {
-        'success': false,
-        'errors': issues.map((e) => e.toString()).toList()
-      };
+      return ZardResult(
+        success: false,
+        error: ZardError(issues),
+      );
     }
   }
 
