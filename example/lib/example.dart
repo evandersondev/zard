@@ -1,6 +1,29 @@
+import 'package:example/user.dart';
 import 'package:zard/zard.dart';
 
+final userMapSchema = z.map({
+  'name': z.string().min(3),
+  'age': z.int().min(18),
+  'email': z.string().email(),
+});
+
+final userSchema = z.inferType(
+  fromJson: (json) => User.fromJson(json),
+  mapSchema: userMapSchema,
+);
+
 void main() async {
+  try {
+    final user = userSchema.parse({
+      'name': 'John Doe',
+      'age': 32,
+      'email': 'john.doe@example.com',
+    });
+    print('User created: ${user.name}, ${user.age}, ${user.email}');
+  } on ZardError catch (e) {
+    print('Error: ${e.messages}');
+  }
+
   // final ignoreSchema = z.map({
   //   'name': z.string().min(3).max(20),
   //   'age': z.int().min(18).max(80).nullable(),
@@ -31,9 +54,9 @@ void main() async {
   // final sallary = doubleSchema.parse('3');
   // print(sallary);
 
-  final emailSchema = z.string(message: 'Deve ser uma string').email();
-  final email = emailSchema.parse(2);
-  print(email);
+  // final emailSchema = z.string(message: 'Deve ser uma string').email();
+  // final email = emailSchema.parse(2);
+  // print(email);
 
   // final tagsSchema = z.list(z.string().transform((value) => '#$value'));
   // final tags = tagsSchema.parse(['#dart', '#flutter']);

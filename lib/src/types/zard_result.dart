@@ -1,4 +1,4 @@
-import 'zart_error.dart';
+import 'zard_error.dart';
 
 class ZardResult {
   final bool success;
