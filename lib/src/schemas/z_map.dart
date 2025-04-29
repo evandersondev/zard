@@ -1,7 +1,7 @@
 import 'package:zard/src/schemas/schemas.dart';
 
+import '../types/zard_error.dart';
 import '../types/zard_issue.dart';
-import '../types/zart_error.dart';
 
 class ZMap extends Schema<Map<String, dynamic>> {
   final Map<String, Schema> schemas;

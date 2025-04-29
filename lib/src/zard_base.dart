@@ -1,12 +1,17 @@
 import 'package:zard/src/schemas/z_interface.dart';
 import 'package:zard/src/schemas/z_lazy.dart';
+import 'package:zard/zard.dart';
 
-import 'schemas/schemas.dart';
 import 'schemas/z_coerce_container.dart';
 
 typedef Validator<T> = String? Function(T value);
 
 class Zard {
+  ZardType inferType(
+          {required dynamic Function(Map<String, dynamic>) fromMap,
+          required Schema<Map<String, dynamic>> mapSchema}) =>
+      ZardType(fromMap: fromMap, mapSchema: mapSchema);
+
   /// A schema for validating strings.
   /// ```md
   /// Types supported:

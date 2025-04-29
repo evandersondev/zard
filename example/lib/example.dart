@@ -1,26 +1,5 @@
+import 'package:example/user.dart';
 import 'package:zard/zard.dart';
-
-class User {
-  String name;
-  String email;
-  List<User> friends;
-
-  User({
-    required this.name,
-    required this.email,
-    this.friends = const [],
-  });
-
-  factory User.fromMap(Map<String, dynamic> json) => User(
-        name: json['name'] as String,
-        email: json['email'] as String,
-        friends: (json['friends'] as List<dynamic>?)
-                ?.map((e) =>
-                    e is Map<String, dynamic> ? User.fromMap(e) : e as User)
-                .toList() ??
-            [],
-      );
-}
 
 void main() async {
   Schema<User> getUserSchema() {
@@ -61,6 +40,28 @@ void main() async {
   //   'email': 'john.doe@example.com',
   // });
   // print(user.email);
+
+  final userMapSchema = z.map({
+    'name': z.string().min(3),
+    'age': z.int().min(18),
+    'email': z.string().email(),
+  });
+
+  final userSchema = z.inferType(
+    fromMap: (json) => User.fromMap(json),
+    mapSchema: userMapSchema,
+  );
+
+  try {
+    final user = userSchema.parse({
+      'name': 'John Doe',
+      'age': 32,
+      'email': 'john.doe@example.com',
+    });
+    print('User created: ${user.name}, ${user.age}, ${user.email}');
+  } on ZardError catch (e) {
+    print('Error: ${e.messages}');
+  }
 
   // final ignoreSchema = z.map({
   //   'name': z.string().min(3).max(20),

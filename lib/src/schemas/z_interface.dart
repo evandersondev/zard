@@ -1,7 +1,7 @@
 import 'package:zard/src/schemas/schemas.dart';
 
+import '../types/zard_error.dart';
 import '../types/zard_issue.dart';
-import '../types/zart_error.dart';
 
 class ZInterface extends Schema<Map<String, dynamic>> {
   // Map with effective keys (without "?" suffix) and their corresponding schemas.

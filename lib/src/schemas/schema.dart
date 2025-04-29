@@ -1,5 +1,5 @@
 import 'package:zard/src/schemas/z_list.dart';
-import 'package:zard/src/types/zart_error.dart';
+import 'package:zard/src/types/zard_error.dart';
 
 import '../types/zard_issue.dart';
 import '../types/zard_result.dart';
