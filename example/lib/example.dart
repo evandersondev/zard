@@ -2,6 +2,9 @@ import 'package:example/user.dart';
 import 'package:zard/zard.dart';
 
 void main() async {
+  // Recursive schema example
+  // Transform to type
+  // Lazy schema
   Schema<User> getUserSchema() {
     return z.interface({
       'name': z.string().min(3).max(20),
@@ -41,24 +44,33 @@ void main() async {
   // });
   // print(user.email);
 
-  final userMapSchema = z.map({
-    'name': z.string().min(3),
-    'age': z.int().min(18),
-    'email': z.string().email(),
-  });
-
+  // Inferred type example
   final userSchema = z.inferType(
     fromMap: (json) => User.fromMap(json),
-    mapSchema: userMapSchema,
+    mapSchema: z.map({
+      'name': z.string().min(3),
+      'email': z.string().email(),
+      'friends': z
+          .list(z.map({
+            'name': z.string().min(3),
+            'email': z.string().email(),
+            'friends': z
+                .list(z.map({
+                  'name': z.string().min(3),
+                  'email': z.string().email(),
+                }))
+                .optional(),
+          }))
+          .optional(),
+    }),
   );
 
   try {
     final user = userSchema.parse({
       'name': 'John Doe',
-      'age': 32,
       'email': 'john.doe@example.com',
     });
-    print('User created: ${user.name}, ${user.age}, ${user.email}');
+    print('User created: ${user.name}, ${user.email}');
   } on ZardError catch (e) {
     print('Error: ${e.messages}');
   }
