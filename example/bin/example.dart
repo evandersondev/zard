@@ -1,6 +1,67 @@
 import 'package:zard/zard.dart';
 
+class User {
+  String name;
+  String email;
+  List<User> friends;
+
+  User({
+    required this.name,
+    required this.email,
+    this.friends = const [],
+  });
+
+  factory User.fromMap(Map<String, dynamic> json) => User(
+        name: json['name'] as String,
+        email: json['email'] as String,
+        friends: (json['friends'] as List<dynamic>?)
+                ?.map((e) =>
+                    e is Map<String, dynamic> ? User.fromMap(e) : e as User)
+                .toList() ??
+            [],
+      );
+}
+
 void main() async {
+  Schema<User> getUserSchema() {
+    return z.interface({
+      'name': z.string().min(3).max(20),
+      'email': z.string().email(),
+      'friends?': z.lazy(() => getUserSchema().list()),
+    }).transformTyped((json) => User.fromMap(json));
+  }
+
+  final user = getUserSchema().parse({
+    'name': 'John Doe',
+    'email': 'john.doe@example.com',
+    'friends': [
+      {
+        'name': 'Jane Doe',
+        'email': 'jane.doe@example.com',
+        'friends': [
+          {
+            'name': 'Evan Doe',
+            'email': 'john.doe@example.com',
+          },
+        ],
+      },
+    ],
+  });
+  print(user?.friends.first.friends.first.name);
+
+  // final userSchemaInterface = z.interface({
+  //   'name': z.string().min(3).max(20),
+  //   'email': z.string().email(),
+  //   'age?': z.int().min(18).max(80),
+  //   'isActive?': z.bool(),
+  // }).transformTyped((data) => User.fromMap(data));
+
+  // final user = userSchemaInterface.parse({
+  //   'name': 'John Doe',
+  //   'email': 'john.doe@example.com',
+  // });
+  // print(user.email);
+
   // final ignoreSchema = z.map({
   //   'name': z.string().min(3).max(20),
   //   'age': z.int().min(18).max(80).nullable(),
@@ -31,9 +92,9 @@ void main() async {
   // final sallary = doubleSchema.parse('3');
   // print(sallary);
 
-  final emailSchema = z.string(message: 'Deve ser uma string').email();
-  final email = emailSchema.parse(2);
-  print(email);
+  // final emailSchema = z.string(message: 'Deve ser uma string').email();
+  // final email = emailSchema.parse(2);
+  // print(email);
 
   // final tagsSchema = z.list(z.string().transform((value) => '#$value'));
   // final tags = tagsSchema.parse(['#dart', '#flutter']);

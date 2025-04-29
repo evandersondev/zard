@@ -1,3 +1,6 @@
+import 'package:zard/src/schemas/z_interface.dart';
+import 'package:zard/src/schemas/z_lazy.dart';
+
 import 'schemas/schemas.dart';
 import 'schemas/z_coerce_container.dart';
 
@@ -88,6 +91,11 @@ class Zard {
   /// ```
   ZMap map(Map<String, Schema> schema, {String? message}) =>
       ZMap(schema, message: message);
+
+  ZInterface interface(Map<String, Schema> rawSchemas, {String? message}) =>
+      ZInterface(rawSchemas, message: message);
+
+  LazySchema lazy(Schema Function() schemaThunk) => LazySchema(schemaThunk);
 
   /// A schema for validating lists.
   /// ```md

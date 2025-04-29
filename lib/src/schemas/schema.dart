@@ -1,7 +1,9 @@
+import 'package:zard/src/schemas/z_list.dart';
 import 'package:zard/src/types/zart_error.dart';
 
 import '../types/zard_issue.dart';
 import '../types/zard_result.dart';
+import 'transformed_schema.dart';
 
 typedef Validator<T> = ZardIssue? Function(T value);
 typedef Transformer<T> = T Function(T value);
@@ -25,6 +27,10 @@ abstract class Schema<T> {
     return this;
   }
 
+  TransformedSchema<T, R> transformTyped<R>(R Function(T value) transformer) {
+    return TransformedSchema<T, R>(this, transformer);
+  }
+
   // O método .optional() não altera o comportamento de parse() diretamente,
   // pois a omissão (campo não fornecido) deve ser tratada por schemas contêiner, como ZMap.
   Schema<T> optional() {
@@ -40,6 +46,10 @@ abstract class Schema<T> {
 
   void addTransform(Transformer<T> transform) {
     _transforms.add(transform);
+  }
+
+  ZList list({String? message}) {
+    return ZList(this, message: message);
   }
 
   T? parse(dynamic value) {
