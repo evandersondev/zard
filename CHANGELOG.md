@@ -1,3 +1,7 @@
+## 0.0.13
+
+- Add z.interface, z.lazy, z.interType and transformTyped.
+
 ## 0.0.12
 
 - Add ZardResult type and update custom message.

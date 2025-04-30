@@ -1,6 +1,6 @@
 import 'package:zard/src/types/zard_issue.dart';
 
-import '../types/zart_error.dart';
+import '../types/zard_error.dart';
 import 'schemas.dart';
 
 class ZDate extends Schema<DateTime> {

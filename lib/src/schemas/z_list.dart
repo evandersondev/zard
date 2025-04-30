@@ -1,5 +1,5 @@
+import '../types/zard_error.dart';
 import '../types/zard_issue.dart';
-import '../types/zart_error.dart';
 import 'schema.dart';
 
 typedef ListValidator = ZardIssue? Function(List<dynamic> value);

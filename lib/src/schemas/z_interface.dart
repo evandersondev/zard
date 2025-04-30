@@ -3,22 +3,42 @@ import 'package:zard/src/schemas/schemas.dart';
 import '../types/zard_error.dart';
 import '../types/zard_issue.dart';
 
-class ZMap extends Schema<Map<String, dynamic>> {
+class ZInterface extends Schema<Map<String, dynamic>> {
+  // Map with effective keys (without "?" suffix) and their corresponding schemas.
   final Map<String, Schema> schemas;
   bool _strict = false;
   bool Function(Map<String, dynamic> value)? _refineValidator;
   String? _refineMessage;
   final String? message;
 
-  ZMap(this.schemas, {this.message});
+  ZInterface(Map<String, Schema> rawSchemas, {this.message})
+      : schemas = _processRawSchemas(rawSchemas);
 
-  ZMap strict() {
+  // Processes the raw schema keys.
+  // Keys ending with '?' are treated as optional.
+  static Map<String, Schema> _processRawSchemas(
+      Map<String, Schema> rawSchemas) {
+    final Map<String, Schema> processed = {};
+    rawSchemas.forEach((key, schema) {
+      if (key.endsWith('?')) {
+        // Remove the trailing '?' for the effective key
+        final newKey = key.substring(0, key.length - 1);
+        // Mark the schema as optional regardless
+        processed[newKey] = schema.optional();
+      } else {
+        processed[key] = schema;
+      }
+    });
+    return processed;
+  }
+
+  ZInterface strict() {
     _strict = true;
     return this;
   }
 
   @override
-  ZMap refine(bool Function(Map<String, dynamic> value) predicate,
+  ZInterface refine(bool Function(Map<String, dynamic> value) predicate,
       {String? message}) {
     _refineValidator = predicate;
     _refineMessage = message;
@@ -42,6 +62,7 @@ class ZMap extends Schema<Map<String, dynamic>> {
 
     schemas.forEach((key, schema) {
       if (!value.containsKey(key)) {
+        // If the field is missing and the schema is not optional, add error.
         if (!schema.isOptional) {
           addError(ZardIssue(
             message: 'Field "$key" is required',
@@ -76,6 +97,7 @@ class ZMap extends Schema<Map<String, dynamic>> {
     });
 
     if (_strict) {
+      // Check for extra keys not defined in the interface.
       for (var key in value.keys) {
         if (!schemas.containsKey(key)) {
           addError(ZardIssue(
@@ -179,35 +201,8 @@ class ZMap extends Schema<Map<String, dynamic>> {
     }
   }
 
-  /// Use .keyOf to create a ZodEnum schema from the keys of an object schema.
-  ZEnum keyof() {
-    return ZEnum(schemas.keys.toList());
-  }
-
-  /// Use .pick to create a new schema that only includes the specified keys.
-  ZMap pick(List<String> keys) {
-    final newSchemas = <String, Schema>{};
-    for (final key in keys) {
-      if (schemas.containsKey(key)) {
-        newSchemas[key] = schemas[key]!;
-      }
-    }
-    return ZMap(newSchemas);
-  }
-
-  /// Use .omit to create a new schema that excludes the specified keys.
-  ZMap omit(List<String> keys) {
-    final newSchemas = <String, Schema>{};
-    for (final key in schemas.keys) {
-      if (!keys.contains(key)) {
-        newSchemas[key] = schemas[key]!;
-      }
-    }
-    return ZMap(newSchemas);
-  }
-
   @override
   String toString() {
-    return 'ZMap(${schemas.toString()})';
+    return 'ZInterface(${schemas.toString()})';
   }
 }
