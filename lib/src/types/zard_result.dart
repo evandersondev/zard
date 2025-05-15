@@ -1,8 +1,8 @@
 import 'zard_error.dart';
 
-class ZardResult {
+class ZardResult<T> {
   final bool success;
-  final dynamic data;
+  final T? data;
   final ZardError? error;
 
   ZardResult({

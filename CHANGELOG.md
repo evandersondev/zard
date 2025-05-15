@@ -1,3 +1,7 @@
+## 0.0.15
+
+- Add generic type to ZardResult.
+
 ## 0.0.14
 
 - Export ZardResult type.

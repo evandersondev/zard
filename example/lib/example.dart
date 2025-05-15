@@ -75,24 +75,24 @@ void main() async {
     print('Error: ${e.messages}');
   }
 
-  // final ignoreSchema = z.map({
-  //   'name': z.string().min(3).max(20),
-  //   'age': z.int().min(18).max(80).nullable(),
-  //   'email': z.string().email(),
-  //   'isActive': z.bool().optional(),
-  // });
+  final ignoreSchema = z.map({
+    'name': z.string().min(3).max(20),
+    'age': z.int().min(18).max(80).nullable(),
+    'email': z.string().email(),
+    'isActive': z.bool().optional(),
+  });
 
-  // final ignore = ignoreSchema.safeParse({
-  //   'name': 'John Doe',
-  //   'age': 50,
-  //   'email': 'john.doe@example.com',
-  //   'isActive': true,
-  // });
-  // if (ignore.success) {
-  //   print(ignore.data);
-  // } else {
-  //   print(ignore.error);
-  // }
+  final ignore = ignoreSchema.safeParse({
+    'name': 'John Doe',
+    'age': 50,
+    'email': 'john.doe@example.com',
+    'isActive': true,
+  });
+  if (ignore.success) {
+    print(ignore.data);
+  } else {
+    print(ignore.error);
+  }
   // final stringSchema = z.string().min(3);
   // final hello = stringSchema.parse('hello');
   // print(hello);
