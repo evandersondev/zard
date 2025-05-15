@@ -1,3 +1,7 @@
+## 0.0.16
+
+- Add path key to ZardIssue.
+
 ## 0.0.15
 
 - Add generic type to ZardResult.

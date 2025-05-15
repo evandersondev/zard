@@ -20,7 +20,7 @@ class ZardType<T> extends Schema<T> {
   });
 
   @override
-  T parse(dynamic value) {
+  T parse(dynamic value, {String? path}) {
     // Primeiro valida o Map com o schema de Map.
     final validatedMap = mapSchema.parse(value);
 

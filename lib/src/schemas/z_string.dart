@@ -364,7 +364,7 @@ class ZString extends Schema<String> {
   }
 
   @override
-  String parse(dynamic value) {
+  String parse(dynamic value, {String? path}) {
     clearErrors();
 
     if (value is! String) {
@@ -373,6 +373,7 @@ class ZString extends Schema<String> {
           message: message ?? 'Expected a string value',
           type: 'type_error',
           value: value,
+          path: path,
         ),
       );
 
@@ -383,7 +384,12 @@ class ZString extends Schema<String> {
       final error = validator(value);
       if (error != null) {
         addError(
-          ZardIssue(message: error.message, type: error.type, value: value),
+          ZardIssue(
+            message: error.message,
+            type: error.type,
+            value: value,
+            path: path,
+          ),
         );
       }
     }
@@ -404,7 +410,7 @@ class ZCoerceString extends Schema<String> {
   ZCoerceString({String? message}) {}
 
   @override
-  String parse(dynamic value) {
+  String parse(dynamic value, {String? path}) {
     clearErrors();
 
     try {
@@ -418,6 +424,7 @@ class ZCoerceString extends Schema<String> {
         message: 'Failed to coerce value to string',
         type: 'coerce_error',
         value: value,
+        path: path,
       ));
       throw ZardError(issues);
     }

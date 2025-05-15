@@ -20,7 +20,7 @@ class ZBool extends Schema<bool> {
   }
 
   @override
-  bool parse(dynamic value) {
+  bool parse(dynamic value, {String? path}) {
     clearErrors();
 
     if (value is! bool) {
@@ -54,7 +54,7 @@ class ZBool extends Schema<bool> {
   }
 
   @override
-  Future<bool> parseAsync(dynamic value) async {
+  Future<bool> parseAsync(dynamic value, {String? path}) async {
     clearErrors();
     final resolvedValue = value is Future ? await value : value;
     return parse(resolvedValue);
@@ -65,7 +65,7 @@ class ZCoerceBoolean extends Schema<bool> {
   ZCoerceBoolean({String? message});
 
   @override
-  bool parse(dynamic value) {
+  bool parse(dynamic value, {String? path}) {
     clearErrors();
     try {
       if (value == 0 ||

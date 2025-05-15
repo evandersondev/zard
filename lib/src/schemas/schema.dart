@@ -52,7 +52,7 @@ abstract class Schema<T> {
     return ZList(this, message: message);
   }
 
-  T? parse(dynamic value) {
+  T? parse(dynamic value, {String path = ''}) {
     clearErrors();
 
     if (value == null) {
@@ -63,6 +63,7 @@ abstract class Schema<T> {
           message: 'Value is required and cannot be null',
           type: 'required_error',
           value: value,
+          path: path.isEmpty ? null : path, // Adiciona path como opcional
         ));
         throw ZardError(issues);
       }
@@ -77,6 +78,7 @@ abstract class Schema<T> {
           message: error.message,
           type: error.type,
           value: value,
+          path: path.isEmpty ? null : path, // Adiciona path como opcional
         ));
       }
     }
@@ -112,9 +114,9 @@ abstract class Schema<T> {
     return List.unmodifiable(_transforms);
   }
 
-  ZardResult safeParse(dynamic value) {
+  ZardResult safeParse(dynamic value, {String path = ''}) {
     try {
-      final parsed = parse(value);
+      final parsed = parse(value, path: path);
       return ZardResult(
         success: true,
         data: parsed,
@@ -128,11 +130,11 @@ abstract class Schema<T> {
   }
 
   // Asynchronous version of parse.
-  Future<T?> parseAsync(dynamic value) async {
+  Future<T?> parseAsync(dynamic value, {String path = ''}) async {
     clearErrors();
     try {
       final resolvedValue = value is Future ? await value : value;
-      final result = parse(resolvedValue);
+      final result = parse(resolvedValue, path: path);
       return result;
     } catch (e) {
       return Future.error(ZardError(issues));
@@ -140,9 +142,9 @@ abstract class Schema<T> {
   }
 
   // Asynchronous version of safeParse.
-  Future<ZardResult> safeParseAsync(dynamic value) async {
+  Future<ZardResult> safeParseAsync(dynamic value, {String path = ''}) async {
     try {
-      final parsed = await parseAsync(value);
+      final parsed = await parseAsync(value, path: path);
       return ZardResult(
         success: true,
         data: parsed,
@@ -155,13 +157,15 @@ abstract class Schema<T> {
     }
   }
 
-  Schema<T> refine(bool Function(T value) predicate, {String? message}) {
+  Schema<T> refine(bool Function(T value) predicate,
+      {String? message, String? path}) {
     addValidator((T value) {
       if (!predicate(value)) {
         return ZardIssue(
           message: message ?? "Refinement failed",
           type: "refine_error",
           value: value,
+          path: path, // Passa o path se necessário
         );
       }
       return null;

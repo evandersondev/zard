@@ -67,7 +67,7 @@ class ZDate extends Schema<DateTime> {
   }
 
   @override
-  DateTime? parse(dynamic value) {
+  DateTime? parse(dynamic value, {String? path}) {
     clearErrors();
 
     if (value == null && isOptional) {
@@ -116,7 +116,7 @@ class ZCoerceDate extends Schema<DateTime> {
   ZCoerceDate({String? message});
 
   @override
-  DateTime parse(dynamic value) {
+  DateTime parse(dynamic value, {String? path}) {
     clearErrors();
     try {
       DateTime result;

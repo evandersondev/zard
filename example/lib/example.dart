@@ -1,35 +1,34 @@
-import 'package:example/user.dart';
 import 'package:zard/zard.dart';
 
 void main() async {
   // Recursive schema example
   // Transform to type
   // Lazy schema
-  Schema<User> getUserSchema() {
-    return z.interface({
-      'name': z.string().min(3).max(20),
-      'email': z.string().email(),
-      'friends?': z.lazy(() => getUserSchema().list()),
-    }).transformTyped((json) => User.fromMap(json));
-  }
+  // Schema<User> getUserSchema() {
+  //   return z.interface({
+  //     'name': z.string().min(3).max(20),
+  //     'email': z.string().email(),
+  //     'friends?': z.lazy(() => getUserSchema().list()),
+  //   }).transformTyped((json) => User.fromMap(json));
+  // }
 
-  final user = getUserSchema().parse({
-    'name': 'John Doe',
-    'email': 'john.doe@example.com',
-    'friends': [
-      {
-        'name': 'Jane Doe',
-        'email': 'jane.doe@example.com',
-        'friends': [
-          {
-            'name': 'Evan Doe',
-            'email': 'john.doe@example.com',
-          },
-        ],
-      },
-    ],
-  });
-  print(user?.friends.first.friends.first.name);
+  // final user = getUserSchema().parse({
+  //   'name': 'John Doe',
+  //   'email': 'john.doe@example.com',
+  //   'friends': [
+  //     {
+  //       'name': 'Jane Doe',
+  //       'email': 'jane.doe@example.com',
+  //       'friends': [
+  //         {
+  //           'name': 'Evan Doe',
+  //           'email': 'john.doe@example.com',
+  //         },
+  //       ],
+  //     },
+  //   ],
+  // });
+  // print(user?.friends.first.friends.first.name);
 
   // final userSchemaInterface = z.interface({
   //   'name': z.string().min(3).max(20),
@@ -45,35 +44,35 @@ void main() async {
   // print(user.email);
 
   // Inferred type example
-  final userSchema = z.inferType(
-    fromMap: (json) => User.fromMap(json),
-    mapSchema: z.map({
-      'name': z.string().min(3),
-      'email': z.string().email(),
-      'friends': z
-          .list(z.map({
-            'name': z.string().min(3),
-            'email': z.string().email(),
-            'friends': z
-                .list(z.map({
-                  'name': z.string().min(3),
-                  'email': z.string().email(),
-                }))
-                .optional(),
-          }))
-          .optional(),
-    }),
-  );
+  // final userSchema = z.inferType(
+  //   fromMap: (json) => User.fromMap(json),
+  //   mapSchema: z.map({
+  //     'name': z.string().min(3),
+  //     'email': z.string().email(),
+  //     'friends': z
+  //         .list(z.map({
+  //           'name': z.string().min(3),
+  //           'email': z.string().email(),
+  //           'friends': z
+  //               .list(z.map({
+  //                 'name': z.string().min(3),
+  //                 'email': z.string().email(),
+  //               }))
+  //               .optional(),
+  //         }))
+  //         .optional(),
+  //   }),
+  // );
 
-  try {
-    final user = userSchema.parse({
-      'name': 'John Doe',
-      'email': 'john.doe@example.com',
-    });
-    print('User created: ${user.name}, ${user.email}');
-  } on ZardError catch (e) {
-    print('Error: ${e.messages}');
-  }
+  // try {
+  //   final user = userSchema.parse({
+  //     'name': 'John Doe',
+  //     'email': 'john.doe@example.com',
+  //   });
+  //   print('User created: ${user.name}, ${user.email}');
+  // } on ZardError catch (e) {
+  //   print('Error: ${e.messages}');
+  // }
 
   final ignoreSchema = z.map({
     'name': z.string().min(3).max(20),
@@ -91,11 +90,11 @@ void main() async {
   if (ignore.success) {
     print(ignore.data);
   } else {
-    print(ignore.error);
+    print(ignore.error?.issues.toList());
   }
-  // final stringSchema = z.string().min(3);
-  // final hello = stringSchema.parse('hello');
-  // print(hello);
+  final stringSchema = z.string().min(3);
+  final hello = stringSchema.parse('lo');
+  print(hello);
 
   // final intSchema = z.int().min(0).max(10);
   // final age = intSchema.parse(5);

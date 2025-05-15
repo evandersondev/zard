@@ -56,7 +56,7 @@ class ZEnum extends Schema<List<String>> {
   }
 
   @override
-  List<String> parse(dynamic value) {
+  List<String> parse(dynamic value, {String? path}) {
     clearErrors();
 
     if (value is! List<String>) {

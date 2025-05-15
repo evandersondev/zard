@@ -39,14 +39,14 @@ class ZInterface extends Schema<Map<String, dynamic>> {
 
   @override
   ZInterface refine(bool Function(Map<String, dynamic> value) predicate,
-      {String? message}) {
+      {String? message, String? path}) {
     _refineValidator = predicate;
     _refineMessage = message;
     return this;
   }
 
   @override
-  Map<String, dynamic>? parse(dynamic value) {
+  Map<String, dynamic>? parse(dynamic value, {String? path}) {
     clearErrors();
 
     if (value is! Map) {
@@ -127,7 +127,8 @@ class ZInterface extends Schema<Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>?> parseAsync(dynamic value) async {
+  Future<Map<String, dynamic>?> parseAsync(dynamic value,
+      {String? path}) async {
     clearErrors();
     try {
       final resolvedValue = value is Future ? await value : value;

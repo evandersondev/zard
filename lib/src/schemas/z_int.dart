@@ -163,7 +163,7 @@ class ZInt extends Schema<int> {
   }
 
   @override
-  int? parse(dynamic value) {
+  int? parse(dynamic value, {String? path}) {
     clearErrors();
 
     if (value is! int) {
@@ -203,7 +203,7 @@ class ZCoerceInt extends Schema<int> {
   ZCoerceInt({String? message});
 
   @override
-  int parse(dynamic value) {
+  int parse(dynamic value, {String? path}) {
     clearErrors();
     try {
       final asString = value?.toString() ?? '';
