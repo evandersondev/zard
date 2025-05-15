@@ -1,3 +1,7 @@
+## 0.0.14
+
+- Export ZardResult type.
+
 ## 0.0.13
 
 - Add z.interface, z.lazy, z.interType and transformTyped.
