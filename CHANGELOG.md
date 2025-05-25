@@ -1,3 +1,7 @@
+## 0.0.17
+
+- Chore nullable return from ZMap parse.
+
 ## 0.0.16
 
 - Add path key to ZardIssue.

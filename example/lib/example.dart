@@ -1,6 +1,9 @@
+import 'package:example/helpers/maps.dart';
 import 'package:zard/zard.dart';
 
 void main() async {
+  mapsHelper();
+
   // Recursive schema example
   // Transform to type
   // Lazy schema
@@ -29,6 +32,7 @@ void main() async {
   //   ],
   // });
   // print(user?.friends.first.friends.first.name);
+  // print(user.friends.first.friends.first.name);
 
   // final userSchemaInterface = z.interface({
   //   'name': z.string().min(3).max(20),
@@ -72,6 +76,12 @@ void main() async {
   //   print('User created: ${user.name}, ${user.email}');
   // } on ZardError catch (e) {
   //   print('Error: ${e.messages}');
+  // }
+
+  // if (ignore.success) {
+  //   print(ignore.data);
+  // } else {
+  //   print(ignore.error);
   // }
 
   final ignoreSchema = z.map({

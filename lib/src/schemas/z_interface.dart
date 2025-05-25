@@ -46,7 +46,7 @@ class ZInterface extends Schema<Map<String, dynamic>> {
   }
 
   @override
-  Map<String, dynamic>? parse(dynamic value, {String? path}) {
+  Map<String, dynamic> parse(dynamic value, {String? path}) {
     clearErrors();
 
     if (value is! Map) {

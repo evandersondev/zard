@@ -52,21 +52,17 @@ abstract class Schema<T> {
     return ZList(this, message: message);
   }
 
-  T? parse(dynamic value, {String path = ''}) {
+  T parse(dynamic value, {String path = ''}) {
     clearErrors();
 
     if (value == null) {
-      if (_nullable) {
-        return null;
-      } else {
-        addError(ZardIssue(
-          message: 'Value is required and cannot be null',
-          type: 'required_error',
-          value: value,
-          path: path.isEmpty ? null : path, // Adiciona path como opcional
-        ));
-        throw ZardError(issues);
-      }
+      addError(ZardIssue(
+        message: 'Value is required and cannot be null',
+        type: 'required_error',
+        value: value,
+        path: path.isEmpty ? null : path, // Adiciona path como opcional
+      ));
+      throw ZardError(issues);
     }
 
     T result = value as T;

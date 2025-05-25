@@ -6,7 +6,7 @@ class LazySchema<T> extends Schema<T> {
   LazySchema(this.schemaThunk);
 
   @override
-  T? parse(dynamic value, {String? path}) {
+  T parse(dynamic value, {String? path}) {
     // Get the actual schema when needed.
     final actualSchema = schemaThunk();
     return actualSchema.parse(value);
