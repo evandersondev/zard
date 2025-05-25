@@ -1,3 +1,7 @@
+## 0.0.14
+
+- Chore nullable return from ZMap parse.
+
 ## 0.0.13
 
 - Add z.interface, z.lazy, z.interType and transformTyped.

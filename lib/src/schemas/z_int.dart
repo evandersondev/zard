@@ -163,7 +163,7 @@ class ZInt extends Schema<int> {
   }
 
   @override
-  int? parse(dynamic value) {
+  int parse(dynamic value) {
     clearErrors();
 
     if (value is! int) {

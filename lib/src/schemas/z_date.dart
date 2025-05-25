@@ -67,12 +67,12 @@ class ZDate extends Schema<DateTime> {
   }
 
   @override
-  DateTime? parse(dynamic value) {
+  DateTime parse(dynamic value) {
     clearErrors();
 
-    if (value == null && isOptional) {
-      return null;
-    }
+    // if (value == null && isOptional) {
+    //   return null;
+    // }
 
     final validationResult = _validate(value);
     if (validationResult != null) {
@@ -108,7 +108,7 @@ class ZDate extends Schema<DateTime> {
     }
     // If the value is already a DateTime, defer to the base implementation.
     final result = super.parse(value);
-    return result as DateTime;
+    return result;
   }
 }
 

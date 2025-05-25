@@ -52,20 +52,20 @@ abstract class Schema<T> {
     return ZList(this, message: message);
   }
 
-  T? parse(dynamic value) {
+  T parse(dynamic value) {
     clearErrors();
 
     if (value == null) {
-      if (_nullable) {
-        return null;
-      } else {
-        addError(ZardIssue(
-          message: 'Value is required and cannot be null',
-          type: 'required_error',
-          value: value,
-        ));
-        throw ZardError(issues);
-      }
+      // if (_nullable) {
+      //   return null;
+      // } else {
+      addError(ZardIssue(
+        message: 'Value is required and cannot be null',
+        type: 'required_error',
+        value: value,
+      ));
+      throw ZardError(issues);
+      // }
     }
 
     T result = value as T;

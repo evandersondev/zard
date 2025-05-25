@@ -26,7 +26,7 @@ class ZMap extends Schema<Map<String, dynamic>> {
   }
 
   @override
-  Map<String, dynamic>? parse(dynamic value) {
+  Map<String, dynamic> parse(dynamic value) {
     clearErrors();
 
     if (value is! Map) {
