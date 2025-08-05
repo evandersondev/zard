@@ -3,7 +3,7 @@
   <h1 align="center">Zard</h1>
   <br>
   <p align="center">
-  <a href="https://github.com/evandersondev/darto">🛡️ Zard Github</a>
+  <a href="https://zard-docs.vercel.app/">🛡️ Zard Documentation</a>
   <br/>
     Zard is a schema validation and transformation library for Dart, inspired by the popular  <a href="https://github.com/colinhacks/zod">Zod</a> library for JavaScript. With Zard, you can define schemas to validate and transform data easily and intuitively.
   </p>
