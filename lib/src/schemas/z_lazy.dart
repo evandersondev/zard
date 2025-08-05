@@ -13,7 +13,7 @@ class LazySchema<T> extends Schema<T> {
   }
 
   @override
-  Future<T?> parseAsync(dynamic value, {String? path}) async {
+  Future<T> parseAsync(dynamic value, {String? path}) async {
     final actualSchema = schemaThunk();
     return await actualSchema.parseAsync(value);
   }

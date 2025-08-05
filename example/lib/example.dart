@@ -1,8 +1,23 @@
-import 'package:example/helpers/maps.dart';
+import 'dart:io';
+
 import 'package:zard/zard.dart';
 
 void main() async {
-  mapsHelper();
+  // final enumSchema = z.$enum(['red', 'green', 'blue']).extract(['red', 'blue']);
+  // final roles = ['red', 'green', 'blue'];
+  // final result = enumSchema.parse('red');
+  // print('Enum values: $result');
+  // mapsHelper();
+
+  final file = File('mock_file.txt');
+  // await file.writeAsString('This is a mock file for testing purposes.');
+
+  final fileSchema = z.file().mime('image/png');
+  // fileSchema.min(10000); // minimum size (bytes)
+  /// fileSchema.max(1_000_000); // maximum size (bytes)
+  /// fileSchema.mime("image/png"); // MIME type
+  /// fileSchema.mime(["image/png", "image/jpeg"]);
+  print(fileSchema.parse(file));
 
   // Recursive schema example
   // Transform to type
@@ -84,27 +99,27 @@ void main() async {
   //   print(ignore.error);
   // }
 
-  final ignoreSchema = z.map({
-    'name': z.string().min(3).max(20),
-    'age': z.int().min(18).max(80).nullable(),
-    'email': z.string().email(),
-    'isActive': z.bool().optional(),
-  });
+  // final ignoreSchema = z.map({
+  //   'name': z.string().min(3).max(20),
+  //   'age': z.int().min(18).max(80).nullable(),
+  //   'email': z.string().email(),
+  //   'isActive': z.bool().optional(),
+  // });
 
-  final ignore = ignoreSchema.safeParse({
-    'name': 'John Doe',
-    'age': 50,
-    'email': 'john.doe@example.com',
-    'isActive': true,
-  });
-  if (ignore.success) {
-    print(ignore.data);
-  } else {
-    print(ignore.error?.issues.toList());
-  }
-  final stringSchema = z.string().min(3);
-  final hello = stringSchema.parse('lo');
-  print(hello);
+  // final ignore = ignoreSchema.safeParse({
+  //   'name': 'John Doe',
+  //   'age': 50,
+  //   'email': 'john.doe@example.com',
+  //   'isActive': true,
+  // });
+  // if (ignore.success) {
+  //   print(ignore.data);
+  // } else {
+  //   print(ignore.error?.issues.toList());
+  // }
+  // final stringSchema = z.string().min(3);
+  // final hello = stringSchema.parse('lo');
+  // print(hello);
 
   // final intSchema = z.int().min(0).max(10);
   // final age = intSchema.parse(5);
@@ -137,11 +152,6 @@ void main() async {
   //   {'street': '456 Elm St', 'city': 'SHELBYVILLE'},
   // ]);
   // print(addresses);
-
-  // final enumSchema = z.enumerate(['red', 'green', 'blue']).exclude(['green']);
-  // final roles = ['red', 'green', 'blue'];
-  // final result = enumSchema.parse(roles);
-  // print('Extract and exclude enum values: $result');
 
   // final userSchema = z.map({
   //   'name': z.string().transform((value) => value.toUpperCase()),

@@ -3,6 +3,7 @@ import 'package:zard/src/schemas/z_lazy.dart';
 import 'package:zard/zard.dart';
 
 import 'schemas/z_coerce_container.dart';
+import 'schemas/z_file.dart';
 
 typedef Validator<T> = String? Function(T value);
 
@@ -200,7 +201,7 @@ class Zard {
   /// final roles = ['red', 'green', 'blue'];
   /// final result = enumSchema.parse(roles);
   /// ```
-  ZEnum enumerate(List<String> values, {String? message}) =>
+  ZEnum $enum(List<String> values, {String? message}) =>
       ZEnum(values, message: message);
 
   /// Make a parse type coercion.
@@ -210,6 +211,16 @@ class Zard {
   /// print(result); // "123"
   /// ```
   ZCoerce get coerce => ZCoerce();
+
+  /// A schema for validating files.
+  /// ```dart
+  /// final fileSchema = z.file();
+  /// fileSchema.min(10_000); // minimum size (bytes)
+  /// fileSchema.max(1_000_000); // maximum size (bytes)
+  /// fileSchema.mime("image/png"); // MIME type
+  /// fileSchema.mime(["image/png", "image/jpeg"]); // multiple MIME types
+  /// ```
+  ZFile file({String? message}) => ZFile(message: message);
 }
 
 final z = Zard();

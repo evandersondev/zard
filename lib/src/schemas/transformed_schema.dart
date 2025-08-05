@@ -17,7 +17,7 @@ class TransformedSchema<T, R> extends Schema<R> {
   }
 
   @override
-  Future<R?> parseAsync(dynamic value, {String? path}) async {
+  Future<R> parseAsync(dynamic value, {String? path}) async {
     final T? originalResult = await inner.parseAsync(value);
     if (originalResult == null) {
       throw Exception("Transformation error: inner.parseAsync returned null");

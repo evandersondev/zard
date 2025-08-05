@@ -127,8 +127,7 @@ class ZInterface extends Schema<Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>?> parseAsync(dynamic value,
-      {String? path}) async {
+  Future<Map<String, dynamic>> parseAsync(dynamic value, {String? path}) async {
     clearErrors();
     try {
       final resolvedValue = value is Future ? await value : value;

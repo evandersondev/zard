@@ -3,6 +3,7 @@ import 'package:zard/src/types/zard_error.dart';
 
 import '../types/zard_issue.dart';
 import '../types/zard_result.dart';
+
 import 'transformed_schema.dart';
 
 typedef Validator<T> = ZardIssue? Function(T value);
@@ -126,7 +127,7 @@ abstract class Schema<T> {
   }
 
   // Asynchronous version of parse.
-  Future<T?> parseAsync(dynamic value, {String path = ''}) async {
+  Future<T> parseAsync(dynamic value, {String path = ''}) async {
     clearErrors();
     try {
       final resolvedValue = value is Future ? await value : value;

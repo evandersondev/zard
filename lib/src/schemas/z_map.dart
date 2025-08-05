@@ -111,7 +111,7 @@ class ZMap extends Schema<Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>?> parseAsync(dynamic value,
+  Future<Map<String, dynamic>> parseAsync(dynamic value,
       {String path = ''}) async {
     clearErrors();
     try {

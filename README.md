@@ -23,7 +23,7 @@ Add the following line to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  zard: ^0.0.17
+  zard: ^0.0.18
 ```
 
 Then, run:

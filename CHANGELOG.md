@@ -1,3 +1,7 @@
+## 0.0.18
+
+- Chore nullable return from ZMap parse async, add file method and fix $enum type.
+
 ## 0.0.17
 
 - Chore nullable return from ZMap parse.
