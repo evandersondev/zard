@@ -2,8 +2,7 @@ import '../schemas/schema.dart';
 
 abstract class CustomModel {
   // Factory method para criar uma instância a partir de um JSON validado.
-  factory CustomModel.fromJson(Map<String, dynamic> json) =>
-      throw UnimplementedError();
+  factory CustomModel.fromJson(Map<String, dynamic> json) => throw UnimplementedError();
 }
 
 /// ZardType é um Schema customizado que valida um Map e o transforma na instância do modelo T.
@@ -25,6 +24,6 @@ class ZardType<T> extends Schema<T> {
     final validatedMap = mapSchema.parse(value);
 
     // Aqui você pode ainda customizar validações antes da conversão.
-    return fromMap(validatedMap!);
+    return fromMap(validatedMap);
   }
 }
