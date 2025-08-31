@@ -319,3 +319,15 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ---
 
 Made with ❤️ for Dart/Flutter developers! 🎯✨
+
+<div style={{textAlign: 'center', margin: '2rem 0'}}>
+  <a href="https://github.com/evandersondev/zard/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=evandersondev/zard" alt="Contributors" />
+  </a>
+  <p style={{marginTop: '1rem', fontSize: '0.9rem', color: 'var(--ifm-color-emphasis-600)'}}>
+    <strong>Made with <a href="https://contrib.rocks" target="_blank">contrib.rocks</a></strong>
+  </p>
+</div>
+
+</div>
+
