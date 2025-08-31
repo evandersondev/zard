@@ -250,6 +250,11 @@ Zard now supports additional methods to handle asynchronous validations and cust
   - It accepts a function that receives the parsed value and returns a boolean. If the function returns `false`, a `refine_error` is added with a custom message.
   - This feature is especially useful for validating inter-dependent fields—for example, ensuring that an `age` field is greater than 18 in a user profile map.
 
+- **InferType Method**
+  - **`inferType()`**: Allows you to create a typed schema that validates a Map and transforms it into a specific model instance.
+  - It combines a Map validation schema with a conversion function, enabling type-safe validation and transformation in a single operation.
+  - This feature is especially useful for creating strongly-typed schemas for your data models while maintaining all validation capabilities including `refine()`.
+
 Example usage of `refine()` in a Map schema:
 
 ```dart
@@ -274,6 +279,23 @@ final result2 = schema.safeParse({
   'email': 'john.doe@example.com',
 });
 print(result2); // {success: false, errors: [...]}
+```
+Example usage of `inferType()`:
+
+```dart
+final userSchema = z.inferType<User>(
+  fromMap: (map) => User.fromMap(map),
+  mapSchema: schema,
+).refine(
+  (value) => value.age >= 18,
+  message: 'User must be at least 18 years old',
+);
+
+final user = userSchema.parse({
+  'name': 'John Doe',
+  'age': 25,
+});
+print(user.name); // John Doe
 ```
 
 <br>

@@ -12,17 +12,17 @@ void main() {
       'age': '20',
     };
 
-    final sucessParsed = User.fromMap(map);
+    final successParsed = User.fromMap(map);
 
-    expect(sucessParsed.name, 'John Doe');
-    expect(sucessParsed.age, 20);
+    expect(successParsed.name, 'John Doe');
+    expect(successParsed.age, 20);
     expect(() => User.fromMap(mapError), throwsA(isA<ZardError>()));
   });
 
-  test('Refine deve falhar com idade < 18', () async {
+  test('Refine should fail with age < 18', () async {
     final map = {
       'name': 'John Doe',
-      'age': 15, // Idade inválida: 15 < 18
+      'age': 15, // Invalid age: 15 < 18
     };
 
     final userSchema = z
@@ -35,14 +35,14 @@ void main() {
           message: 'Age must be greater than 18',
         );
 
-    // Deve lançar ZardError porque 15 < 18
+    // Should throw ZardError because 15 < 18
     expect(() => userSchema.parse(map), throwsA(isA<ZardError>()));
   });
 
-  test('Refine deve passar com idade > 18', () async {
+  test('Refine should pass with age > 18', () async {
     final map = {
       'name': 'John Doe',
-      'age': 20, // Idade válida: 20 > 18
+      'age': 20, // Valid age: 20 > 18
     };
 
     final userSchema = z
@@ -55,7 +55,7 @@ void main() {
           message: 'Age must be greater than 18',
         );
 
-    // Deve passar sem erro
+    // Should pass without error
     final user = userSchema.parse(map);
     expect(user.age, 20);
     expect(user.name, 'John Doe');
