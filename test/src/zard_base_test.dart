@@ -19,12 +19,13 @@ void main() {
     expect(() => User.fromMap(mapError), throwsA(isA<ZardError>()));
   });
 
-  test('Infer type', () async {
-    final mapError = {
+  test('Refine deve falhar com idade < 18', () async {
+    final map = {
       'name': 'John Doe',
-      'age': 20,
+      'age': 15, // Idade inválida: 15 < 18
     };
-    final result = z
+
+    final userSchema = z
         .inferType<User>(
           fromMap: (map) => User.fromMap(map),
           mapSchema: User.zMap,
@@ -32,8 +33,32 @@ void main() {
         .refine(
           (value) => value.age > 18,
           message: 'Age must be greater than 18',
+        );
+
+    // Deve lançar ZardError porque 15 < 18
+    expect(() => userSchema.parse(map), throwsA(isA<ZardError>()));
+  });
+
+  test('Refine deve passar com idade > 18', () async {
+    final map = {
+      'name': 'John Doe',
+      'age': 20, // Idade válida: 20 > 18
+    };
+
+    final userSchema = z
+        .inferType<User>(
+          fromMap: (map) => User.fromMap(map),
+          mapSchema: User.zMap,
         )
-        .parse(mapError);
+        .refine(
+          (value) => value.age > 18,
+          message: 'Age must be greater than 18',
+        );
+
+    // Deve passar sem erro
+    final user = userSchema.parse(map);
+    expect(user.age, 20);
+    expect(user.name, 'John Doe');
   });
 }
 
@@ -49,7 +74,7 @@ class User {
   User({required this.name, required this.age});
 
   factory User.fromMap(Map<String, dynamic> map) {
-    zMap.parse(map);
-    return User(name: map['name'], age: map['age']);
+    final validatedMap = zMap.parse(map);
+    return User(name: validatedMap['name'], age: validatedMap['age']);
   }
 }

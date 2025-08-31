@@ -1,4 +1,6 @@
 import '../schemas/schema.dart';
+import '../types/zard_error.dart';
+import '../types/zard_issue.dart';
 
 abstract class CustomModel {
   // Factory method para criar uma instância a partir de um JSON validado.
@@ -23,7 +25,28 @@ class ZardType<T> extends Schema<T> {
     // Primeiro valida o Map com o schema de Map.
     final validatedMap = mapSchema.parse(value);
 
-    // Aqui você pode ainda customizar validações antes da conversão.
-    return fromMap(validatedMap);
+    // Converte o Map validado para a instância do modelo
+    final result = fromMap(validatedMap);
+
+    // Executa os validadores herdados do Schema base (incluindo refine)
+    for (final validator in getValidators()) {
+      final error = validator(result);
+      if (error != null) {
+        addError(error);
+      }
+    }
+
+    // Executa as transformações
+    T transformedResult = result;
+    for (final transform in getTransforms()) {
+      transformedResult = transform(transformedResult);
+    }
+
+    // Se houver erros, lança exceção
+    if (issues.isNotEmpty) {
+      throw ZardError(issues);
+    }
+
+    return transformedResult;
   }
 }
