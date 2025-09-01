@@ -1,3 +1,7 @@
+## 0.0.19
+
+- Fix inferType refine validation and improve type safety.
+
 ## 0.0.18
 
 - Chore nullable return from ZMap parse async, add file method and fix $enum type.
