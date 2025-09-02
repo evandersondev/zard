@@ -1,3 +1,7 @@
+## 0.0.20
+
+- Fix path error from ZInt.
+
 ## 0.0.19
 
 - Fix inferType refine validation and improve type safety.

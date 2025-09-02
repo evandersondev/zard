@@ -1,23 +1,33 @@
-import 'dart:io';
-
-import 'package:zard/zard.dart';
+import 'models/pedido_mapper.dart';
 
 void main() async {
+  final pedidoMap = {
+    'numero_pedido': '123456',
+    'status': 'cancelado',
+    'produto': {
+      'id': '123',
+      'nome': 'P',
+      'preco': 10.99,
+      'quantidade': -2,
+    }
+  };
+  final pedido = pedidoSchema.parse(pedidoMap);
+  print(pedido);
   // final enumSchema = z.$enum(['red', 'green', 'blue']).extract(['red', 'blue']);
   // final roles = ['red', 'green', 'blue'];
   // final result = enumSchema.parse('red');
   // print('Enum values: $result');
   // mapsHelper();
 
-  final file = File('mock_file.txt');
+  // final file = File('mock_file.txt');
   // await file.writeAsString('This is a mock file for testing purposes.');
 
-  final fileSchema = z.file().mime('image/png');
+  // final fileSchema = z.file().mime('image/png');
   // fileSchema.min(10000); // minimum size (bytes)
   /// fileSchema.max(1_000_000); // maximum size (bytes)
   /// fileSchema.mime("image/png"); // MIME type
   /// fileSchema.mime(["image/png", "image/jpeg"]);
-  print(fileSchema.parse(file));
+  // print(fileSchema.parse(file));
 
   // Recursive schema example
   // Transform to type

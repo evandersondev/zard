@@ -23,7 +23,7 @@ Add the following line to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  zard: ^0.0.19
+  zard: ^0.0.20
 ```
 
 Then, run:
@@ -246,6 +246,7 @@ Zard now supports additional methods to handle asynchronous validations and cust
   - These methods ensure that if your input is a `Future`, Zard waits for its resolution before parsing.
 
 - **Refine Method on Map Schemas**
+
   - **`refine()`**: Allows you to add custom validation logic on `Map` schemas.
   - It accepts a function that receives the parsed value and returns a boolean. If the function returns `false`, a `refine_error` is added with a custom message.
   - This feature is especially useful for validating inter-dependent fields—for example, ensuring that an `age` field is greater than 18 in a user profile map.
@@ -280,6 +281,7 @@ final result2 = schema.safeParse({
 });
 print(result2); // {success: false, errors: [...]}
 ```
+
 Example usage of `inferType()`:
 
 ```dart
@@ -330,4 +332,3 @@ Made with ❤️ for Dart/Flutter developers! 🎯✨
 </div>
 
 </div>
-

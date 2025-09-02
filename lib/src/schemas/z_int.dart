@@ -172,6 +172,7 @@ class ZInt extends Schema<int> {
           message: message ?? 'Expected an integer value',
           type: 'type_error',
           value: value,
+          path: path,
         ),
       );
       throw ZardError(issues);
@@ -181,7 +182,11 @@ class ZInt extends Schema<int> {
       final error = validator(value);
       if (error != null) {
         addError(
-          ZardIssue(message: error.message, type: error.type, value: value),
+          ZardIssue(
+              message: error.message,
+              type: error.type,
+              value: value,
+              path: path),
         );
       }
     }

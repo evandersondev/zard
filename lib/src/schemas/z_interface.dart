@@ -46,7 +46,7 @@ class ZInterface extends Schema<Map<String, dynamic>> {
   }
 
   @override
-  Map<String, dynamic> parse(dynamic value, {String? path}) {
+  Map<String, dynamic> parse(dynamic value, {String path = ''}) {
     clearErrors();
 
     if (value is! Map) {
@@ -54,6 +54,7 @@ class ZInterface extends Schema<Map<String, dynamic>> {
         message: message ?? 'Expected a Map',
         type: 'type_error',
         value: value,
+        path: path,
       ));
       throw ZardError(issues);
     }
@@ -68,6 +69,7 @@ class ZInterface extends Schema<Map<String, dynamic>> {
             message: 'Field "$key" is required',
             type: 'required_error',
             value: null,
+            path: path,
           ));
         }
       } else {
@@ -78,10 +80,10 @@ class ZInterface extends Schema<Map<String, dynamic>> {
               result[key] = null;
             } else {
               addError(ZardIssue(
-                message: 'Field "$key" cannot be null',
-                type: 'null_error',
-                value: fieldValue,
-              ));
+                  message: 'Field "$key" cannot be null',
+                  type: 'null_error',
+                  value: fieldValue,
+                  path: path));
             }
           } else {
             result[key] = schema.parse(fieldValue);

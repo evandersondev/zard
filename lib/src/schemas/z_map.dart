@@ -61,10 +61,11 @@ class ZMap extends Schema<Map<String, dynamic>> {
               result[key] = null;
             } else {
               addError(ZardIssue(
-                  message: 'Field "$key" cannot be null',
-                  type: 'null_error',
-                  value: fieldValue,
-                  path: fieldPath));
+                message: 'Field "$key" cannot be null',
+                type: 'null_error',
+                value: fieldValue,
+                path: fieldPath,
+              ));
             }
           } else {
             result[key] = schema.parse(fieldValue, path: fieldPath);

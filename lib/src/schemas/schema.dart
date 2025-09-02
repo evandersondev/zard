@@ -3,7 +3,6 @@ import 'package:zard/src/types/zard_error.dart';
 
 import '../types/zard_issue.dart';
 import '../types/zard_result.dart';
-
 import 'transformed_schema.dart';
 
 typedef Validator<T> = ZardIssue? Function(T value);
