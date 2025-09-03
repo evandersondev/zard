@@ -91,9 +91,11 @@ class Zard {
   /// 'sallary': 1000.0,
   /// });
   /// ```
-  ZMap map(Map<String, Schema> schema, {String? message}) => ZMap(schema, message: message);
+  ZMap map(Map<String, Schema> schema, {String? message}) =>
+      ZMap(schema, message: message);
 
-  ZInterface interface(Map<String, Schema> rawSchemas, {String? message}) => ZInterface(rawSchemas, message: message);
+  ZInterface interface(Map<String, Schema> rawSchemas, {String? message}) =>
+      ZInterface(rawSchemas, message: message);
 
   LazySchema lazy(Schema Function() schemaThunk) => LazySchema(schemaThunk);
 
@@ -114,7 +116,8 @@ class Zard {
   /// final listSchema = z.list(z.string());
   /// final list = listSchema.parse(['a', 'b', 'c']);
   /// ```
-  ZList list(Schema itemSchema, {String? message}) => ZList(itemSchema, message: message);
+  ZList list(Schema itemSchema, {String? message}) =>
+      ZList(itemSchema, message: message);
 
   /// A schema for validating booleans.
   /// ```md
@@ -194,7 +197,8 @@ class Zard {
   /// final roles = ['red', 'green', 'blue'];
   /// final result = enumSchema.parse(roles);
   /// ```
-  ZEnum $enum(List<String> values, {String? message}) => ZEnum(values, message: message);
+  ZEnum $enum(List<String> values, {String? message}) =>
+      ZEnum(values, message: message);
 
   /// Make a parse type coercion.
   /// ```dart

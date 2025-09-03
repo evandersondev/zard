@@ -176,6 +176,7 @@ class ZDouble extends Schema<double> {
           message: message ?? 'Expected a double value',
           type: 'type_error',
           value: value,
+          path: path,
         ),
       );
       throw ZardError(issues);
@@ -189,6 +190,7 @@ class ZDouble extends Schema<double> {
             message: error.message,
             type: error.type,
             value: value,
+            path: path,
           ),
         );
       }
@@ -222,6 +224,7 @@ class ZCoerceDouble extends Schema<double> {
             message: 'Value is not a valid number',
             type: 'type_error',
             value: value,
+            path: path,
           ),
           ...issues,
         ]);
@@ -235,6 +238,7 @@ class ZCoerceDouble extends Schema<double> {
         message: 'Failed to coerce value to number',
         type: 'coerce_error',
         value: value,
+        path: path,
       ));
       throw ZardError(issues);
     }

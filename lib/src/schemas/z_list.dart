@@ -23,9 +23,11 @@ class ZList extends Schema<List<dynamic>> {
     if (value is! List) {
       addError(
         ZardIssue(
-            message: message ?? 'Must be a list',
-            type: 'type_error',
-            value: value),
+          message: message ?? 'Must be a list',
+          type: 'type_error',
+          value: value,
+          path: path,
+        ),
       );
       throw ZardError(issues);
     }

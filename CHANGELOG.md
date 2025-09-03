@@ -1,3 +1,7 @@
+## 0.0.21
+
+- Update transform method.
+
 ## 0.0.20
 
 - Fix path error from ZInt.

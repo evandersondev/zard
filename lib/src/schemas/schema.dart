@@ -22,9 +22,8 @@ abstract class Schema<T> {
     _validators.add(validator);
   }
 
-  Schema<T> transform(Transformer<T> transformer) {
-    addTransform(transformer);
-    return this;
+  TransformedSchema<T, R> transform<R>(R Function(T value) transformer) {
+    return TransformedSchema<T, R>(this, transformer);
   }
 
   TransformedSchema<T, R> transformTyped<R>(R Function(T value) transformer) {

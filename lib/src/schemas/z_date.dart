@@ -77,6 +77,7 @@ class ZDate extends Schema<DateTime> {
           message: validationResult.message,
           type: validationResult.type,
           value: value,
+          path: path,
         ),
       );
       throw ZardError(issues);
@@ -97,6 +98,7 @@ class ZDate extends Schema<DateTime> {
             message: message ?? 'Invalid date format',
             type: 'datetime',
             value: value,
+            path: path,
           ),
         );
         throw ZardError(issues);
@@ -130,6 +132,7 @@ class ZCoerceDate extends Schema<DateTime> {
         message: 'Failed to coerce value to DateTime',
         type: 'coerce_error',
         value: value,
+        path: path,
       ));
       throw ZardError(issues);
     }

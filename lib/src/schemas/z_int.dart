@@ -222,6 +222,7 @@ class ZCoerceInt extends Schema<int> {
         message: 'Failed to coerce value to BigInt',
         type: 'coerce_error',
         value: value,
+        path: path,
       ));
       throw ZardError(issues);
     }

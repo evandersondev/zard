@@ -1,18 +1,50 @@
-import 'models/pedido_mapper.dart';
+import 'package:intl/intl.dart';
+import 'package:zard/zard.dart';
+
+String slugify(String str) {
+  final slug = str
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+      .replaceAll(RegExp(r'^-+'), '')
+      .replaceAll(RegExp(r'-+$'), '');
+  return slug;
+}
 
 void main() async {
-  final pedidoMap = {
-    'numero_pedido': '123456',
-    'status': 'cancelado',
-    'produto': {
-      'id': '123',
-      'nome': 'P',
-      'preco': 10.99,
-      'quantidade': -2,
-    }
+  final product = {
+    'quantity': 4,
+    'price': 1500.0,
+    'currency': 'usd',
+    'name': 'MacBook Pro',
   };
-  final pedido = pedidoSchema.parse(pedidoMap);
-  print(pedido);
+
+  final f = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+  final schema = z.map({
+    'quantity': z.int(),
+    'price': z.double().transform((p) => f.format(p)),
+    'currency': z.string().transform((c) => c.toUpperCase()),
+    'name': z.string(),
+  }).transform((map) {
+    map['slug'] = slugify(map['name']);
+    map['total'] = map['quantity'] * f.parse(map['price']);
+    return map;
+  });
+
+  final result = schema.parse(product);
+  print(result);
+
+  // final pedidoMap = {
+  //   'numero_pedido': '123456',
+  //   'status': 'cancelado',
+  //   'produto': {
+  //     'id': '123',
+  //     'nome': 'P',
+  //     'preco': 10.99,
+  //     'quantidade': -2,
+  //   }
+  // };
+  // final pedido = pedidoSchema.parse(pedidoMap);
+  // print(pedido);
   // final enumSchema = z.$enum(['red', 'green', 'blue']).extract(['red', 'blue']);
   // final roles = ['red', 'green', 'blue'];
   // final result = enumSchema.parse('red');

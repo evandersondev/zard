@@ -7,9 +7,8 @@ class TransformedSchema<T, R> extends Schema<R> {
   TransformedSchema(this.inner, this.transformer);
 
   @override
-  R parse(dynamic value, {String? path}) {
-    // Verifica se o valor retornado pelo inner.parse é nulo e lança um erro customizado, se necessário.
-    final T? originalResult = inner.parse(value);
+  R parse(dynamic value, {String path = ''}) {
+    final T? originalResult = inner.parse(value, path: path);
     if (originalResult == null) {
       throw Exception("Transformation error: inner.parse returned null");
     }
@@ -17,8 +16,8 @@ class TransformedSchema<T, R> extends Schema<R> {
   }
 
   @override
-  Future<R> parseAsync(dynamic value, {String? path}) async {
-    final T? originalResult = await inner.parseAsync(value);
+  Future<R> parseAsync(dynamic value, {String path = ''}) async {
+    final T? originalResult = await inner.parseAsync(value, path: path);
     if (originalResult == null) {
       throw Exception("Transformation error: inner.parseAsync returned null");
     }

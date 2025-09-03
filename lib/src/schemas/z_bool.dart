@@ -81,6 +81,7 @@ class ZCoerceBoolean extends Schema<bool> {
         message: 'Failed to coerce value to boolean',
         type: 'coerce_error',
         value: value,
+        path: path,
       ));
       throw ZardError(issues);
     }

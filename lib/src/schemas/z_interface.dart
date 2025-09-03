@@ -80,10 +80,11 @@ class ZInterface extends Schema<Map<String, dynamic>> {
               result[key] = null;
             } else {
               addError(ZardIssue(
-                  message: 'Field "$key" cannot be null',
-                  type: 'null_error',
-                  value: fieldValue,
-                  path: path));
+                message: 'Field "$key" cannot be null',
+                type: 'null_error',
+                value: fieldValue,
+                path: path,
+              ));
             }
           } else {
             result[key] = schema.parse(fieldValue);
@@ -106,6 +107,7 @@ class ZInterface extends Schema<Map<String, dynamic>> {
             message: 'Unexpected key "$key" found in object',
             type: 'strict_error',
             value: value[key],
+            path: path,
           ));
         }
       }
@@ -153,6 +155,7 @@ class ZInterface extends Schema<Map<String, dynamic>> {
               message: 'Field "$key" is required',
               type: 'required_error',
               value: null,
+              path: path,
             ));
           }
         } else {
@@ -166,6 +169,7 @@ class ZInterface extends Schema<Map<String, dynamic>> {
                   message: 'Field "$key" cannot be null',
                   type: 'null_error',
                   value: fieldValue,
+                  path: path,
                 ));
               }
             } else {
@@ -188,6 +192,7 @@ class ZInterface extends Schema<Map<String, dynamic>> {
               message: 'Unexpected key "$key" found in object',
               type: 'strict_error',
               value: resolvedValue[key],
+              path: path,
             ));
           }
         }

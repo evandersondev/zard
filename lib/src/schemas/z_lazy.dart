@@ -6,15 +6,21 @@ class LazySchema<T> extends Schema<T> {
   LazySchema(this.schemaThunk);
 
   @override
-  T parse(dynamic value, {String? path}) {
+  T parse(dynamic value, {String path = ''}) {
     // Get the actual schema when needed.
     final actualSchema = schemaThunk();
-    return actualSchema.parse(value);
+    return actualSchema.parse(
+      value,
+      path: path,
+    );
   }
 
   @override
-  Future<T> parseAsync(dynamic value, {String? path}) async {
+  Future<T> parseAsync(dynamic value, {String path = ''}) async {
     final actualSchema = schemaThunk();
-    return await actualSchema.parseAsync(value);
+    return await actualSchema.parseAsync(
+      value,
+      path: path,
+    );
   }
 }
