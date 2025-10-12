@@ -7,8 +7,8 @@ class TransformedSchema<T, R> extends Schema<R> {
   TransformedSchema(this.inner, this.transformer);
 
   @override
-  R parse(dynamic value, {String path = ''}) {
-    final T? originalResult = inner.parse(value, path: path);
+  R parse(dynamic value, {String path = '', ErrorMap? error}) {
+    final T? originalResult = inner.parse(value, path: path, error: error);
     if (originalResult == null) {
       throw Exception("Transformation error: inner.parse returned null");
     }

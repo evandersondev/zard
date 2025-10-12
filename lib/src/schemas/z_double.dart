@@ -167,7 +167,7 @@ class ZDouble extends Schema<double> {
   }
 
   @override
-  double parse(dynamic value, {String? path}) {
+  double parse(dynamic value, {String path = '', ErrorMap? error}) {
     clearErrors();
 
     if (value is! double) {
@@ -178,6 +178,7 @@ class ZDouble extends Schema<double> {
           value: value,
           path: path,
         ),
+        customErrorMap: error,
       );
       throw ZardError(issues);
     }
@@ -213,7 +214,7 @@ class ZCoerceDouble extends Schema<double> {
   ZCoerceDouble({String? message});
 
   @override
-  double parse(dynamic value, {String? path}) {
+  double parse(dynamic value, {String path = '', ErrorMap? error}) {
     clearErrors();
     try {
       final asString = value?.toString() ?? '';

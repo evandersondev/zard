@@ -36,8 +36,7 @@ class ZEnum extends Schema<String> {
   /// print(value); // Prints: ['a', 'b']
   /// ```
   ZEnum extract(List<String> list) {
-    final filteredValues =
-        _allowedValues.where((e) => list.contains(e)).toList();
+    final filteredValues = _allowedValues.where((e) => list.contains(e)).toList();
     return ZEnum(filteredValues, message: message);
   }
 
@@ -48,13 +47,12 @@ class ZEnum extends Schema<String> {
   /// print(value); // Prints: ['c']
   /// ```
   ZEnum exclude(List<String> list) {
-    final filteredValues =
-        _allowedValues.where((e) => !list.contains(e)).toList();
+    final filteredValues = _allowedValues.where((e) => !list.contains(e)).toList();
     return ZEnum(filteredValues, message: message);
   }
 
   @override
-  String parse(dynamic value, {String path = ''}) {
+  String parse(dynamic value, {String path = '', ErrorMap? error}) {
     clearErrors();
 
     // Verifica se o valor é uma string
@@ -111,10 +109,10 @@ class ZEnum extends Schema<String> {
   }
 
   @override
-  ZardResult<String> safeParse(dynamic value, {String path = ''}) {
+  ZardResult safeParse(dynamic value, {String path = '', ErrorMap? error}) {
     try {
-      final parsed = parse(value, path: path);
-      return ZardResult<String>(
+      final parsed = parse(value, path: path, error: error);
+      return ZardResult(
         success: true,
         data: parsed,
       );
@@ -127,8 +125,7 @@ class ZEnum extends Schema<String> {
   }
 
   @override
-  Future<ZardResult<String>> safeParseAsync(dynamic value,
-      {String path = ''}) async {
+  Future<ZardResult<String>> safeParseAsync(dynamic value, {String path = ''}) async {
     try {
       final parsed = await parseAsync(value, path: path);
       return ZardResult<String>(

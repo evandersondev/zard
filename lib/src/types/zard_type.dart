@@ -3,8 +3,7 @@ import '../types/zard_error.dart';
 
 abstract class CustomModel {
   // Factory method to create an instance from validated JSON.
-  factory CustomModel.fromJson(Map<String, dynamic> json) =>
-      throw UnimplementedError();
+  factory CustomModel.fromJson(Map<String, dynamic> json) => throw UnimplementedError();
 }
 
 /// ZardType is a custom Schema that validates a Map and transforms it into a model instance T.
@@ -21,9 +20,9 @@ class ZardType<T> extends Schema<T> {
   });
 
   @override
-  T parse(dynamic value, {String? path = ''}) {
+  T parse(dynamic value, {String path = '', ErrorMap? error}) {
     // First validates the Map with the Map schema.
-    final validatedMap = mapSchema.parse(value);
+    final validatedMap = mapSchema.parse(value, path: path, error: error);
 
     // Converts the validated Map to the model instance
     final result = fromMap(validatedMap);

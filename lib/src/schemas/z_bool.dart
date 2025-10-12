@@ -20,7 +20,7 @@ class ZBool extends Schema<bool> {
   }
 
   @override
-  bool parse(dynamic value, {String? path}) {
+  bool parse(dynamic value, {String path = '', ErrorMap? error}) {
     clearErrors();
 
     if (value is! bool) {
@@ -30,6 +30,7 @@ class ZBool extends Schema<bool> {
           type: 'type_error',
           value: value,
         ),
+        customErrorMap: error,
       );
       throw ZardError(issues);
     }
@@ -65,14 +66,10 @@ class ZCoerceBoolean extends Schema<bool> {
   ZCoerceBoolean({String? message});
 
   @override
-  bool parse(dynamic value, {String? path}) {
+  bool parse(dynamic value, {String path = '', ErrorMap? error}) {
     clearErrors();
     try {
-      if (value == 0 ||
-          value == '0' ||
-          value == '' ||
-          value == false ||
-          value == null) {
+      if (value == 0 || value == '0' || value == '' || value == false || value == null) {
         return false;
       }
       return true;

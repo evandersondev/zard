@@ -18,15 +18,14 @@ class ZMap extends Schema<Map<String, dynamic>> {
   }
 
   @override
-  ZMap refine(bool Function(Map<String, dynamic> value) predicate,
-      {String? message, String? path}) {
+  ZMap refine(bool Function(Map<String, dynamic> value) predicate, {String? message, String? path}) {
     _refineValidator = predicate;
     _refineMessage = message;
     return this;
   }
 
   @override
-  Map<String, dynamic> parse(dynamic value, {String path = ''}) {
+  Map<String, dynamic> parse(dynamic value, {String path = '', ErrorMap? error}) {
     clearErrors();
 
     if (value is! Map) {
@@ -112,8 +111,7 @@ class ZMap extends Schema<Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>> parseAsync(dynamic value,
-      {String path = ''}) async {
+  Future<Map<String, dynamic>> parseAsync(dynamic value, {String path = ''}) async {
     clearErrors();
     try {
       final resolvedValue = value is Future ? await value : value;
@@ -150,15 +148,10 @@ class ZMap extends Schema<Map<String, dynamic>> {
               if (schema.isNullable) {
                 result[key] = null;
               } else {
-                addError(ZardIssue(
-                    message: 'Field "$key" cannot be null',
-                    type: 'null_error',
-                    value: fieldValue,
-                    path: fieldPath));
+                addError(ZardIssue(message: 'Field "$key" cannot be null', type: 'null_error', value: fieldValue, path: fieldPath));
               }
             } else {
-              result[key] =
-                  await schema.parseAsync(fieldValue, path: fieldPath);
+              result[key] = await schema.parseAsync(fieldValue, path: fieldPath);
             }
           } catch (e) {
             if (e is ZardError) {

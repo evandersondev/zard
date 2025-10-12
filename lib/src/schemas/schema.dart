@@ -7,6 +7,7 @@ import 'transformed_schema.dart';
 
 typedef Validator<T> = ZardIssue? Function(T value);
 typedef Transformer<T> = T Function(T value);
+typedef ErrorMap = String? Function(ZardIssue issue);
 
 abstract class Schema<T> {
   final List<Validator<T>> _validators = [];
@@ -14,6 +15,7 @@ abstract class Schema<T> {
   bool _isOptional = false;
   bool _nullable = false;
   final List<ZardIssue> issues = [];
+  ErrorMap? _errorMap;
 
   bool get isOptional => _isOptional;
   bool get isNullable => _nullable;
@@ -53,34 +55,46 @@ abstract class Schema<T> {
     _transforms.add(transform);
   }
 
+  /// Define um error map personalizado para este schema
+  Schema<T> errorMap(ErrorMap map) {
+    _errorMap = map;
+    return this;
+  }
+
   ZList list({String? message}) {
     return ZList(this, message: message);
   }
 
-  T parse(dynamic value, {String path = ''}) {
+  T parse(dynamic value, {String path = '', ErrorMap? error}) {
     clearErrors();
 
     if (value == null) {
-      addError(ZardIssue(
-        message: 'Value is required and cannot be null',
-        type: 'required_error',
-        value: value,
-        path: path.isEmpty ? null : path, // Adiciona path como opcional
-      ));
+      addError(
+        ZardIssue(
+          message: 'Value is required and cannot be null',
+          type: 'required_error',
+          value: value,
+          path: path.isEmpty ? null : path,
+        ),
+        customErrorMap: error,
+      );
       throw ZardError(issues);
     }
 
     T result = value as T;
 
     for (final validator in _validators) {
-      final error = validator(result);
-      if (error != null) {
-        addError(ZardIssue(
-          message: error.message,
-          type: error.type,
-          value: value,
-          path: path.isEmpty ? null : path, // Adiciona path como opcional
-        ));
+      final validationError = validator(result);
+      if (validationError != null) {
+        addError(
+          ZardIssue(
+            message: validationError.message,
+            type: validationError.type,
+            value: value,
+            path: path.isEmpty ? null : path,
+          ),
+          customErrorMap: error,
+        );
       }
     }
 
@@ -95,7 +109,16 @@ abstract class Schema<T> {
     return result;
   }
 
-  void addError(ZardIssue error) {
+  void addError(ZardIssue error, {ErrorMap? customErrorMap}) {
+    // Aplica error map se disponível
+    final errorMap = customErrorMap ?? _errorMap;
+    if (errorMap != null) {
+      final customMessage = errorMap(error);
+      if (customMessage != null) {
+        issues.add(error.copyWith(message: customMessage));
+        return;
+      }
+    }
     issues.add(error);
   }
 
@@ -115,10 +138,10 @@ abstract class Schema<T> {
     return List.unmodifiable(_transforms);
   }
 
-  ZardResult<T> safeParse(dynamic value, {String path = ''}) {
+  ZardResult safeParse(dynamic value, {String path = '', ErrorMap? error}) {
     try {
-      final parsed = parse(value, path: path);
-      return ZardResult<T>(
+      final parsed = parse(value, path: path, error: error);
+      return ZardResult(
         success: true,
         data: parsed,
       );
@@ -143,8 +166,7 @@ abstract class Schema<T> {
   }
 
   // Asynchronous version of safeParse.
-  Future<ZardResult<T>> safeParseAsync(dynamic value,
-      {String path = ''}) async {
+  Future<ZardResult<T>> safeParseAsync(dynamic value, {String path = ''}) async {
     try {
       final parsed = await parseAsync(value, path: path);
       return ZardResult<T>(
