@@ -1,0 +1,14 @@
+# GitGuardian configuration
+version: 2
+
+# Ignore test UUIDs and example data
+paths-ignore:
+  - test/**
+  - example/**
+  - "**/*.md"
+
+# Specify patterns to ignore
+matches-ignore:
+  # Ignore example UUIDs used in tests
+  - name: Example UUID
+    match: 123e4567-e89b-12d3-a456-426614174000
