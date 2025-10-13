@@ -109,15 +109,15 @@ abstract class Schema<T> {
     return List.unmodifiable(_transforms);
   }
 
-  ZardResult safeParse(dynamic value, {String path = ''}) {
+  ZardResult<T> safeParse(dynamic value, {String path = ''}) {
     try {
       final parsed = parse(value, path: path);
-      return ZardResult(
+      return ZardResult<T>(
         success: true,
         data: parsed,
       );
     } catch (e) {
-      return ZardResult(
+      return ZardResult<T>(
         success: false,
         error: ZardError(issues),
       );
@@ -137,15 +137,16 @@ abstract class Schema<T> {
   }
 
   // Asynchronous version of safeParse.
-  Future<ZardResult> safeParseAsync(dynamic value, {String path = ''}) async {
+  Future<ZardResult<T>> safeParseAsync(dynamic value,
+      {String path = ''}) async {
     try {
       final parsed = await parseAsync(value, path: path);
-      return ZardResult(
+      return ZardResult<T>(
         success: true,
         data: parsed,
       );
     } catch (e) {
-      return ZardResult(
+      return ZardResult<T>(
         success: false,
         error: ZardError(issues),
       );

@@ -1,7 +1,6 @@
 import '../types/zard_error.dart';
 import '../types/zard_issue.dart';
 import '../types/zard_result.dart';
-
 import 'schema.dart';
 
 class ZEnum extends Schema<String> {
@@ -112,15 +111,15 @@ class ZEnum extends Schema<String> {
   }
 
   @override
-  ZardResult safeParse(dynamic value, {String path = ''}) {
+  ZardResult<String> safeParse(dynamic value, {String path = ''}) {
     try {
       final parsed = parse(value, path: path);
-      return ZardResult(
+      return ZardResult<String>(
         success: true,
         data: parsed,
       );
     } catch (e) {
-      return ZardResult(
+      return ZardResult<String>(
         success: false,
         error: ZardError(issues),
       );
@@ -128,15 +127,16 @@ class ZEnum extends Schema<String> {
   }
 
   @override
-  Future<ZardResult> safeParseAsync(dynamic value, {String path = ''}) async {
+  Future<ZardResult<String>> safeParseAsync(dynamic value,
+      {String path = ''}) async {
     try {
       final parsed = await parseAsync(value, path: path);
-      return ZardResult(
+      return ZardResult<String>(
         success: true,
         data: parsed,
       );
     } catch (e) {
-      return ZardResult(
+      return ZardResult<String>(
         success: false,
         error: ZardError(issues),
       );

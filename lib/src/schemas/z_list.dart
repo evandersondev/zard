@@ -62,19 +62,6 @@ class ZList extends Schema<List<dynamic>> {
     return transformedResult;
   }
 
-  // @override
-  // Map<String, dynamic> safeParse(dynamic value) {
-  //   try {
-  //     final parsed = parse(value);
-  //     return {'success': true, 'data': parsed};
-  //   } catch (e) {
-  //     return {
-  //       'success': false,
-  //       'errors': issues.map((e) => e.toString()).toList()
-  //     };
-  //   }
-  // }
-
   /// Noempty validation
   /// Example:
   /// ```dart

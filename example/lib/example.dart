@@ -1,4 +1,3 @@
-import 'package:intl/intl.dart';
 import 'package:zard/zard.dart';
 
 String slugify(String str) {
@@ -11,27 +10,27 @@ String slugify(String str) {
 }
 
 void main() async {
-  final product = {
-    'quantity': 4,
-    'price': 1500.0,
-    'currency': 'usd',
-    'name': 'MacBook Pro',
-  };
+  // final product = {
+  //   'quantity': 4,
+  //   'price': 1500.0,
+  //   'currency': 'usd',
+  //   'name': 'MacBook Pro',
+  // };
 
-  final f = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
-  final schema = z.map({
-    'quantity': z.int(),
-    'price': z.double().transform((p) => f.format(p)),
-    'currency': z.string().transform((c) => c.toUpperCase()),
-    'name': z.string(),
-  }).transform((map) {
-    map['slug'] = slugify(map['name']);
-    map['total'] = map['quantity'] * f.parse(map['price']);
-    return map;
-  });
+  // final f = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+  // final schema = z.map({
+  //   'quantity': z.int(),
+  //   'price': z.double().transform((p) => f.format(p)),
+  //   'currency': z.string().transform((c) => c.toUpperCase()),
+  //   'name': z.string(),
+  // }).transform((map) {
+  //   map['slug'] = slugify(map['name']);
+  //   map['total'] = map['quantity'] * f.parse(map['price']);
+  //   return map;
+  // });
 
-  final result = schema.parse(product);
-  print(result);
+  // final result = schema.parse(product);
+  // print(result);
 
   // final pedidoMap = {
   //   'numero_pedido': '123456',
@@ -45,10 +44,10 @@ void main() async {
   // };
   // final pedido = pedidoSchema.parse(pedidoMap);
   // print(pedido);
-  // final enumSchema = z.$enum(['red', 'green', 'blue']).extract(['red', 'blue']);
+  final enumSchema = ZEnum(['red', 'green', 'blue']).extract(['red', 'blue']);
   // final roles = ['red', 'green', 'blue'];
-  // final result = enumSchema.parse('red');
-  // print('Enum values: $result');
+  final result = enumSchema.parse('red');
+  print('Enum values: $result');
   // mapsHelper();
 
   // final file = File('mock_file.txt');
@@ -163,9 +162,9 @@ void main() async {
   // final hello = stringSchema.parse('lo');
   // print(hello);
 
-  // final intSchema = z.int().min(0).max(10);
-  // final age = intSchema.parse(5);
-  // print(age);
+  final intSchema = z.int().min(0).max(10);
+  final age = intSchema.safeParse(5);
+  print(age);
 
   // final doubleSchema = z.double(message: 'Deve ser um double').min(0).max(10);
   // final sallary = doubleSchema.parse('3');

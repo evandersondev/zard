@@ -1,3 +1,7 @@
+## 0.0.22
+
+- Improve to add type result from safeParse.
+
 ## 0.0.21
 
 - Update transform method.
