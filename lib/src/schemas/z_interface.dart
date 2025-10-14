@@ -11,11 +11,13 @@ class ZInterface extends Schema<Map<String, dynamic>> {
   String? _refineMessage;
   final String? message;
 
-  ZInterface(Map<String, Schema> rawSchemas, {this.message}) : schemas = _processRawSchemas(rawSchemas);
+  ZInterface(Map<String, Schema> rawSchemas, {this.message})
+      : schemas = _processRawSchemas(rawSchemas);
 
   // Processes the raw schema keys.
   // Keys ending with '?' are treated as optional.
-  static Map<String, Schema> _processRawSchemas(Map<String, Schema> rawSchemas) {
+  static Map<String, Schema> _processRawSchemas(
+      Map<String, Schema> rawSchemas) {
     final Map<String, Schema> processed = {};
     rawSchemas.forEach((key, schema) {
       if (key.endsWith('?')) {
@@ -36,14 +38,15 @@ class ZInterface extends Schema<Map<String, dynamic>> {
   }
 
   @override
-  ZInterface refine(bool Function(Map<String, dynamic> value) predicate, {String? message, String? path}) {
+  ZInterface refine(bool Function(Map<String, dynamic> value) predicate,
+      {String? message, String? path}) {
     _refineValidator = predicate;
     _refineMessage = message;
     return this;
   }
 
   @override
-  Map<String, dynamic> parse(dynamic value, {String path = '', ErrorMap? error}) {
+  Map<String, dynamic> parse(dynamic value, {String path = ''}) {
     clearErrors();
 
     if (value is! Map) {

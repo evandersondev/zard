@@ -17,7 +17,7 @@ class ZList extends Schema<List<dynamic>> {
   }
 
   @override
-  List<dynamic> parse(dynamic value, {String path = '', ErrorMap? error}) {
+  List<dynamic> parse(dynamic value, {String? path}) {
     clearErrors();
 
     if (value is! List) {

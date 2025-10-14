@@ -19,7 +19,8 @@ class ZDate extends Schema<DateTime> {
   /// Performs validation on the provided value to ensure it represents a valid datetime.
   ZardIssue? _validate(dynamic value) {
     // If value is a DateTime instance, convert it to ISO8601 string for validation.
-    String valueStr = value is DateTime ? value.toIso8601String() : value.toString();
+    String valueStr =
+        value is DateTime ? value.toIso8601String() : value.toString();
 
     // Regex pattern supporting various date formats.
     final dateRegExp = RegExp(
@@ -44,7 +45,10 @@ class ZDate extends Schema<DateTime> {
     }
 
     // Additional validation: Check individual date components.
-    final components = valueStr.split(RegExp(r'[-T:/\.Z+]')).where((c) => c.isNotEmpty).toList();
+    final components = valueStr
+        .split(RegExp(r'[-T:/\.Z+]'))
+        .where((c) => c.isNotEmpty)
+        .toList();
     if (components.length >= 3) {
       final year = int.tryParse(components[0]) ?? 0;
       final month = int.tryParse(components[1]) ?? 0;
@@ -63,7 +67,7 @@ class ZDate extends Schema<DateTime> {
   }
 
   @override
-  DateTime parse(dynamic value, {String path = '', ErrorMap? error}) {
+  DateTime parse(dynamic value, {String? path}) {
     clearErrors();
 
     final validationResult = _validate(value);
@@ -110,7 +114,7 @@ class ZCoerceDate extends Schema<DateTime> {
   ZCoerceDate({String? message});
 
   @override
-  DateTime parse(dynamic value, {String path = '', ErrorMap? error}) {
+  DateTime parse(dynamic value, {String? path}) {
     clearErrors();
     try {
       DateTime result;

@@ -163,7 +163,7 @@ class ZInt extends Schema<int> {
   }
 
   @override
-  int parse(dynamic value, {String path = '', ErrorMap? error}) {
+  int parse(dynamic value, {String? path}) {
     clearErrors();
 
     if (value is! int) {
@@ -174,7 +174,6 @@ class ZInt extends Schema<int> {
           value: value,
           path: path,
         ),
-        customErrorMap: error,
       );
       throw ZardError(issues);
     }
@@ -205,7 +204,7 @@ class ZCoerceInt extends Schema<int> {
   ZCoerceInt({String? message});
 
   @override
-  int parse(dynamic value, {String path = '', ErrorMap? error}) {
+  int parse(dynamic value, {String? path}) {
     clearErrors();
     try {
       final asString = value?.toString() ?? '';

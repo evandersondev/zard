@@ -135,7 +135,6 @@ class ZString extends Schema<String> {
   /// Example:
   /// ```dart
   /// final uuidSchema = z.string().uuid();
-  /// // ggignore - Example UUID for documentation purposes only
   /// final uuid = uuidSchema.parse('123e4567-e89b-12d3-a456-426614174000'); // returns valid uuid
   /// final uuid = uuidSchema.parse('invalid-uuid'); // throws with error details
   /// ```
@@ -365,7 +364,7 @@ class ZString extends Schema<String> {
   }
 
   @override
-  String parse(dynamic value, {String path = '', ErrorMap? error}) {
+  String parse(dynamic value, {String? path}) {
     clearErrors();
 
     if (value is! String) {
@@ -376,7 +375,6 @@ class ZString extends Schema<String> {
           value: value,
           path: path,
         ),
-        customErrorMap: error,
       );
 
       throw ZardError(issues);
@@ -412,7 +410,7 @@ class ZCoerceString extends Schema<String> {
   ZCoerceString({String? message}) {}
 
   @override
-  String parse(dynamic value, {String path = '', ErrorMap? error}) {
+  String parse(dynamic value, {String? path}) {
     clearErrors();
 
     try {
