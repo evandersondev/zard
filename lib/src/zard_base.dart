@@ -1,5 +1,4 @@
-import 'package:zard/src/schemas/z_double_copy.dart';
-import 'package:zard/zard.dart' hide ZCoerceDouble;
+import 'package:zard/zard.dart';
 import 'types/zard_error_formatter.dart' as formatter;
 
 typedef Validator<T> = String? Function(T value);
@@ -72,8 +71,6 @@ class Zard {
   /// final sallary = doubleSchema.parse(5.5);
   /// ```
   ZDouble double({String? message}) => ZDouble(message: message);
-  //TODO: @evanderson revisar
-  ZDoubleCopy doubleCopy({String? message}) => ZDoubleCopy(message: message);
 
   /// A schema that coerces values to double.
   /// ```md
