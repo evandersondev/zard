@@ -5,9 +5,9 @@ void main() {
   group('Error Formatting Tests', () {
     group('treeifyError', () {
       test('should convert simple error to tree', () {
-        final schema = ZMap({
-          'username': ZString(),
-          'age': ZInt(),
+        final schema = z.map({
+          'username': z.string(),
+          'age': z.int(),
         });
 
         try {
@@ -27,7 +27,7 @@ void main() {
       });
 
       test('should handle root level errors', () {
-        final schema = ZString();
+        final schema = z.string();
 
         try {
           schema.parse(123);
@@ -44,10 +44,10 @@ void main() {
       });
 
       test('should handle nested object errors', () {
-        final schema = ZMap({
-          'user': ZMap({
-            'name': ZString(),
-            'email': ZString().email(),
+        final schema = z.map({
+          'user': z.map({
+            'name': z.string(),
+            'email': z.string().email(),
           }),
         });
 
@@ -71,8 +71,8 @@ void main() {
       });
 
       test('should handle strict mode errors', () {
-        final schema = ZMap({
-          'name': ZString(),
+        final schema = z.map({
+          'name': z.string(),
         }).strict();
 
         try {
@@ -85,7 +85,9 @@ void main() {
           final tree = treeifyError(error);
 
           // O erro pode estar em errors ou em properties/items dependendo do path
-          final hasErrors = tree.errors.isNotEmpty || tree.properties != null || tree.items != null;
+          final hasErrors = tree.errors.isNotEmpty ||
+              tree.properties != null ||
+              tree.items != null;
           expect(hasErrors, isTrue);
         }
       });
@@ -93,9 +95,9 @@ void main() {
 
     group('prettifyError', () {
       test('should create readable error string', () {
-        final schema = ZMap({
-          'username': ZString(),
-          'age': ZInt(),
+        final schema = z.map({
+          'username': z.string(),
+          'age': z.int(),
         });
 
         try {
@@ -114,7 +116,7 @@ void main() {
       });
 
       test('should handle root level errors', () {
-        final schema = ZString();
+        final schema = z.string();
 
         try {
           schema.parse(123);
@@ -131,9 +133,9 @@ void main() {
       });
 
       test('should show paths correctly', () {
-        final schema = ZMap({
-          'user': ZMap({
-            'name': ZString(),
+        final schema = z.map({
+          'user': z.map({
+            'name': z.string(),
           }),
         });
 
@@ -156,9 +158,9 @@ void main() {
 
     group('flattenError', () {
       test('should flatten errors to field level', () {
-        final schema = ZMap({
-          'username': ZString(),
-          'age': ZInt(),
+        final schema = z.map({
+          'username': z.string(),
+          'age': z.int(),
         });
 
         try {
@@ -178,8 +180,8 @@ void main() {
       });
 
       test('should separate form and field errors', () {
-        final schema = ZMap({
-          'name': ZString(),
+        final schema = z.map({
+          'name': z.string(),
         }).strict();
 
         try {
@@ -192,16 +194,17 @@ void main() {
           final flattened = flattenError(error);
 
           // Erros podem estar em formErrors ou fieldErrors
-          final hasErrors = flattened.formErrors.isNotEmpty || flattened.fieldErrors.isNotEmpty;
+          final hasErrors = flattened.formErrors.isNotEmpty ||
+              flattened.fieldErrors.isNotEmpty;
           expect(hasErrors, isTrue);
         }
       });
 
       test('should handle nested paths by taking first segment', () {
-        final schema = ZMap({
-          'user': ZMap({
-            'name': ZString(),
-            'email': ZString(),
+        final schema = z.map({
+          'user': z.map({
+            'name': z.string(),
+            'email': z.string(),
           }),
         });
 
@@ -221,15 +224,16 @@ void main() {
 
           // Ambos erros devem estar agrupados sob 'user'
           expect(flattened.fieldErrors['user'], isNotNull);
-          expect(flattened.fieldErrors['user']!.length, greaterThanOrEqualTo(1));
+          expect(
+              flattened.fieldErrors['user']!.length, greaterThanOrEqualTo(1));
         }
       });
     });
 
     group('Complex Scenarios', () {
       test('should handle array validation errors', () {
-        final schema = ZMap({
-          'tags': ZList(ZString()),
+        final schema = z.map({
+          'tags': z.list(z.string()),
         });
 
         try {
@@ -250,7 +254,8 @@ void main() {
 
           final flattened = flattenError(error);
           // Pode estar em fieldErrors ou formErrors
-          final hasErrors = flattened.fieldErrors.isNotEmpty || flattened.formErrors.isNotEmpty;
+          final hasErrors = flattened.fieldErrors.isNotEmpty ||
+              flattened.formErrors.isNotEmpty;
           expect(hasErrors, isTrue);
 
           final pretty = prettifyError(error);
@@ -259,8 +264,8 @@ void main() {
       });
 
       test('should handle multiple errors on same field', () {
-        final schema = ZMap({
-          'password': ZString().min(8).regex(RegExp(r'[A-Z]')),
+        final schema = z.map({
+          'password': z.string().min(8).regex(RegExp(r'[A-Z]')),
         });
 
         try {
@@ -273,18 +278,19 @@ void main() {
           final flattened = flattenError(error);
           expect(flattened.fieldErrors['password'], isNotNull);
           // Pode ter múltiplos erros
-          expect(flattened.fieldErrors['password']!.length, greaterThanOrEqualTo(1));
+          expect(flattened.fieldErrors['password']!.length,
+              greaterThanOrEqualTo(1));
         }
       });
 
       test('should format complex nested structure', () {
-        final schema = ZMap({
-          'user': ZMap({
-            'profile': ZMap({
-              'name': ZString(),
-              'age': ZInt().positive(),
+        final schema = z.map({
+          'user': z.map({
+            'profile': z.map({
+              'name': z.string(),
+              'age': z.int().positive(),
             }),
-            'contacts': ZList(ZString().email()),
+            'contacts': z.list(z.string().email()),
           }),
         });
 
@@ -319,9 +325,9 @@ void main() {
 
     group('Integration with existing error handling', () {
       test('should work with safeParse results', () {
-        final schema = ZMap({
-          'email': ZString().email(),
-          'age': ZInt().min(18),
+        final schema = z.map({
+          'email': z.string().email(),
+          'age': z.int().min(18),
         });
 
         final result = schema.safeParse({
@@ -338,7 +344,7 @@ void main() {
       });
 
       test('should integrate with custom error messages', () {
-        final schema = ZString(message: 'Campo obrigatório deve ser texto');
+        final schema = z.string(message: 'Campo obrigatório deve ser texto');
 
         try {
           schema.parse(123);

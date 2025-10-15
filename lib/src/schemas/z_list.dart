@@ -4,7 +4,7 @@ import 'schema.dart';
 
 typedef ListValidator = ZardIssue? Function(List<dynamic> value);
 
-class ZList extends Schema<List<dynamic>> {
+abstract interface class ZList extends Schema<List<dynamic>> {
   final Schema _itemSchema;
   final List<ListValidator> _validators = [];
   final String? message;
@@ -153,4 +153,8 @@ class ZList extends Schema<List<dynamic>> {
     });
     return this;
   }
+}
+
+class ZListImpl extends ZList {
+  ZListImpl(super._itemSchema, {super.message});
 }

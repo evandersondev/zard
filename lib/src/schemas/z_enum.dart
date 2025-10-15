@@ -3,7 +3,7 @@ import '../types/zard_issue.dart';
 import '../types/zard_result.dart';
 import 'schema.dart';
 
-class ZEnum extends Schema<String> {
+abstract interface class ZEnum extends Schema<String> {
   final List<String> _allowedValues;
   final String? message;
 
@@ -38,7 +38,7 @@ class ZEnum extends Schema<String> {
   ZEnum extract(List<String> list) {
     final filteredValues =
         _allowedValues.where((e) => list.contains(e)).toList();
-    return ZEnum(filteredValues, message: message);
+    return ZEnumImpl(filteredValues, message: message);
   }
 
   /// Exclude value from enum transform.
@@ -50,7 +50,7 @@ class ZEnum extends Schema<String> {
   ZEnum exclude(List<String> list) {
     final filteredValues =
         _allowedValues.where((e) => !list.contains(e)).toList();
-    return ZEnum(filteredValues, message: message);
+    return ZEnumImpl(filteredValues, message: message);
   }
 
   @override
@@ -147,4 +147,8 @@ class ZEnum extends Schema<String> {
   String toString() {
     return 'ZEnum($_allowedValues)';
   }
+}
+
+class ZEnumImpl extends ZEnum {
+  ZEnumImpl(super._allowedValues, {super.message});
 }

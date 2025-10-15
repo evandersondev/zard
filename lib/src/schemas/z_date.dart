@@ -1,9 +1,8 @@
-import 'package:zard/src/types/zard_issue.dart';
-
 import '../types/zard_error.dart';
-import 'schemas.dart';
+import '../types/zard_issue.dart';
+import 'schema.dart';
 
-class ZDate extends Schema<DateTime> {
+abstract interface class ZDate extends Schema<DateTime> {
   final String? message;
 
   ZDate({this.message});
@@ -110,31 +109,38 @@ class ZDate extends Schema<DateTime> {
   }
 }
 
-class ZCoerceDate extends Schema<DateTime> {
-  ZCoerceDate({String? message});
+class ZCoerceDate extends ZDate {
+  ZCoerceDate({super.message});
 
   @override
   DateTime parse(dynamic value, {String? path}) {
     clearErrors();
+    DateTime? coercedValue;
+
     try {
-      DateTime result;
       if (value is DateTime) {
-        result = value;
+        coercedValue = value;
       } else {
-        result = DateTime.parse(value?.toString() ?? '');
+        coercedValue = DateTime.tryParse(value?.toString() ?? '');
       }
-      for (final transform in getTransforms()) {
-        result = transform(result);
-      }
-      return result;
     } catch (e) {
+      // Let the check below handle the error reporting.
+    }
+
+    if (coercedValue == null) {
       addError(ZardIssue(
-        message: 'Failed to coerce value to DateTime',
+        message: message ?? 'Failed to coerce value to DateTime',
         type: 'coerce_error',
         value: value,
         path: path,
       ));
       throw ZardError(issues);
     }
+
+    return super.parse(coercedValue, path: path);
   }
+}
+
+class ZDateImpl extends ZDate {
+  ZDateImpl({super.message});
 }

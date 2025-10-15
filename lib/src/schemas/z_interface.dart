@@ -3,7 +3,7 @@ import 'package:zard/src/schemas/schemas.dart';
 import '../types/zard_error.dart';
 import '../types/zard_issue.dart';
 
-class ZInterface extends Schema<Map<String, dynamic>> {
+abstract interface class ZInterface extends Schema<Map<String, dynamic>> {
   // Map with effective keys (without "?" suffix) and their corresponding schemas.
   final Map<String, Schema> schemas;
   bool _strict = false;
@@ -212,4 +212,8 @@ class ZInterface extends Schema<Map<String, dynamic>> {
   String toString() {
     return 'ZInterface(${schemas.toString()})';
   }
+}
+
+class ZInterfaceImpl extends ZInterface {
+  ZInterfaceImpl(super.schemas, {super.message});
 }

@@ -3,7 +3,7 @@ import 'package:zard/src/types/zard_issue.dart';
 import '../types/zard_error.dart';
 import 'schema.dart';
 
-class ZBool extends Schema<bool> {
+abstract interface class ZBool extends Schema<bool> {
   final String? message;
 
   ZBool({this.message}) {
@@ -61,8 +61,8 @@ class ZBool extends Schema<bool> {
   }
 }
 
-class ZCoerceBoolean extends Schema<bool> {
-  ZCoerceBoolean({String? message});
+class ZCoerceBoolean extends ZBool {
+  ZCoerceBoolean({super.message});
 
   @override
   bool parse(dynamic value, {String? path}) {
@@ -70,20 +70,20 @@ class ZCoerceBoolean extends Schema<bool> {
     try {
       if (value == 0 ||
           value == '0' ||
-          value == '' ||
           value == false ||
-          value == null) {
+          value == null ||
+          value == '') {
         return false;
       }
       return true;
     } catch (e) {
-      addError(ZardIssue(
-        message: 'Failed to coerce value to boolean',
-        type: 'coerce_error',
-        value: value,
-        path: path,
-      ));
-      throw ZardError(issues);
+      // This logic is simple enough that it shouldn't throw.
+      // The super.parse will handle any final type checks.
     }
+    return super.parse(value, path: path);
   }
+}
+
+class ZBoolImpl extends ZBool {
+  ZBoolImpl({super.message});
 }

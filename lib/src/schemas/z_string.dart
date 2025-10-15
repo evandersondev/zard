@@ -2,7 +2,7 @@ import '../types/zard_error.dart';
 import '../types/zard_issue.dart';
 import 'schema.dart';
 
-class ZString extends Schema<String> {
+abstract interface class ZString extends Schema<String> {
   final String? message;
 
   ZString({this.message}) {
@@ -406,27 +406,22 @@ class ZString extends Schema<String> {
   }
 }
 
-class ZCoerceString extends Schema<String> {
-  ZCoerceString({String? message}) {}
+class ZCoerceString extends ZString {
+  ZCoerceString({super.message});
 
   @override
   String parse(dynamic value, {String? path}) {
     clearErrors();
 
-    try {
-      String result = value?.toString() ?? "null";
-      for (final transform in getTransforms()) {
-        result = transform(result);
-      }
-      return result;
-    } catch (e) {
-      addError(ZardIssue(
-        message: 'Failed to coerce value to string',
-        type: 'coerce_error',
-        value: value,
-        path: path,
-      ));
-      throw ZardError(issues);
-    }
+    // Coercion to string is generally safe with toString().
+    // We handle null by converting it to an empty string.
+    final coercedValue = value?.toString() ?? '';
+
+    // Now, we use the parent's parse method to run all validations.
+    return super.parse(coercedValue, path: path);
   }
+}
+
+class ZStringImpl extends ZString {
+  ZStringImpl({super.message});
 }

@@ -116,7 +116,7 @@ void main() {
     });
 
     test('custom error messages', () {
-      final schema = ZNum(message: 'Custom error message');
+      final schema = z.num(message: 'Custom error message');
       try {
         schema.parse('invalid');
         fail('Should have thrown');
@@ -135,7 +135,9 @@ void main() {
       } catch (e) {
         expect(e, isA<ZardError>());
         final error = e as ZardError;
-        expect(error.issues.any((issue) => issue.message == 'Must be at least 10'), isTrue);
+        expect(
+            error.issues.any((issue) => issue.message == 'Must be at least 10'),
+            isTrue);
       }
     });
 
@@ -156,33 +158,33 @@ void main() {
 
   group('ZCoerceDouble', () {
     test('coerces string to double', () {
-      final schema = z.coerceDouble();
+      final schema = z.coerce.double();
       expect(schema.parse('3.14'), equals(3.14));
       expect(schema.parse('42'), equals(42.0));
       expect(schema.parse('0'), equals(0.0));
     });
 
     test('accepts double directly', () {
-      final schema = z.coerceDouble();
+      final schema = z.coerce.double();
       expect(schema.parse(3.14), equals(3.14));
       expect(schema.parse(42.0), equals(42.0));
     });
 
     test('coerces int to double', () {
-      final schema = z.coerceDouble();
+      final schema = z.coerce.double();
       expect(schema.parse(42), equals(42.0));
       expect(schema.parse(0), equals(0.0));
     });
 
     test('rejects invalid strings', () {
-      final schema = z.coerceDouble();
+      final schema = z.coerce.double();
       expect(() => schema.parse('not a number'), throwsA(isA<ZardError>()));
       expect(() => schema.parse('abc'), throwsA(isA<ZardError>()));
       expect(() => schema.parse(''), throwsA(isA<ZardError>()));
     });
 
     test('handles edge cases', () {
-      final schema = z.coerceDouble();
+      final schema = z.coerce.double();
       expect(schema.parse('3.14159'), equals(3.14159));
       expect(schema.parse('-42.5'), equals(-42.5));
       expect(schema.parse('0.0'), equals(0.0));

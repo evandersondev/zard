@@ -1,10 +1,9 @@
 import 'dart:io';
 
 import '../types/zard_issue.dart';
-
 import 'schema.dart';
 
-class ZFile extends Schema<File> {
+abstract interface class ZFile extends Schema<File> {
   int? _minSize;
   int? _maxSize;
   List<String>? _mimeTypes;
@@ -85,4 +84,8 @@ class ZFile extends Schema<File> {
   String toString() {
     return 'ZFile(minSize: $_minSize, maxSize: $_maxSize, mimeTypes: $_mimeTypes)';
   }
+}
+
+class ZFileImpl extends ZFile {
+  ZFileImpl({super.message});
 }
