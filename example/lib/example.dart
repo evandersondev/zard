@@ -1,11 +1,7 @@
 import 'package:zard/zard.dart';
 
 String slugify(String str) {
-  final slug = str
-      .toLowerCase()
-      .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
-      .replaceAll(RegExp(r'^-+'), '')
-      .replaceAll(RegExp(r'-+$'), '');
+  final slug = str.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-').replaceAll(RegExp(r'^-+'), '').replaceAll(RegExp(r'-+$'), '');
   return slug;
 }
 
