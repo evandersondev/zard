@@ -43,6 +43,12 @@ abstract class Schema<T> {
     return this;
   }
 
+  Schema<T> nullish() {
+    _nullable = true;
+    _isOptional = true;
+    return this;
+  }
+
   void addTransform(Transformer<T> transform) {
     _transforms.add(transform);
   }
@@ -137,8 +143,7 @@ abstract class Schema<T> {
   }
 
   // Asynchronous version of safeParse.
-  Future<ZardResult<T>> safeParseAsync(dynamic value,
-      {String path = ''}) async {
+  Future<ZardResult<T>> safeParseAsync(dynamic value, {String path = ''}) async {
     try {
       final parsed = await parseAsync(value, path: path);
       return ZardResult<T>(
@@ -153,8 +158,7 @@ abstract class Schema<T> {
     }
   }
 
-  Schema<T> refine(bool Function(T value) predicate,
-      {String? message, String? path}) {
+  Schema<T> refine(bool Function(T value) predicate, {String? message, String? path}) {
     addValidator((T value) {
       if (!predicate(value)) {
         return ZardIssue(

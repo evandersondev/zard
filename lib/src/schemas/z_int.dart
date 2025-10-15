@@ -182,11 +182,7 @@ class ZInt extends Schema<int> {
       final error = validator(value);
       if (error != null) {
         addError(
-          ZardIssue(
-              message: error.message,
-              type: error.type,
-              value: value,
-              path: path),
+          ZardIssue(message: error.message, type: error.type, value: value, path: path),
         );
       }
     }
