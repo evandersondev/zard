@@ -1,4 +1,5 @@
-import 'package:zard/zard.dart';
+import 'package:zard/src/schemas/z_double_copy.dart';
+import 'package:zard/zard.dart' hide ZCoerceDouble;
 import 'types/zard_error_formatter.dart' as formatter;
 
 typedef Validator<T> = String? Function(T value);
@@ -71,6 +72,51 @@ class Zard {
   /// final sallary = doubleSchema.parse(5.5);
   /// ```
   ZDouble double({String? message}) => ZDouble(message: message);
+  //TODO: @evanderson revisar
+  ZDoubleCopy doubleCopy({String? message}) => ZDoubleCopy(message: message);
+
+  /// A schema that coerces values to double.
+  /// ```md
+  /// Types supported (with coercion):
+  /// - String (must be parseable as a number)
+  /// - int (converted to double)
+  /// - double (passed through)
+  ///
+  /// Types not supported:
+  /// - bool
+  /// - List
+  /// - Map
+  /// - Non-numeric strings
+  ///
+  /// Examples:
+  /// ```dart
+  /// final schema = z.coerceDouble();
+  /// final value1 = schema.parse('3.14'); // returns 3.14 (double)
+  /// final value2 = schema.parse('42'); // returns 42.0 (double)
+  /// final value3 = schema.parse(5); // returns 5.0 (double)
+  /// final value4 = schema.parse(3.14); // returns 3.14 (double)
+  /// ```
+  ZCoerceDouble coerceDouble({String? message}) => ZCoerceDouble(message: message);
+
+  /// A schema for validating numbers (int or double).
+  /// ```md
+  /// Types supported:
+  /// - int
+  /// - double
+  ///
+  /// Types not supported:
+  /// - String
+  /// - bool
+  /// - List
+  /// - Map
+  ///
+  /// Examples:
+  /// ```dart
+  /// final numSchema = z.num().min(0).max(10);
+  /// final value = numSchema.parse(5); // returns 5 (int)
+  /// final value2 = numSchema.parse(5.5); // returns 5.5 (double)
+  /// ```
+  ZNum num({String? message}) => ZNum(message: message);
 
   /// A schema for validating maps.
   /// ```md
