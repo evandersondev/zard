@@ -1,4 +1,5 @@
 import 'package:zard/zard.dart';
+
 import 'types/zard_error_formatter.dart' as formatter;
 
 typedef Validator<T> = String? Function(T value);
@@ -7,7 +8,8 @@ class Zard {
   // Error formatting utilities
   ZardErrorTree treeifyError(ZardError error) => formatter.treeifyError(error);
   String prettifyError(ZardError error) => formatter.prettifyError(error);
-  ZardFlattenedError flattenError(ZardError error) => formatter.flattenError(error);
+  ZardFlattenedError flattenError(ZardError error) =>
+      formatter.flattenError(error);
 
   ZardType<T> inferType<T>({
     required T Function(Map<String, dynamic>) fromMap,
@@ -32,7 +34,7 @@ class Zard {
   /// final stringSchema = z.string().min(3);
   /// final hello = stringSchema.parse('hello');
   /// ```
-  ZString string({String? message}) => ZString(message: message);
+  ZString string({String? message}) => ZStringImpl(message: message);
 
   /// A schema for validating integers.
   /// ```md
@@ -51,7 +53,7 @@ class Zard {
   /// final intSchema = z.int().min(0).max(10);
   /// final age = intSchema.parse(5);
   /// ```
-  ZInt int({String? message}) => ZInt(message: message);
+  ZInt int({String? message}) => ZIntImpl(message: message);
 
   /// A schema for validating doubles.
   /// ```md
@@ -70,7 +72,7 @@ class Zard {
   /// final doubleSchema = z.double().min(0).max(10);
   /// final sallary = doubleSchema.parse(5.5);
   /// ```
-  ZDouble double({String? message}) => ZDouble(message: message);
+  ZDouble double({String? message}) => ZDoubleImpl(message: message);
 
   /// A schema that coerces values to double.
   /// ```md
@@ -93,7 +95,8 @@ class Zard {
   /// final value3 = schema.parse(5); // returns 5.0 (double)
   /// final value4 = schema.parse(3.14); // returns 3.14 (double)
   /// ```
-  ZCoerceDouble coerceDouble({String? message}) => ZCoerceDouble(message: message);
+  ZCoerceDouble coerceDouble({String? message}) =>
+      ZCoerceDouble(message: message);
 
   /// A schema for validating numbers (int or double).
   /// ```md
@@ -113,7 +116,7 @@ class Zard {
   /// final value = numSchema.parse(5); // returns 5 (int)
   /// final value2 = numSchema.parse(5.5); // returns 5.5 (double)
   /// ```
-  ZNum num({String? message}) => ZNum(message: message);
+  ZNum num({String? message}) => ZNumImpl(message: message);
 
   /// A schema for validating maps.
   /// ```md
@@ -140,11 +143,14 @@ class Zard {
   /// 'sallary': 1000.0,
   /// });
   /// ```
-  ZMap map(Map<String, Schema> schema, {String? message}) => ZMap(schema, message: message);
+  ZMap map(Map<String, Schema> schema, {String? message}) =>
+      ZMapImpl(schema, message: message);
 
-  ZInterface interface(Map<String, Schema> rawSchemas, {String? message}) => ZInterface(rawSchemas, message: message);
+  ZInterface interface(Map<String, Schema> rawSchemas, {String? message}) =>
+      ZInterfaceImpl(rawSchemas, message: message);
 
-  LazySchema lazy(Schema Function() schemaThunk) => LazySchema(schemaThunk);
+  LazySchema<T> lazy<T>(Schema<T> Function() schemaThunk) =>
+      ZLazySchemaImpl<T>(schemaThunk);
 
   /// A schema for validating lists.
   /// ```md
@@ -163,7 +169,8 @@ class Zard {
   /// final listSchema = z.list(z.string());
   /// final list = listSchema.parse(['a', 'b', 'c']);
   /// ```
-  ZList list(Schema itemSchema, {String? message}) => ZList(itemSchema, message: message);
+  ZList list(Schema itemSchema, {String? message}) =>
+      ZListImpl(itemSchema, message: message);
 
   /// A schema for validating booleans.
   /// ```md
@@ -182,7 +189,7 @@ class Zard {
   /// final boolSchema = z.bool();
   /// final boolValue = boolSchema.parse(true);
   /// ```
-  ZBool bool({String? message}) => ZBool(message: message);
+  ZBool bool({String? message}) => ZBoolImpl(message: message);
 
   ///  A schema for validating dates.
   ///
@@ -223,7 +230,7 @@ class Zard {
   ///
   /// final date = dateSchema.parse('2021-01-01');
   /// ```
-  ZDate date({String? message}) => ZDate(message: message);
+  ZDate date({String? message}) => ZDateImpl(message: message);
 
   /// A schema for validating enums.
   /// ```md
@@ -243,7 +250,8 @@ class Zard {
   /// final roles = ['red', 'green', 'blue'];
   /// final result = enumSchema.parse(roles);
   /// ```
-  ZEnum $enum(List<String> values, {String? message}) => ZEnum(values, message: message);
+  ZEnum $enum(List<String> values, {String? message}) =>
+      ZEnumImpl(values, message: message);
 
   /// Make a parse type coercion.
   /// ```dart
@@ -251,7 +259,7 @@ class Zard {
   /// final result = schema.parse(123);
   /// print(result); // "123"
   /// ```
-  ZCoerce get coerce => ZCoerce();
+  ZCoerce get coerce => ZCoerceImpl();
 
   /// A schema for validating files.
   /// ```dart
@@ -261,7 +269,7 @@ class Zard {
   /// fileSchema.mime("image/png"); // MIME type
   /// fileSchema.mime(["image/png", "image/jpeg"]); // multiple MIME types
   /// ```
-  ZFile file({String? message}) => ZFile(message: message);
+  ZFile file({String? message}) => ZFileImpl(message: message);
 }
 
 final z = Zard();
