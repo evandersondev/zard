@@ -2,7 +2,7 @@ import 'zard_error.dart';
 import 'zard_issue.dart';
 
 /// Estrutura de erro em árvore
-class ZardErrorTree {
+abstract interface class ZardErrorTree {
   final List<String> errors;
   final Map<String, ZardErrorTree>? properties;
   final List<ZardErrorTree?>? items;
@@ -19,8 +19,23 @@ class ZardErrorTree {
   }
 }
 
+class ZardErrorTreeImpl implements ZardErrorTree {
+  @override
+  final List<String> errors;
+  @override
+  final Map<String, ZardErrorTree>? properties;
+  @override
+  final List<ZardErrorTree?>? items;
+
+  ZardErrorTreeImpl({
+    this.errors = const [],
+    this.properties,
+    this.items,
+  });
+}
+
 /// Estrutura de erro plana
-class ZardFlattenedError {
+abstract interface class ZardFlattenedError {
   final List<String> formErrors;
   final Map<String, List<String>> fieldErrors;
 
@@ -33,6 +48,13 @@ class ZardFlattenedError {
   String toString() {
     return 'ZardFlattenedError(formErrors: $formErrors, fieldErrors: $fieldErrors)';
   }
+}
+
+class ZardFlattenedErrorImpl extends ZardFlattenedError {
+  ZardFlattenedErrorImpl({
+    super.formErrors = const [],
+    super.fieldErrors = const {},
+  });
 }
 
 /// Converte um ZardError em uma estrutura de árvore aninhada
@@ -76,7 +98,7 @@ ZardErrorTree treeifyError(ZardError error) {
       // É um índice de array
       final index = int.parse(firstPart.value);
       if (parts.length == 1) {
-        items[index] = ZardErrorTree(
+        items[index] = ZardErrorTreeImpl(
           errors: issues.map((i) => i.message).toList(),
         );
       } else {
@@ -95,7 +117,7 @@ ZardErrorTree treeifyError(ZardError error) {
     } else {
       // É uma propriedade
       if (parts.length == 1) {
-        properties[firstPart.value] = ZardErrorTree(
+        properties[firstPart.value] = ZardErrorTreeImpl(
           errors: issues.map((i) => i.message).toList(),
         );
       } else {
@@ -114,7 +136,7 @@ ZardErrorTree treeifyError(ZardError error) {
     }
   }
 
-  return ZardErrorTree(
+  return ZardErrorTreeImpl(
     errors: rootIssues.map((i) => i.message).toList(),
     properties: properties.isEmpty ? null : properties,
     items: items.isEmpty ? null : _convertItemsMapToList(items),
@@ -173,7 +195,7 @@ ZardFlattenedError flattenError(ZardError error) {
     }
   }
 
-  return ZardFlattenedError(
+  return ZardFlattenedErrorImpl(
     formErrors: formErrors,
     fieldErrors: fieldErrors,
   );

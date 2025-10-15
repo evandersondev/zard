@@ -47,7 +47,7 @@ void main() {
       });
 
       test('ZNum accepts both int and double in map', () {
-        final schema = ZMap({
+        final schema = z.map({
           'price': z.num(),
         });
 
@@ -399,7 +399,7 @@ void main() {
       });
 
       test('async lazy parsing', () async {
-        final lazySchema = z.lazy<String>(() => ZString().min(3));
+        final lazySchema = z.lazy<String>(() => z.string().min(3));
         expect(await lazySchema.parseAsync(Future.value('hello')),
             equals('hello'));
       });

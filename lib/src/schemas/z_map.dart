@@ -3,7 +3,7 @@ import 'package:zard/src/schemas/schemas.dart';
 import '../types/zard_error.dart';
 import '../types/zard_issue.dart';
 
-class ZMap extends Schema<Map<String, dynamic>> {
+abstract interface class ZMap extends Schema<Map<String, dynamic>> {
   final Map<String, Schema> schemas;
   bool _strict = false;
   bool Function(Map<String, dynamic> value)? _refineValidator;
@@ -195,7 +195,7 @@ class ZMap extends Schema<Map<String, dynamic>> {
 
   /// Use .keyOf to create a ZodEnum schema from the keys of an object schema.
   ZEnum keyof() {
-    return ZEnum(schemas.keys.toList());
+    return ZEnumImpl(schemas.keys.toList());
   }
 
   /// Use .pick to create a new schema that only includes the specified keys.
@@ -206,7 +206,7 @@ class ZMap extends Schema<Map<String, dynamic>> {
         newSchemas[key] = schemas[key]!;
       }
     }
-    return ZMap(newSchemas);
+    return ZMapImpl(newSchemas);
   }
 
   /// Use .omit to create a new schema that excludes the specified keys.
@@ -217,11 +217,15 @@ class ZMap extends Schema<Map<String, dynamic>> {
         newSchemas[key] = schemas[key]!;
       }
     }
-    return ZMap(newSchemas);
+    return ZMapImpl(newSchemas);
   }
 
   @override
   String toString() {
     return 'ZMap(${schemas.toString()})';
   }
+}
+
+class ZMapImpl extends ZMap {
+  ZMapImpl(super.schemas, {super.message});
 }

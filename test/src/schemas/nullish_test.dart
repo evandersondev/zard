@@ -1,18 +1,18 @@
 import 'package:test/test.dart';
-import 'package:zard/src/schemas/schemas.dart';
+import 'package:zard/zard.dart';
 
 void main() {
   group('Nullish Tests', () {
     test('nullish should mark schema as both nullable and optional', () {
-      final schema = ZString().nullish();
+      final schema = z.string().nullish();
       expect(schema.isNullable, isTrue);
       expect(schema.isOptional, isTrue);
     });
 
     test('nullish should work in ZMap with null value', () {
-      final schema = ZMap({
-        'name': ZString(),
-        'nickname': ZString().nullish(),
+      final schema = z.map({
+        'name': z.string(),
+        'nickname': z.string().nullish(),
       });
 
       final result = schema.parse({'name': 'John', 'nickname': null});
@@ -21,9 +21,9 @@ void main() {
     });
 
     test('nullish should work in ZMap with omitted field', () {
-      final schema = ZMap({
-        'name': ZString(),
-        'nickname': ZString().nullish(),
+      final schema = z.map({
+        'name': z.string(),
+        'nickname': z.string().nullish(),
       });
 
       final result = schema.parse({'name': 'John'});
@@ -32,9 +32,9 @@ void main() {
     });
 
     test('nullish should work in ZMap with actual value', () {
-      final schema = ZMap({
-        'name': ZString(),
-        'nickname': ZString().nullish(),
+      final schema = z.map({
+        'name': z.string(),
+        'nickname': z.string().nullish(),
       });
 
       final result = schema.parse({'name': 'John', 'nickname': 'Johnny'});
@@ -43,17 +43,17 @@ void main() {
     });
 
     test('nullish should be equivalent to nullable().optional()', () {
-      final nullishSchema = ZString().nullish();
-      final combinedSchema = ZString().nullable().optional();
+      final nullishSchema = z.string().nullish();
+      final combinedSchema = z.string().nullable().optional();
 
       expect(nullishSchema.isNullable, equals(combinedSchema.isNullable));
       expect(nullishSchema.isOptional, equals(combinedSchema.isOptional));
     });
 
     test('nullish with ZInt', () {
-      final schema = ZMap({
-        'required': ZInt(),
-        'optional': ZInt().nullish(),
+      final schema = z.map({
+        'required': z.int(),
+        'optional': z.int().nullish(),
       });
 
       // Com null
@@ -70,15 +70,15 @@ void main() {
     });
 
     test('complex nested nullish fields', () {
-      final schema = ZMap({
-        'user': ZMap({
-          'name': ZString(),
-          'email': ZString().email().nullish(),
-          'age': ZInt().nullish(),
+      final schema = z.map({
+        'user': z.map({
+          'name': z.string(),
+          'email': z.string().email().nullish(),
+          'age': z.int().nullish(),
         }),
-        'metadata': ZMap({
-          'createdAt': ZString(),
-          'updatedAt': ZString().nullish(),
+        'metadata': z.map({
+          'createdAt': z.string(),
+          'updatedAt': z.string().nullish(),
         }).nullish(),
       });
 

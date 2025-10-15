@@ -1,7 +1,7 @@
 /// More dartdocs go here.
 library;
 
-export 'src/schemas/schemas.dart';
+export 'src/schemas/schemas.dart' hide ZBool;
 export 'src/types/zard_error.dart';
 export 'src/types/zard_error_formatter.dart';
 export 'src/types/zard_result.dart';

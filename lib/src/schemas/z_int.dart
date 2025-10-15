@@ -2,7 +2,7 @@ import '../types/zard_error.dart';
 import '../types/zard_issue.dart';
 import 'schema.dart';
 
-class ZInt extends Schema<int> {
+abstract interface class ZInt extends Schema<int> {
   final String? message;
 
   ZInt({this.message}) {
@@ -234,4 +234,8 @@ class ZCoerceInt extends ZInt {
     // that might have been chained.
     return super.parse(coercedValue, path: path);
   }
+}
+
+class ZIntImpl extends ZInt {
+  ZIntImpl({super.message});
 }

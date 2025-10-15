@@ -23,11 +23,11 @@ abstract class Schema<T> {
   }
 
   TransformedSchema<T, R> transform<R>(R Function(T value) transformer) {
-    return TransformedSchema<T, R>(this, transformer);
+    return TransformedSchemaImpl<T, R>(this, transformer);
   }
 
   TransformedSchema<T, R> transformTyped<R>(R Function(T value) transformer) {
-    return TransformedSchema<T, R>(this, transformer);
+    return TransformedSchemaImpl<T, R>(this, transformer);
   }
 
   // O método .optional() não altera o comportamento de parse() diretamente,
@@ -54,7 +54,7 @@ abstract class Schema<T> {
   }
 
   ZList list({String? message}) {
-    return ZList(this, message: message);
+    return ZListImpl(this, message: message);
   }
 
   T parse(dynamic value, {String path = ''}) {

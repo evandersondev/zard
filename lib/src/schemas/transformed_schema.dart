@@ -1,6 +1,6 @@
 import 'schema.dart';
 
-class TransformedSchema<T, R> extends Schema<R> {
+abstract interface class TransformedSchema<T, R> extends Schema<R> {
   final Schema<T> inner;
   final R Function(T value) transformer;
 
@@ -23,4 +23,8 @@ class TransformedSchema<T, R> extends Schema<R> {
     }
     return transformer(originalResult);
   }
+}
+
+class TransformedSchemaImpl<T, R> extends TransformedSchema<T, R> {
+  TransformedSchemaImpl(super.inner, super.transformer);
 }

@@ -3,7 +3,7 @@ import 'package:zard/src/types/zard_issue.dart';
 import '../types/zard_error.dart';
 import 'schema.dart';
 
-class ZBool extends Schema<bool> {
+abstract interface class ZBool extends Schema<bool> {
   final String? message;
 
   ZBool({this.message}) {
@@ -68,7 +68,11 @@ class ZCoerceBoolean extends ZBool {
   bool parse(dynamic value, {String? path}) {
     clearErrors();
     try {
-      if (value == 0 || value == '0' || value == false || value == null) {
+      if (value == 0 ||
+          value == '0' ||
+          value == false ||
+          value == null ||
+          value == '') {
         return false;
       }
       return true;
@@ -78,4 +82,8 @@ class ZCoerceBoolean extends ZBool {
     }
     return super.parse(value, path: path);
   }
+}
+
+class ZBoolImpl extends ZBool {
+  ZBoolImpl({super.message});
 }

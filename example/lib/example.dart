@@ -44,7 +44,7 @@ void main() async {
   // };
   // final pedido = pedidoSchema.parse(pedidoMap);
   // print(pedido);
-  final enumSchema = ZEnum(['red', 'green', 'blue']).extract(['red', 'blue']);
+  final enumSchema = z.$enum(['red', 'green', 'blue']).extract(['red', 'blue']);
   // final roles = ['red', 'green', 'blue'];
   final result = enumSchema.parse('red');
   print('Enum values: $result');

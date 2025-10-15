@@ -2,7 +2,7 @@ import '../types/zard_error.dart';
 import '../types/zard_issue.dart';
 import 'schema.dart';
 
-class ZDouble extends Schema<double> {
+abstract interface class ZDouble extends Schema<double> {
   final String? message;
 
   ZDouble({this.message}) {
@@ -244,4 +244,8 @@ class ZCoerceDouble extends ZDouble {
       throw e;
     }
   }
+}
+
+class ZDoubleImpl extends ZDouble {
+  ZDoubleImpl({super.message});
 }

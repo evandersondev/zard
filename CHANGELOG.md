@@ -1,3 +1,7 @@
+## 0.0.23
+
+- Chore interfaces schemas to improve usability.
+
 ## 0.0.22
 
 - Improve to add type result from safeParse.

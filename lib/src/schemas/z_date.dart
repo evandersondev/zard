@@ -2,7 +2,7 @@ import '../types/zard_error.dart';
 import '../types/zard_issue.dart';
 import 'schema.dart';
 
-class ZDate extends Schema<DateTime> {
+abstract interface class ZDate extends Schema<DateTime> {
   final String? message;
 
   ZDate({this.message});
@@ -139,4 +139,8 @@ class ZCoerceDate extends ZDate {
 
     return super.parse(coercedValue, path: path);
   }
+}
+
+class ZDateImpl extends ZDate {
+  ZDateImpl({super.message});
 }

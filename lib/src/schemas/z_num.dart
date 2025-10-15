@@ -2,7 +2,7 @@ import '../types/zard_error.dart';
 import '../types/zard_issue.dart';
 import 'schema.dart';
 
-class ZNum extends Schema<num> {
+abstract interface class ZNum extends Schema<num> {
   final String? message;
 
   ZNum({this.message}) {
@@ -242,4 +242,8 @@ class ZCoerceNum extends ZNum {
     // Now that we have a num, we can run the validators from the parent ZNum class.
     return super.parse(coercedValue, path: path);
   }
+}
+
+class ZNumImpl extends ZNum {
+  ZNumImpl({super.message});
 }

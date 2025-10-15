@@ -1,6 +1,6 @@
 import 'schema.dart';
 
-class LazySchema<T> extends Schema<T> {
+abstract interface class LazySchema<T> extends Schema<T> {
   final Schema<T> Function() schemaThunk;
 
   LazySchema(this.schemaThunk);
@@ -23,4 +23,8 @@ class LazySchema<T> extends Schema<T> {
       path: path,
     );
   }
+}
+
+class ZLazySchemaImpl<T> extends LazySchema<T> {
+  ZLazySchemaImpl(super.schemaThunk);
 }

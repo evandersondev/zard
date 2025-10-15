@@ -2,7 +2,7 @@ import '../types/zard_error.dart';
 import '../types/zard_issue.dart';
 import 'schema.dart';
 
-class ZString extends Schema<String> {
+abstract interface class ZString extends Schema<String> {
   final String? message;
 
   ZString({this.message}) {
@@ -420,4 +420,8 @@ class ZCoerceString extends ZString {
     // Now, we use the parent's parse method to run all validations.
     return super.parse(coercedValue, path: path);
   }
+}
+
+class ZStringImpl extends ZString {
+  ZStringImpl({super.message});
 }
