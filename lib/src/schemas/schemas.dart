@@ -1,7 +1,4 @@
-export './schema.dart';
-export './z_list.dart';
-export './z_map.dart';
-export './z_string.dart';
+export 'schema.dart';
 export 'z_bool.dart';
 export 'z_coerce_container.dart';
 export 'z_date.dart';
@@ -11,4 +8,7 @@ export 'z_file.dart';
 export 'z_int.dart';
 export 'z_interface.dart';
 export 'z_lazy.dart';
+export 'z_list.dart';
+export 'z_map.dart';
 export 'z_num.dart';
+export 'z_string.dart';

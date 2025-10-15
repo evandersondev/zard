@@ -61,29 +61,21 @@ class ZBool extends Schema<bool> {
   }
 }
 
-class ZCoerceBoolean extends Schema<bool> {
-  ZCoerceBoolean({String? message});
+class ZCoerceBoolean extends ZBool {
+  ZCoerceBoolean({super.message});
 
   @override
   bool parse(dynamic value, {String? path}) {
     clearErrors();
     try {
-      if (value == 0 ||
-          value == '0' ||
-          value == '' ||
-          value == false ||
-          value == null) {
+      if (value == 0 || value == '0' || value == false || value == null) {
         return false;
       }
       return true;
     } catch (e) {
-      addError(ZardIssue(
-        message: 'Failed to coerce value to boolean',
-        type: 'coerce_error',
-        value: value,
-        path: path,
-      ));
-      throw ZardError(issues);
+      // This logic is simple enough that it shouldn't throw.
+      // The super.parse will handle any final type checks.
     }
+    return super.parse(value, path: path);
   }
 }

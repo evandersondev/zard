@@ -1,6 +1,5 @@
-import 'package:zard/src/types/zard_issue.dart';
-
 import '../types/zard_error.dart';
+import '../types/zard_issue.dart';
 import 'schema.dart';
 
 class ZNum extends Schema<num> {
@@ -207,5 +206,40 @@ class ZNum extends Schema<num> {
     }
 
     return result;
+  }
+}
+
+class ZCoerceNum extends ZNum {
+  ZCoerceNum({super.message});
+
+  @override
+  num parse(dynamic value, {String? path}) {
+    clearErrors();
+
+    num? coercedValue;
+
+    if (value is num) {
+      coercedValue = value;
+    } else {
+      try {
+        final asString = value?.toString() ?? '';
+        coercedValue = num.tryParse(asString);
+      } catch (e) {
+        // Let the check below handle the error.
+      }
+    }
+
+    if (coercedValue == null) {
+      addError(ZardIssue(
+        message: message ?? 'Failed to coerce value to a number',
+        type: 'coerce_error',
+        value: value,
+        path: path,
+      ));
+      throw ZardError(issues);
+    }
+
+    // Now that we have a num, we can run the validators from the parent ZNum class.
+    return super.parse(coercedValue, path: path);
   }
 }

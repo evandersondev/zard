@@ -1,9 +1,9 @@
-import 'package:zard/src/schemas/z_list.dart';
 import 'package:zard/src/types/zard_error.dart';
 
 import '../types/zard_issue.dart';
 import '../types/zard_result.dart';
 import 'transformed_schema.dart';
+import 'z_list.dart';
 
 typedef Validator<T> = ZardIssue? Function(T value);
 typedef Transformer<T> = T Function(T value);
@@ -143,7 +143,8 @@ abstract class Schema<T> {
   }
 
   // Asynchronous version of safeParse.
-  Future<ZardResult<T>> safeParseAsync(dynamic value, {String path = ''}) async {
+  Future<ZardResult<T>> safeParseAsync(dynamic value,
+      {String path = ''}) async {
     try {
       final parsed = await parseAsync(value, path: path);
       return ZardResult<T>(
@@ -158,7 +159,8 @@ abstract class Schema<T> {
     }
   }
 
-  Schema<T> refine(bool Function(T value) predicate, {String? message, String? path}) {
+  Schema<T> refine(bool Function(T value) predicate,
+      {String? message, String? path}) {
     addValidator((T value) {
       if (!predicate(value)) {
         return ZardIssue(

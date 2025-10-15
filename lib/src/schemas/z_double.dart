@@ -1,6 +1,5 @@
-import 'package:zard/src/types/zard_issue.dart';
-
 import '../types/zard_error.dart';
+import '../types/zard_issue.dart';
 import 'schema.dart';
 
 class ZDouble extends Schema<double> {
@@ -209,38 +208,40 @@ class ZDouble extends Schema<double> {
   }
 }
 
-class ZCoerceDouble extends Schema<double> {
-  ZCoerceDouble({String? message});
+class ZCoerceDouble extends ZDouble {
+  ZCoerceDouble({super.message});
 
   @override
   double parse(dynamic value, {String? path}) {
     clearErrors();
+
+    double? coercedValue;
+
     try {
       final asString = value?.toString() ?? '';
-      double? result = double.tryParse(asString);
-      if (result == null) {
-        throw ZardError([
-          ZardIssue(
-            message: 'Value is not a valid number',
-            type: 'type_error',
-            value: value,
-            path: path,
-          ),
-          ...issues,
-        ]);
-      }
-      for (final transform in getTransforms()) {
-        result = transform(result!);
-      }
-      return result!;
+      coercedValue = double.tryParse(asString);
     } catch (e) {
+      // Let the super.parse handle the error reporting
+    }
+
+    if (coercedValue == null) {
       addError(ZardIssue(
-        message: 'Failed to coerce value to number',
+        message: message ?? 'Failed to coerce value to double',
         type: 'coerce_error',
         value: value,
         path: path,
       ));
       throw ZardError(issues);
+    }
+
+    // Now that we have a double, we can run the validators from the parent ZDouble class.
+    // We call super.parse() to run all the validations (min, max, etc.)
+    // that might have been chained.
+    try {
+      return super.parse(coercedValue, path: path);
+    } on ZardError catch (e) {
+      // Re-throw the error to propagate it up.
+      throw e;
     }
   }
 }

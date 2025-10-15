@@ -182,7 +182,11 @@ class ZInt extends Schema<int> {
       final error = validator(value);
       if (error != null) {
         addError(
-          ZardIssue(message: error.message, type: error.type, value: value, path: path),
+          ZardIssue(
+              message: error.message,
+              type: error.type,
+              value: value,
+              path: path),
         );
       }
     }
@@ -200,27 +204,34 @@ class ZInt extends Schema<int> {
   }
 }
 
-class ZCoerceInt extends Schema<int> {
-  ZCoerceInt({String? message});
+class ZCoerceInt extends ZInt {
+  ZCoerceInt({super.message});
 
   @override
   int parse(dynamic value, {String? path}) {
     clearErrors();
+
+    int? coercedValue;
     try {
       final asString = value?.toString() ?? '';
-      int result = int.parse(asString);
-      for (final transform in getTransforms()) {
-        result = transform(result);
-      }
-      return result;
+      coercedValue = int.tryParse(asString);
     } catch (e) {
+      // Let the super.parse handle the error reporting
+    }
+
+    if (coercedValue == null) {
       addError(ZardIssue(
-        message: 'Failed to coerce value to BigInt',
+        message: message ?? 'Failed to coerce value to int',
         type: 'coerce_error',
         value: value,
         path: path,
       ));
       throw ZardError(issues);
     }
+
+    // Now that we have an int, we can run the validators from the parent ZInt class.
+    // We call super.parse() to run all the validations (min, max, etc.)
+    // that might have been chained.
+    return super.parse(coercedValue, path: path);
   }
 }

@@ -4,6 +4,14 @@ version: 0.0.22
 homepage: https://github.com/evandersondev/zard
 repository: https://github.com/evandersondev/zard
 
+platforms:
+  android:
+  ios:
+  linux:
+  macos:
+  web:
+  windows:
+
 environment:
   sdk: ">=3.0.0 <4.0.0"
 
