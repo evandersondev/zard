@@ -11,3 +11,4 @@ export 'z_file.dart';
 export 'z_int.dart';
 export 'z_interface.dart';
 export 'z_lazy.dart';
+export 'z_num.dart';

@@ -2,6 +2,7 @@ import 'package:test/test.dart';
 import 'package:zard/src/schemas/schemas.dart';
 import 'package:zard/src/schemas/z_lazy.dart';
 import 'package:zard/src/types/zard_error.dart';
+import 'package:zard/zard.dart';
 
 void main() {
   group('Schemas Integration Tests', () {
@@ -150,11 +151,70 @@ void main() {
       });
     });
 
+    group('ZNum', () {
+      test('basic validation', () {
+        final schema = ZNum();
+        expect(schema.parse(42), equals(42)); // int permanece int
+        expect(schema.parse(42) is int, isTrue);
+        expect(schema.parse(3.14), equals(3.14)); // double permanece double
+        expect(schema.parse(3.14) is double, isTrue);
+        expect(() => schema.parse('3.14'), throwsA(isA<ZardError>()));
+      });
+
+      test('min and max', () {
+        final schema = ZNum().min(0).max(10);
+
+        expect(schema.parse(5), equals(5));
+        expect(schema.parse(5.5), equals(5.5));
+        expect(() => schema.parse(-1), throwsA(isA<ZardError>()));
+        expect(() => schema.parse(11), throwsA(isA<ZardError>()));
+      });
+
+      test('positive, nonnegative, negative', () {
+        expect(ZNum().positive().parse(5), equals(5));
+        expect(ZNum().positive().parse(5.5), equals(5.5));
+        expect(() => ZNum().positive().parse(0), throwsA(isA<ZardError>()));
+
+        expect(ZNum().nonnegative().parse(0), equals(0));
+        expect(() => ZNum().nonnegative().parse(-1), throwsA(isA<ZardError>()));
+
+        expect(ZNum().negative().parse(-5), equals(-5));
+        expect(ZNum().negative().parse(-5.5), equals(-5.5));
+        expect(() => ZNum().negative().parse(0), throwsA(isA<ZardError>()));
+      });
+
+      test('multipleOf and step', () {
+        final schema = ZNum().multipleOf(3);
+        expect(schema.parse(6), equals(6));
+        expect(() => schema.parse(5), throwsA(isA<ZardError>()));
+
+        final stepSchema = ZNum().step(5);
+        expect(stepSchema.parse(10), equals(10));
+        expect(() => stepSchema.parse(7), throwsA(isA<ZardError>()));
+      });
+
+      test('ZNum accepts both int and double in map', () {
+        final schema = ZMap({
+          'price': ZNum(),
+        });
+
+        // Deve aceitar int e manter como int
+        final result1 = schema.parse({'price': 42});
+        expect(result1['price'], equals(42));
+        expect(result1['price'] is int, isTrue);
+
+        // Deve aceitar double e manter como double
+        final result2 = schema.parse({'price': 42.0});
+        expect(result2['price'], equals(42.0));
+        expect(result2['price'] is double, isTrue);
+      });
+    });
+
     group('ZDouble', () {
       test('basic validation', () {
         final schema = ZDouble();
         expect(schema.parse(3.14), equals(3.14));
-        expect(() => schema.parse(42), throwsA(isA<ZardError>()));
+        expect(() => schema.parse(42), throwsA(isA<ZardError>())); // double não aceita int
         expect(() => schema.parse('3.14'), throwsA(isA<ZardError>()));
       });
 
