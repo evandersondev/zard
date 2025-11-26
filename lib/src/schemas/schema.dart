@@ -2,8 +2,8 @@ import 'package:zard/src/types/zard_error.dart';
 
 import '../types/zard_issue.dart';
 import '../types/zard_result.dart';
+import 'schemas.dart';
 import 'transformed_schema.dart';
-import 'z_list.dart';
 
 typedef Validator<T> = ZardIssue? Function(T value);
 typedef Transformer<T> = T Function(T value);
@@ -49,6 +49,16 @@ abstract class Schema<T> {
     return this;
   }
 
+  /// A schema to define a default value for a field.
+  /// ```dart
+  /// final schema = z.string().default('Hello World');
+  /// final result = schema.parse(null);
+  /// print(result); // "Hello World"
+  /// ```
+  Schema $default(T defaultValue) {
+    return ZDefaultImpl(this, defaultValue);
+  }
+
   void addTransform(Transformer<T> transform) {
     _transforms.add(transform);
   }
@@ -65,7 +75,7 @@ abstract class Schema<T> {
         message: 'Value is required and cannot be null',
         type: 'required_error',
         value: value,
-        path: path.isEmpty ? null : path, // Adiciona path como opcional
+        path: path.isEmpty ? null : path,
       ));
       throw ZardError(issues);
     }
@@ -79,7 +89,7 @@ abstract class Schema<T> {
           message: error.message,
           type: error.type,
           value: value,
-          path: path.isEmpty ? null : path, // Adiciona path como opcional
+          path: path.isEmpty ? null : path,
         ));
       }
     }
@@ -167,7 +177,7 @@ abstract class Schema<T> {
           message: message ?? "Refinement failed",
           type: "refine_error",
           value: value,
-          path: path, // Passa o path se necessário
+          path: path,
         );
       }
       return null;

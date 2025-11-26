@@ -2,6 +2,7 @@ export 'schema.dart';
 export 'z_bool.dart';
 export 'z_coerce_container.dart';
 export 'z_date.dart';
+export 'z_default.dart';
 export 'z_double.dart';
 export 'z_enum.dart';
 export 'z_file.dart';

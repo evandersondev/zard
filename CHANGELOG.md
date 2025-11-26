@@ -1,3 +1,7 @@
+## 0.0.24
+
+- Add ZDefault to define a default value.
+
 ## 0.0.23
 
 - Chore interfaces schemas to improve usability.

@@ -1,32 +1,70 @@
+import 'package:intl/intl.dart';
 import 'package:zard/zard.dart';
 
+import 'user.dart';
+
 String slugify(String str) {
-  final slug = str.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-').replaceAll(RegExp(r'^-+'), '').replaceAll(RegExp(r'-+$'), '');
+  final slug = str
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+      .replaceAll(RegExp(r'^-+'), '')
+      .replaceAll(RegExp(r'-+$'), '');
   return slug;
 }
 
 void main() async {
-  // final product = {
-  //   'quantity': 4,
-  //   'price': 1500.0,
-  //   'currency': 'usd',
-  //   'name': 'MacBook Pro',
-  // };
+  print(z.int().$default(42).parse(null)); // Output: 42
+  print(z.string().$default('Hello World').parse(null)); // Output: Hello World
+  print(z.double().$default(3.14).parse(null)); // Output: 3.14
+  print(z.bool().$default(true).parse(null)); // Output: true
+  // example with map schema
+  final pedidoSchema = z.map({
+    'numero_pedido': z.string(),
+    'status': z.$enum([
+      'pendente',
+      'processando',
+      'enviado',
+      'entregue',
+      'cancelado'
+    ]).$default('pendente'),
+    'produto': z.map({
+      'id': z.string(),
+      'nome': z.string().min(3).max(50),
+      'preco': z.double().min(0),
+      'quantidade': z.int().min(1).$default(20),
+    }),
+  });
+  final pedido = pedidoSchema.parse({
+    'numero_pedido': '123456',
+    'produto': {
+      'id': '123',
+      'nome': 'Produto Exemplo',
+      'preco': 10.99,
+    }
+  });
+  print(pedido);
 
-  // final f = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
-  // final schema = z.map({
-  //   'quantity': z.int(),
-  //   'price': z.double().transform((p) => f.format(p)),
-  //   'currency': z.string().transform((c) => c.toUpperCase()),
-  //   'name': z.string(),
-  // }).transform((map) {
-  //   map['slug'] = slugify(map['name']);
-  //   map['total'] = map['quantity'] * f.parse(map['price']);
-  //   return map;
-  // });
+  final product = {
+    'quantity': 4,
+    'price': 1500.0,
+    'currency': 'usd',
+    'name': 'MacBook Pro',
+  };
 
-  // final result = schema.parse(product);
-  // print(result);
+  final f = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+  final schema = z.map({
+    'quantity': z.int(),
+    'price': z.double().transform((p) => f.format(p)),
+    'currency': z.string().transform((c) => c.toUpperCase()),
+    'name': z.string(),
+  }).transform((map) {
+    map['slug'] = slugify(map['name']);
+    map['total'] = map['quantity'] * f.parse(map['price']);
+    return map;
+  });
+
+  final result = schema.parse(product);
+  print(result);
 
   // final pedidoMap = {
   //   'numero_pedido': '123456',
@@ -42,8 +80,8 @@ void main() async {
   // print(pedido);
   final enumSchema = z.$enum(['red', 'green', 'blue']).extract(['red', 'blue']);
   // final roles = ['red', 'green', 'blue'];
-  final result = enumSchema.parse('red');
-  print('Enum values: $result');
+  final result2 = enumSchema.parse('red');
+  print('Enum values: $result2');
   // mapsHelper();
 
   // final file = File('mock_file.txt');
@@ -100,35 +138,35 @@ void main() async {
   // print(user.email);
 
   // Inferred type example
-  // final userSchema = z.inferType(
-  //   fromMap: (json) => User.fromMap(json),
-  //   mapSchema: z.map({
-  //     'name': z.string().min(3),
-  //     'email': z.string().email(),
-  //     'friends': z
-  //         .list(z.map({
-  //           'name': z.string().min(3),
-  //           'email': z.string().email(),
-  //           'friends': z
-  //               .list(z.map({
-  //                 'name': z.string().min(3),
-  //                 'email': z.string().email(),
-  //               }))
-  //               .optional(),
-  //         }))
-  //         .optional(),
-  //   }),
-  // );
+  final userSchema = z.inferType(
+    fromMap: (json) => User.fromMap(json),
+    mapSchema: z.map({
+      'name': z.string().min(3),
+      'email': z.string().email(),
+      'friends': z
+          .list(z.map({
+            'name': z.string().min(3),
+            'email': z.string().email(),
+            'friends': z
+                .list(z.map({
+                  'name': z.string().min(3),
+                  'email': z.string().email(),
+                }))
+                .optional(),
+          }))
+          .optional(),
+    }),
+  );
 
-  // try {
-  //   final user = userSchema.parse({
-  //     'name': 'John Doe',
-  //     'email': 'john.doe@example.com',
-  //   });
-  //   print('User created: ${user.name}, ${user.email}');
-  // } on ZardError catch (e) {
-  //   print('Error: ${e.messages}');
-  // }
+  try {
+    final user = userSchema.parse({
+      'name': 'John Doe',
+      'email': 'john.doe@example.com',
+    });
+    print('User created: ${user.name}, ${user.email}');
+  } on ZardError catch (e) {
+    print('Error: ${e.messages}');
+  }
 
   // if (ignore.success) {
   //   print(ignore.data);
@@ -136,24 +174,24 @@ void main() async {
   //   print(ignore.error);
   // }
 
-  // final ignoreSchema = z.map({
-  //   'name': z.string().min(3).max(20),
-  //   'age': z.int().min(18).max(80).nullable(),
-  //   'email': z.string().email(),
-  //   'isActive': z.bool().optional(),
-  // });
+  final ignoreSchema = z.map({
+    'name': z.string().min(3).max(20),
+    'age': z.int().min(18).max(80).nullable(),
+    'email': z.string().email(),
+    'isActive': z.bool().optional(),
+  });
 
-  // final ignore = ignoreSchema.safeParse({
-  //   'name': 'John Doe',
-  //   'age': 50,
-  //   'email': 'john.doe@example.com',
-  //   'isActive': true,
-  // });
-  // if (ignore.success) {
-  //   print(ignore.data);
-  // } else {
-  //   print(ignore.error?.issues.toList());
-  // }
+  final ignore = ignoreSchema.safeParse({
+    'name': 'John Doe',
+    'age': 50,
+    'email': 'john.doe@example.com',
+    'isActive': true,
+  });
+  if (ignore.success) {
+    print(ignore.data);
+  } else {
+    print(ignore.error?.issues.toList());
+  }
   // final stringSchema = z.string().min(3);
   // final hello = stringSchema.parse('lo');
   // print(hello);

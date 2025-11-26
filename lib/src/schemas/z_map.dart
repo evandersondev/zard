@@ -34,7 +34,7 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
         message: message ?? 'Expected a Map',
         type: 'type_error',
         value: value,
-        path: path, // Include the current path
+        path: path,
       ));
       throw ZardError(issues);
     }
@@ -42,9 +42,10 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
     Map<String, dynamic> result = {};
 
     schemas.forEach((key, schema) {
-      final fieldPath = path.isEmpty ? key : '$path.$key'; // Track the path
+      final fieldPath = path.isEmpty ? key : '$path.$key';
 
       if (!value.containsKey(key)) {
+        // Campo não fornecido
         if (!schema.isOptional) {
           addError(ZardIssue(
             message: 'Field "$key" is required',
@@ -52,24 +53,23 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
             value: null,
             path: fieldPath,
           ));
+        } else {
+          // Campo opcional - aplicar default
+          try {
+            result[key] = schema.parse(null, path: fieldPath);
+          } catch (e) {
+            if (e is ZardError) {
+              issues.addAll(e.issues);
+            } else if (e is! ZardError) {
+              rethrow;
+            }
+          }
         }
       } else {
         dynamic fieldValue = value[key];
         try {
-          if (fieldValue == null) {
-            if (schema.isNullable) {
-              result[key] = null;
-            } else {
-              addError(ZardIssue(
-                message: 'Field "$key" cannot be null',
-                type: 'null_error',
-                value: fieldValue,
-                path: fieldPath,
-              ));
-            }
-          } else {
-            result[key] = schema.parse(fieldValue, path: fieldPath);
-          }
+          // Se o valor é null, deixar o schema lidar com ele (seja nullable ou default)
+          result[key] = schema.parse(fieldValue, path: fieldPath);
         } catch (e) {
           if (e is ZardError) {
             issues.addAll(e.issues);
@@ -87,7 +87,7 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
             message: 'Unexpected key "$key" found in object',
             type: 'strict_error',
             value: value[key],
-            path: path.isEmpty ? key : '$path.$key', // Include the path
+            path: path.isEmpty ? key : '$path.$key',
           ));
         }
       }
@@ -99,7 +99,7 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
           message: _refineMessage ?? "Refinement failed",
           type: "refine_error",
           value: result,
-          path: path, // Apply refinement path
+          path: path,
         ));
       }
     }
@@ -123,7 +123,7 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
           message: message ?? 'Expected a Map',
           type: 'type_error',
           value: resolvedValue,
-          path: path, // Include the current path
+          path: path,
         ));
         throw ZardError(issues);
       }
@@ -132,9 +132,10 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
 
       for (var key in schemas.keys) {
         final schema = schemas[key]!;
-        final fieldPath = path.isEmpty ? key : '$path.$key'; // Track the path
+        final fieldPath = path.isEmpty ? key : '$path.$key';
 
         if (!resolvedValue.containsKey(key)) {
+          // Campo não fornecido
           if (!schema.isOptional) {
             addError(ZardIssue(
               message: 'Field "$key" is required',
@@ -142,24 +143,23 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
               value: null,
               path: fieldPath,
             ));
+          } else {
+            // Campo opcional - aplicar default
+            try {
+              result[key] = await schema.parseAsync(null, path: fieldPath);
+            } catch (e) {
+              if (e is ZardError) {
+                issues.addAll(e.issues);
+              } else if (e is! ZardError) {
+                rethrow;
+              }
+            }
           }
         } else {
           dynamic fieldValue = resolvedValue[key];
           try {
-            if (fieldValue == null) {
-              if (schema.isNullable) {
-                result[key] = null;
-              } else {
-                addError(ZardIssue(
-                    message: 'Field "$key" cannot be null',
-                    type: 'null_error',
-                    value: fieldValue,
-                    path: fieldPath));
-              }
-            } else {
-              result[key] =
-                  await schema.parseAsync(fieldValue, path: fieldPath);
-            }
+            // Se o valor é null, deixar o schema lidar com ele (seja nullable ou default)
+            result[key] = await schema.parseAsync(fieldValue, path: fieldPath);
           } catch (e) {
             if (e is ZardError) {
               issues.addAll(e.issues);
@@ -177,7 +177,7 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
               message: 'Unexpected key "$key" found in object',
               type: 'strict_error',
               value: resolvedValue[key],
-              path: path.isEmpty ? key : '$path.$key', // Include the path
+              path: path.isEmpty ? key : '$path.$key',
             ));
           }
         }

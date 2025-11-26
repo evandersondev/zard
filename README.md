@@ -23,7 +23,7 @@ Add the following line to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  zard: ^0.0.23
+  zard: ^0.0.24
 ```
 
 Then, run:
@@ -215,6 +215,238 @@ void main() {
     'email': 'john.doe@example.com',
   });
   print(result2);
+}
+```
+
+<br>
+
+#### Date Example
+
+```dart
+import 'package:zard/zard.dart';
+
+void main() {
+  // Date validations
+  final schema = z.date();
+
+  try {
+    final result = schema.parse(DateTime.now());
+    print("Parsed Value: $result"); // 2025-11-26T10:30:00.000
+  } catch (e) {
+    print("Errors (parse): ${schema.getErrors()}");
+  }
+
+  final safeResult = schema.safeParse("2025-11-26");
+  if (!safeResult.success) {
+    print("Safe Error: ${safeResult.error}");
+  } else {
+    print("Safe Parsed Value: ${safeResult.data}");
+  }
+}
+```
+
+<br>
+
+#### Enum Example
+
+```dart
+import 'package:zard/zard.dart';
+
+void main() {
+  // Enum validations with allowed values
+  final schema = z.$enum(['pending', 'active', 'inactive']);
+
+  try {
+    final result = schema.parse('active');
+    print("Parsed Value: $result"); // active
+  } catch (e) {
+    print("Errors (parse): ${schema.getErrors()}");
+  }
+
+  final safeResult = schema.safeParse('unknown');
+  if (!safeResult.success) {
+    print("Safe Error: Value must be one of [pending, active, inactive]");
+  } else {
+    print("Safe Parsed Value: ${safeResult.data}");
+  }
+
+  // Extract or exclude values from enum
+  final extractedSchema = schema.extract(['active', 'pending']);
+  print("Extracted: $extractedSchema"); // Only allows 'active' and 'pending'
+
+  final excludedSchema = schema.exclude(['inactive']);
+  print("Excluded: $excludedSchema"); // Allows everything except 'inactive'
+}
+```
+
+<br>
+
+#### Default Value Example
+
+```dart
+import 'package:zard/zard.dart';
+
+void main() {
+  // Define default values for schemas
+  final schema = z.map({
+    'name': z.string(),
+    'status': z.string().$default('active'),
+    'age': z.int().$default(18),
+  });
+
+  // When 'status' and 'age' are omitted, defaults are used
+  final result = schema.parse({
+    'name': 'John Doe',
+  });
+  print(result); // {name: John Doe, status: active, age: 18}
+
+  // When values are explicitly null, defaults are applied
+  final result2 = schema.parse({
+    'name': 'Jane Doe',
+    'status': null,
+    'age': null,
+  });
+  print(result2); // {name: Jane Doe, status: active, age: 18}
+
+  // When values are provided, they override defaults
+  final result3 = schema.parse({
+    'name': 'Bob Smith',
+    'status': 'inactive',
+    'age': 30,
+  });
+  print(result3); // {name: Bob Smith, status: inactive, age: 30}
+}
+```
+
+<br>
+
+#### Coerce Example
+
+```dart
+import 'package:zard/zard.dart';
+
+void main() {
+  // Coerce converts values to the expected type
+  final intSchema = z.coerce.int().parse("123");
+  print("Coerced int: $intSchema"); // 123
+
+  final doubleSchema = z.coerce.double().parse("3.14");
+  print("Coerced double: $doubleSchema"); // 3.14
+
+  final boolSchema = z.coerce.bool().parse("true");
+  print("Coerced bool: $boolSchema"); // true
+
+  final stringSchema = z.coerce.string().parse(123);
+  print("Coerced string: $stringSchema"); // "123"
+
+  final dateSchema = z.coerce.date().parse("2025-11-26");
+  print("Coerced date: $dateSchema"); // 2025-11-26T00:00:00.000
+}
+```
+
+<br>
+
+#### Lazy Schema Example
+
+```dart
+import 'package:zard/zard.dart';
+
+void main() {
+  // Lazy schemas are useful for recursive or circular schema definitions
+  late Schema<Map<String, dynamic>> userSchema;
+
+  userSchema = z.map({
+    'name': z.string(),
+    'email': z.string().email(),
+    'friends': z.lazy(() => userSchema).list().optional(),
+  });
+
+  final user = userSchema.parse({
+    'name': 'John Doe',
+    'email': 'john@example.com',
+    'friends': [
+      {
+        'name': 'Jane Doe',
+        'email': 'jane@example.com',
+      }
+    ],
+  });
+  print(user); // Recursively parsed user with friends
+}
+```
+
+<br>
+
+### Advanced Features 🎯
+
+#### Transform Values
+
+```dart
+import 'package:zard/zard.dart';
+
+void main() {
+  final schema = z.map({
+    'email': z.string().email().transform((value) => value.toLowerCase()),
+    'name': z.string().transform((value) => value.toUpperCase()),
+  });
+
+  final result = schema.parse({
+    'email': 'JOHN@EXAMPLE.COM',
+    'name': 'john doe',
+  });
+  print(result); // {email: john@example.com, name: JOHN DOE}
+}
+```
+
+<br>
+
+#### Optional and Nullable Fields
+
+```dart
+import 'package:zard/zard.dart';
+
+void main() {
+  final schema = z.map({
+    'name': z.string(),
+    'nickname': z.string().optional(), // Can be omitted
+    'middleName': z.string().nullable(), // Can be null if provided
+    'age': z.int().nullish(), // Can be omitted or null
+  });
+
+  final result = schema.safeParse({
+    'name': 'John Doe',
+    'age': null,
+  });
+
+  if (result.success) {
+    print(result.data); // {name: John Doe, age: null}
+  }
+}
+```
+
+<br>
+
+#### Strict Mode
+
+```dart
+import 'package:zard/zard.dart';
+
+void main() {
+  final schema = z.map({
+    'name': z.string(),
+    'email': z.string().email(),
+  }).strict(); // Disallow extra fields
+
+  // This will throw an error due to the extra 'phone' field
+  try {
+    final result = schema.parse({
+      'name': 'John Doe',
+      'email': 'john@example.com',
+      'phone': '123-456-7890', // Extra field not allowed
+    });
+  } catch (e) {
+    print("Error: Unexpected key 'phone' found in object");
+  }
 }
 ```
 
