@@ -1,3 +1,7 @@
+## 0.0.25
+
+- Chore ZString and ZMap, add Iso, Regexes and ZStringBool.
+
 ## 0.0.24
 
 - Add ZDefault to define a default value.

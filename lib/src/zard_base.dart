@@ -1,6 +1,9 @@
+import 'package:zard/src/schemas/z_string_bool.dart';
+import 'package:zard/src/utils/iso.dart';
 import 'package:zard/zard.dart';
 
 import 'types/zard_error_formatter.dart' as formatter;
+import 'utils/regexes.dart';
 
 typedef Validator<T> = String? Function(T value);
 
@@ -270,6 +273,21 @@ class Zard {
   /// fileSchema.mime(["image/png", "image/jpeg"]); // multiple MIME types
   /// ```
   ZFile file({String? message}) => ZFileImpl(message: message);
+
+  Regexes get regexes => Regexes();
+
+  ZStringBool stringbool({String? message}) =>
+      ZStringBoolImpl(message: message);
+
+  /// ISO string validation namespace
+  /// Example:
+  /// ```dart
+  /// final isoDateSchema = z.iso.date();
+  /// final isoTimeSchema = z.iso.time();
+  /// final isoDatetimeSchema = z.iso.datetime();
+  /// final isoDurationSchema = z.iso.duration();
+  /// ```
+  Iso get iso => Iso();
 }
 
 final z = Zard();

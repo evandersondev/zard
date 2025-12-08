@@ -12,6 +12,41 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
 
   ZMap(this.schemas, {this.message});
 
+  /// Returns a map of field names to their expected types
+  /// Example:
+  /// ```dart
+  /// final dogSchema = z.map({
+  ///   'name': z.string(),
+  ///   'age': z.int(),
+  /// });
+  ///
+  /// dogSchema.shape['name']; // => String
+  /// dogSchema.shape['age']; // => int
+  /// ```
+  Map<String, Type> get shape {
+    return schemas.map((key, schema) {
+      Type schemaType = String; // default fallback
+
+      if (schema is ZInt) {
+        schemaType = int;
+      } else if (schema is ZDouble) {
+        schemaType = double;
+      } else if (schema is ZBool) {
+        schemaType = bool;
+      } else if (schema is ZString) {
+        schemaType = String;
+      } else if (schema is ZDate) {
+        schemaType = DateTime;
+      } else if (schema is ZList) {
+        schemaType = List;
+      } else if (schema is ZMap) {
+        schemaType = Map;
+      }
+
+      return MapEntry(key, schemaType);
+    });
+  }
+
   ZMap strict() {
     _strict = true;
     return this;

@@ -1,6 +1,6 @@
 name: zard
 description: Zard is a schema validation and transformation library for Dart, inspired by the popular Zod library for JavaScript.
-version: 0.0.24
+version: 0.0.25
 homepage: https://github.com/evandersondev/zard
 repository: https://github.com/evandersondev/zard
 
@@ -14,6 +14,9 @@ platforms:
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  string_normalizer: ^0.4.0
 
 dev_dependencies:
   test: ^1.24.0
