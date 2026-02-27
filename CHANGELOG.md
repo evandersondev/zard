@@ -1,3 +1,7 @@
+## 0.0.26
+
+- Fix optional schema from ZMap.
+
 ## 0.0.25
 
 - Chore ZString and ZMap, add Iso, Regexes and ZStringBool.

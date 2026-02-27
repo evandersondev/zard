@@ -93,9 +93,7 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
           try {
             result[key] = schema.parse(null, path: fieldPath);
           } catch (e) {
-            if (e is ZardError) {
-              issues.addAll(e.issues);
-            } else if (e is! ZardError) {
+            if (e is! ZardError) {
               rethrow;
             }
           }
@@ -183,9 +181,7 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
             try {
               result[key] = await schema.parseAsync(null, path: fieldPath);
             } catch (e) {
-              if (e is ZardError) {
-                issues.addAll(e.issues);
-              } else if (e is! ZardError) {
+              if (e is! ZardError) {
                 rethrow;
               }
             }
