@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ':*)",
+      "Bash(stdbuf -oL grep -E \"^\\\\+[0-9]\")",
+      "Bash(dart run:*)"
+    ]
+  }
+}

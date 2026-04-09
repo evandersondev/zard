@@ -6,52 +6,68 @@ typedef ListValidator = ZardIssue? Function(List<dynamic> value);
 
 abstract interface class ZList extends Schema<List<dynamic>> {
   final Schema _itemSchema;
-  final List<ListValidator> _validators = [];
+  final List<ListValidator> _listValidators = [];
   final String? message;
 
   ZList(this._itemSchema, {this.message});
 
   @override
-  void addValidator(ListValidator validator) {
-    _validators.add(validator);
+  void addValidator(covariant ListValidator validator) {
+    _listValidators.add(validator);
   }
 
   @override
-  List<dynamic> parse(dynamic value, {String? path}) {
-    clearErrors();
+  List<dynamic> parse(dynamic value, {String path = ''}) {
+    // Use a LOCAL issues list so that recursive schema invocations (e.g. via
+    // lazy circular references) cannot corrupt this call's error state by
+    // replacing the shared _ctx via clearErrors().
+    final localIssues = <ZardIssue>[];
+
+    if (value == null) {
+      localIssues.add(ZardIssue(
+        message: message ?? 'Value is required and cannot be null',
+        type: 'required_error',
+        value: value,
+        path: path.isEmpty ? null : path,
+      ));
+      throw ZardError(localIssues);
+    }
 
     if (value is! List) {
-      addError(
-        ZardIssue(
-          message: message ?? 'Must be a list',
-          type: 'type_error',
-          value: value,
-          path: path,
-        ),
-      );
-      throw ZardError(issues);
+      localIssues.add(ZardIssue(
+        message: message ?? 'Must be a list',
+        type: 'type_error',
+        value: value,
+        path: path.isEmpty ? null : path,
+      ));
+      throw ZardError(localIssues);
     }
 
     final result = <dynamic>[];
     for (var i = 0; i < value.length; i++) {
       final item = value[i];
+      final itemPath = path.isEmpty ? '[$i]' : '$path[$i]';
       try {
-        final parsedItem = _itemSchema.parse(item);
-        result.add(parsedItem);
-      } catch (e) {
-        issues.addAll(_itemSchema.getErrors());
+        result.add(_itemSchema.parse(item, path: itemPath));
+      } on ZardError catch (e) {
+        localIssues.addAll(e.issues);
       }
     }
 
-    for (final validator in _validators) {
+    for (final validator in _listValidators) {
       final error = validator(result);
       if (error != null) {
-        addError(error);
+        localIssues.add(ZardIssue(
+          message: error.message,
+          type: error.type,
+          value: result,
+          path: path.isEmpty ? null : path,
+        ));
       }
     }
 
-    if (issues.isNotEmpty) {
-      throw ZardError(issues);
+    if (localIssues.isNotEmpty) {
+      throw ZardError(localIssues);
     }
 
     var transformedResult = result;
@@ -62,15 +78,6 @@ abstract interface class ZList extends Schema<List<dynamic>> {
     return transformedResult;
   }
 
-  /// Noempty validation
-  /// Example:
-  /// ```dart
-  /// final listSchema = z.list(z.string()).noempty();
-  /// final list = listSchema.parse(['a', 'b', '2']);
-  /// print(list); // Output: ['a', 'b', '2']
-  /// final listEmpty = listSchema.parse([]);
-  /// // Throws with error details
-  /// ```
   ZList noempty({String? message}) {
     addValidator((List<dynamic> value) {
       if (value.isEmpty) {
@@ -85,15 +92,6 @@ abstract interface class ZList extends Schema<List<dynamic>> {
     return this;
   }
 
-  /// Min validation
-  /// Example:
-  /// ```dart
-  /// final listSchema = z.list(z.string()).min(2);
-  /// final list = listSchema.parse(['a', 'b', '2']);
-  /// print(list); // Output: ['a', 'b', '2']
-  /// final listShort = listSchema.parse(['a']);
-  /// // Throws with error details
-  /// ```
   ZList min(int min, {String? message}) {
     addValidator((List<dynamic> value) {
       if (value.length < min) {
@@ -108,15 +106,6 @@ abstract interface class ZList extends Schema<List<dynamic>> {
     return this;
   }
 
-  /// Max validation
-  /// Example:
-  /// ```dart
-  /// final listSchema = z.list(z.string()).max(2);
-  /// final list = listSchema.parse(['a', 'b']);
-  /// print(list); // Output: ['a', 'b']
-  /// final listLong = listSchema.parse(['a', 'b', 'c']);
-  /// // Throws with error details
-  /// ```
   ZList max(int max, {String? message}) {
     addValidator((List<dynamic> value) {
       if (value.length > max) {
@@ -131,15 +120,6 @@ abstract interface class ZList extends Schema<List<dynamic>> {
     return this;
   }
 
-  /// Length validation
-  /// Example:
-  /// ```dart
-  /// final listSchema = z.list(z.string()).lenght(2);
-  /// final list = listSchema.parse(['a', 'b']);
-  /// print(list); // Output: ['a', 'b']
-  /// final listInvalid = listSchema.parse(['a', 'b', 'c']);
-  /// // Throws with error details
-  /// ```
   ZList lenght(int length, {String? message}) {
     addValidator((List<dynamic> value) {
       if (value.length != length) {

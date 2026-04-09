@@ -98,6 +98,7 @@ class Zard {
   /// final value3 = schema.parse(5); // returns 5.0 (double)
   /// final value4 = schema.parse(3.14); // returns 3.14 (double)
   /// ```
+  @Deprecated('Use z.coerce.double() instead. Will be removed in v1.0.0.')
   ZCoerceDouble coerceDouble({String? message}) =>
       ZCoerceDouble(message: message);
 
@@ -274,7 +275,8 @@ class Zard {
   /// ```
   ZFile file({String? message}) => ZFileImpl(message: message);
 
-  Regexes get regexes => Regexes();
+  // Singleton — RegExp compilation is expensive; reuse the same instance.
+  final regexes = Regexes();
 
   ZStringBool stringbool({String? message}) =>
       ZStringBoolImpl(message: message);

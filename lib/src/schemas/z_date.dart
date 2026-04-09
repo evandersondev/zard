@@ -66,45 +66,50 @@ abstract interface class ZDate extends Schema<DateTime> {
   }
 
   @override
-  DateTime parse(dynamic value, {String? path}) {
+  DateTime parse(dynamic value, {String path = ''}) {
     clearErrors();
+
+    if (value == null) {
+      addError(ZardIssue(
+        message: message ?? 'Value is required and cannot be null',
+        type: 'required_error',
+        value: value,
+        path: path.isEmpty ? null : path,
+      ));
+      throw ZardError(issues);
+    }
 
     final validationResult = _validate(value);
     if (validationResult != null) {
-      addError(
-        ZardIssue(
-          message: validationResult.message,
-          type: validationResult.type,
-          value: value,
-          path: path,
-        ),
-      );
+      addError(ZardIssue(
+        message: validationResult.message,
+        type: validationResult.type,
+        value: value,
+        path: path.isEmpty ? null : path,
+      ));
       throw ZardError(issues);
     }
 
     if (value is String) {
       try {
         final date = DateTime.parse(value);
-        // Optionally, process transformations if any exist.
         DateTime transformedValue = date;
         for (final transform in getTransforms()) {
           transformedValue = transform(transformedValue);
         }
         return transformedValue;
       } catch (e) {
-        addError(
-          ZardIssue(
-            message: message ?? 'Invalid date format',
-            type: 'datetime',
-            value: value,
-            path: path,
-          ),
-        );
+        addError(ZardIssue(
+          message: message ?? 'Invalid date format',
+          type: 'datetime',
+          value: value,
+          path: path.isEmpty ? null : path,
+        ));
         throw ZardError(issues);
       }
     }
-    // If the value is already a DateTime, defer to the base implementation.
-    final result = super.parse(value);
+    // Value is already a DateTime — delegate to base (handles transforms).
+    final result = super.parse(value, path: path);
     return result;
   }
 }
@@ -113,26 +118,32 @@ class ZCoerceDate extends ZDate {
   ZCoerceDate({super.message});
 
   @override
-  DateTime parse(dynamic value, {String? path}) {
+  DateTime parse(dynamic value, {String path = ''}) {
     clearErrors();
-    DateTime? coercedValue;
 
-    try {
-      if (value is DateTime) {
-        coercedValue = value;
-      } else {
-        coercedValue = DateTime.tryParse(value?.toString() ?? '');
-      }
-    } catch (e) {
-      // Let the check below handle the error reporting.
+    if (value == null) {
+      addError(ZardIssue(
+        message: message ?? 'Value is required and cannot be null',
+        type: 'required_error',
+        value: value,
+        path: path.isEmpty ? null : path,
+      ));
+      throw ZardError(issues);
     }
+
+    DateTime? coercedValue;
+    try {
+      coercedValue = value is DateTime
+          ? value
+          : DateTime.tryParse(value.toString());
+    } catch (_) {}
 
     if (coercedValue == null) {
       addError(ZardIssue(
         message: message ?? 'Failed to coerce value to DateTime',
         type: 'coerce_error',
         value: value,
-        path: path,
+        path: path.isEmpty ? null : path,
       ));
       throw ZardError(issues);
     }

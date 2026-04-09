@@ -44,6 +44,10 @@ abstract interface class ZardFlattenedError {
     this.fieldErrors = const {},
   });
 
+  /// Returns the first error message for each field.
+  /// Useful for showing per-field error hints in forms.
+  Map<String, String> get firstErrors;
+
   @override
   String toString() {
     return 'ZardFlattenedError(formErrors: $formErrors, fieldErrors: $fieldErrors)';
@@ -55,6 +59,13 @@ class ZardFlattenedErrorImpl extends ZardFlattenedError {
     super.formErrors = const [],
     super.fieldErrors = const {},
   });
+
+  @override
+  Map<String, String> get firstErrors {
+    return fieldErrors.map(
+      (key, errors) => MapEntry(key, errors.first),
+    );
+  }
 }
 
 /// Converte um ZardError em uma estrutura de árvore aninhada

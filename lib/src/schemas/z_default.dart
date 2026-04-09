@@ -6,19 +6,19 @@ abstract interface class ZDefault<T> extends Schema<T> {
 
   ZDefault(this.schema, this.defaultValue) {
     nullish();
-
-    addTransform((value) {
-      if (value == null) {
-        return defaultValue;
-      }
-      return value;
-    });
   }
 
   @override
   T parse(dynamic value, {String path = ''}) {
+    // If value is null or missing, use the default.
     final valueToParse = value ?? defaultValue;
     return schema.parse(valueToParse, path: path);
+  }
+
+  @override
+  Future<T> parseAsync(dynamic value, {String path = ''}) async {
+    final valueToParse = value ?? defaultValue;
+    return schema.parseAsync(valueToParse, path: path);
   }
 }
 

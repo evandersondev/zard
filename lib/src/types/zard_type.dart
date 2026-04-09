@@ -2,17 +2,14 @@ import '../schemas/schema.dart';
 import '../types/zard_error.dart';
 
 abstract class CustomModel {
-  // Factory method to create an instance from validated JSON.
   factory CustomModel.fromJson(Map<String, dynamic> json) =>
       throw UnimplementedError();
 }
 
-/// ZardType is a custom Schema that validates a Map and transforms it into a model instance T.
+/// Validates a Map using [mapSchema] then transforms it into a model instance
+/// of type [T] using [fromMap].
 class ZardType<T> extends Schema<T> {
-  // Function that transforms the validated Map into a model instance.
   final T Function(Map<String, dynamic> json) fromMap;
-
-  // Internal schema to validate the Map (can be a ZMap out of the box).
   final Schema<Map<String, dynamic>> mapSchema;
 
   ZardType({
@@ -21,14 +18,16 @@ class ZardType<T> extends Schema<T> {
   });
 
   @override
-  T parse(dynamic value, {String? path = ''}) {
-    // First validates the Map with the Map schema.
-    final validatedMap = mapSchema.parse(value);
+  T parse(dynamic value, {String path = ''}) {
+    clearErrors();
 
-    // Converts the validated Map to the model instance
-    final result = fromMap(validatedMap);
+    // Validate the Map first; errors from mapSchema propagate via ZardError.
+    final Map<String, dynamic> validatedMap = mapSchema.parse(value, path: path);
 
-    // Executes inherited validators from the base Schema (including refine)
+    // Convert the validated Map to the model instance.
+    final T result = fromMap(validatedMap);
+
+    // Run any validators/refine calls attached to this ZardType.
     for (final validator in getValidators()) {
       final error = validator(result);
       if (error != null) {
@@ -36,17 +35,43 @@ class ZardType<T> extends Schema<T> {
       }
     }
 
-    // Executes transformations
-    T transformedResult = result;
-    for (final transform in getTransforms()) {
-      transformedResult = transform(transformedResult);
-    }
-
-    // If there are errors, throws exception
     if (issues.isNotEmpty) {
-      throw ZardError(issues);
+      throw ZardError(List.of(issues));
     }
 
-    return transformedResult;
+    // Apply transforms.
+    T transformed = result;
+    for (final transform in getTransforms()) {
+      transformed = transform(transformed);
+    }
+
+    return transformed;
+  }
+
+  @override
+  Future<T> parseAsync(dynamic value, {String path = ''}) async {
+    clearErrors();
+
+    final Map<String, dynamic> validatedMap =
+        await mapSchema.parseAsync(value, path: path);
+    final T result = fromMap(validatedMap);
+
+    for (final validator in getValidators()) {
+      final error = validator(result);
+      if (error != null) {
+        addError(error);
+      }
+    }
+
+    if (issues.isNotEmpty) {
+      throw ZardError(List.of(issues));
+    }
+
+    T transformed = result;
+    for (final transform in getTransforms()) {
+      transformed = transform(transformed);
+    }
+
+    return transformed;
   }
 }
