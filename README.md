@@ -1,12 +1,12 @@
 <p align="center">
   <img src="./assets/logo.png" width="200px" align="center" alt="Zard logo" />
-  <h1 align="center">Zard</h1>
-  <br>
-  <p align="center">
-  <a href="https://zard-docs.vercel.app/">🛡️ Zard Documentation</a>
-  <br/>
-    Zard is a schema validation and transformation library for Dart, inspired by the popular  <a href="https://github.com/colinhacks/zod">Zod</a> library for JavaScript. With Zard, you can define schemas to validate and transform data easily and intuitively.
-  </p>
+<h1 align="center">Zard</h1>
+<br>
+<p align="center">
+<a href="https://zard-docs.vercel.app/">🛡️ Zard Documentation</a>
+<br/>
+    Zard is a schema validation and transformation library for Dart, inspired by the popular <a href="https://github.com/colinhacks/zod">Zod</a> library for JavaScript. With Zard, you can define schemas to validate and transform data easily and intuitively.
+</p>
 </p>
 
 <br/>
@@ -54,10 +54,10 @@ Zard allows you to define schemas for various data types. Below are several exam
 import 'package:zard/zard.dart';
 
 void main() {
-  // String validations with minimum length and email format check.
+// String validations with minimum length and email format check.
   final schema = z.string().min(3).email();
 
-  // Using parse (throws ZardError on failure)
+// Using parse (throws ZardError on failure)
   try {
     final result = schema.parse('example@example.com');
     print(result); // example@example.com
@@ -65,14 +65,14 @@ void main() {
     print(e.issues.first.message);
   }
 
-  // Using safeParse (never throws; returns ZardResult)
+// Using safeParse (never throws; returns ZardResult)
   final result = schema.safeParse('hi'); // too short
   if (!result.success) {
     for (final issue in result.error!.issues) {
       print('${issue.type}: ${issue.message}');
+    } else {
+      print(result.data);
     }
-  } else {
-    print(result.data);
   }
 }
 ```
@@ -110,106 +110,105 @@ Zard achieves:
 
 #### Email validation
 
-Zard acrescentou validações específicas para emails usando padrões (RegExp) reutilizáveis. Por padrão, `z.string().email()` valida usando o padrão HTML5 (compatível com a validação dos navegadores) que permite domínios de etiqueta única (ex: `john@example`). É possível passar um `pattern` para escolher outro comportamento.
+Zard added specific validations for emails using reusable patterns (RegExp). By default, `z.string().email()` validates using the HTML5 pattern (compatible with browser validation) which allows single-label domains (e.g.: `john@example`). It is possible to pass a `pattern` to choose a different behavior.
 
-Padrões disponíveis em `z.regexes`:
+Available patterns in `z.regexes`:
 
-- `html5Email` — padrão usado por navegadores (permite `john@example`).
-- `email` — mais estrito, exige um TLD (ex: `example.com`).
-- `rfc5322Email` — implementação mais completa que segue a especificação RFC 5322 (aceita local-parts com aspas, tags, etc.).
-- `unicodeEmail` — permissivo para caracteres não-ASCII (bom para emails internacionais), mas simples.
+- `html5Email` — pattern used by browsers (allows `john@example`).
+- `email` — stricter, requires a TLD (e.g.: `example.com`).
+- `rfc5322Email` — more complete implementation that follows the RFC 5322 specification (accepts quoted local-parts, tags, etc.).
+- `unicodeEmail` — permissive for non-ASCII characters (good for international emails), but simple.
 
-Exemplos rápidos:
+Quick examples:
 
 ```dart
-// 1) padrão HTML5 (padrão do navegador)
+// 1) HTML5 pattern (browser default)
 final html5 = z.string().email();
-print(html5.parse('john@example')); // válido com html5Email
+print(html5.parse('john@example')); // valid with html5Email
 
-// 2) forçar padrão HTML5 explicitamente
+// 2) Force HTML5 pattern explicitly
 final html5explicit = z.string().email(pattern: z.regexes.html5Email);
 print(html5explicit.parse('john@example'));
 
-// 3) padrão mais estrito (exige TLD)
+// 3) Stricter pattern (requires TLD)
 final strict = z.string().email(pattern: z.regexes.email);
-print(strict.parse('john@example.com')); // válido
-// strict.parse('john@example'); // lança erro
+print(strict.parse('john@example.com')); // valid
+// strict.parse('john@example'); // throws error
 
-// 4) RFC5322 (mais completo)
+// 4) RFC5322 (more complete)
 final rfc = z.string().email(pattern: z.regexes.rfc5322Email);
-print(rfc.parse('"john.doe"@example.co.uk')); // válido se atender RFC
+print(rfc.parse('"john.doe"@example.co.uk')); // valid if it meets RFC
 
-// 5) Unicode (aceita caracteres não-ASCII)
+// 5) Unicode (accepts non-ASCII characters)
 final uni = z.string().email(pattern: z.regexes.unicodeEmail);
 print(uni.parse('usuário@exemplo.com'));
 ```
 
-Use o `pattern` quando quiser controlar exatamente quais formatos de e-mail são aceitos no seu domínio ou aplicação.
-
+Use the `pattern` when you want to precisely control which email formats are accepted in your domain or application.
 <br>
 
 #### URL validation
 
-Zard adiciona um validador conveniente para URLs via `z.string().url()` com opções para restringir `hostname` e `protocol` usando `RegExp` personalizados.
+Zard adds a convenient validator for URLs via `z.string().url()` with options to restrict `hostname` and `protocol` using custom `RegExp`.
 
-Exemplos:
+Examples:
 
 ```dart
 import 'package:zard/zard.dart';
 
 void main() {
-  // 1) Padrão: aceita http(s) opcional e hostname genérico
+  // 1) Default: accepts optional http(s) and generic hostname
   final urlSchema = z.string().url();
   print(urlSchema.parse('https://www.example.com'));
 
-  // 2) Forçar hostname que termine com .example.com
+  // 2) Force hostname ending with .example.com
   final urlWithHostnameSchema =
       z.string().url(hostname: RegExp(r'^[\w\.-]+\.example\.com$'));
   print(urlWithHostnameSchema.parse('https://api.example.com/path'));
 
-  // 3) Forçar protocolo (por exemplo: somente https)
+  // 3) Force protocol (e.g.: only https)
   final urlProtocolSchema = z.string().url(protocol: RegExp(r'^https:\/\/'));
   print(urlProtocolSchema.parse('https://secure.example.com'));
 
-  // 4) Hostname + protocolo personalizados simultaneamente
+  // 4) Hostname + protocol customized simultaneously
   final urlAllSchema = z.string().url(
-    hostname: RegExp(r'^[\w\.-]+\.example\.com$'),
-    protocol: RegExp(r'^https:\/\/'),
-  );
+        hostname: RegExp(r'^[\w\.-]+\.example\.com$'),
+        protocol: RegExp(r'^https:\/\/'),
+      );
   print(urlAllSchema.parse('https://api.example.com/endpoint'));
 }
 ```
 
-Observações importantes:
+Important notes:
 
-- Você pode passar `RegExp` em `hostname` e/ou `protocol`. Padrões com âncoras `^` e `$` são aceitos — o validador remove esses anchors internamente ao compor a regex final para evitar conflitos.
-- A sensibilidade a maiúsculas/minúsculas (`isCaseSensitive`) dos `RegExp` que você fornecer é respeitada; por padrão a validação é case-insensitive quando nenhum `RegExp` especifica o contrário.
-- O comportamento padrão permite protocole opcional (`http`/`https`). Para forçar protocolo, forneça um `RegExp` apropriado (por exemplo `RegExp(r'^https:\/\/')`).
+- You can pass `RegExp` to `hostname` and/or `protocol`. Patterns with anchors `^` and `$` are accepted — the validator removes these anchors internally when composing the final regex to avoid conflicts.
+- The case sensitivity (`isCaseSensitive`) of the `RegExp` you provide is respected; by default validation is case-insensitive when no `RegExp` specifies otherwise.
+- The default behavior allows optional protocol (`http`/`https`). To force a protocol, provide an appropriate `RegExp` (e.g. `RegExp(r'^https:\/\/')`).
 
 <br>
 
 #### String transforms (uppercase / lowercase / trim / normalize)
 
-Zard adiciona helpers e validadores convenientes para operações comuns em strings:
+Zard adds convenient helpers and validators for common string operations:
 
-- uppercase() — validador: exige que o valor já esteja todo em maiúsculas.
-- lowercase() — validador: exige que o valor já esteja todo em minúsculas.
-- toUpperCase() — transform: converte o valor para maiúsculas.
-- toLowerCase() — transform: converte o valor para minúsculas.
-- trim() — transform: remove espaços do início/fim da string.
-- normalize() — transform: remove acentos/diacríticos (usa package string_normalizer), remove caracteres de controle, faz trim e colapsa múltiplos whitespace em um único espaço.
+- `uppercase()` — validator: requires the value to already be all uppercase.
+- `lowercase()` — validator: requires the value to already be all lowercase.
+- `toUpperCase()` — transform: converts the value to uppercase.
+- `toLowerCase()` — transform: converts the value to lowercase.
+- `trim()` — transform: removes leading/trailing whitespace.
+- `normalize()` — transform: removes accents/diacritics (uses `string_normalizer` package), removes control characters, trims and collapses multiple whitespace into a single space.
 
-Exemplos:
+Examples:
 
 ```dart
 import 'package:zard/zard.dart';
 
 void main() {
-  // 1) Validador uppercase: aceita apenas strings já em MAIÚSCULAS
+  // 1) uppercase validator: accepts only strings already in UPPERCASE
   final mustBeUpper = z.string().uppercase();
   print(mustBeUpper.parse('ABC')); // ABC
 
-  // 2) Validador lowercase: aceita apenas strings já em minúsculas
+  // 2) lowercase validator: accepts only strings already in lowercase
   final mustBeLower = z.string().lowercase();
   print(mustBeLower.parse('abc')); // abc
 
@@ -218,10 +217,10 @@ void main() {
   print(z.string().toLowerCase().parse('HELLO')); // hello
 
   // 4) Trim
-  print(z.string().trim().parse('  hello  ')); // hello
+  print(z.string().trim().parse(' hello ')); // hello
 
-  // 5) Normalize (remove acentos/diacríticos, trim, collapse whitespace)
-  print(z.string().normalize().parse('  áéí  ')); // aei
+  // 5) Normalize (removes accents/diacritics, trim, collapse whitespace)
+  print(z.string().normalize().parse(' áéí ')); // aei
 }
 ```
 
@@ -229,32 +228,32 @@ void main() {
 
 #### String → Boolean (stringbool)
 
-Zard oferece um schema conveniente para interpretar strings como booleanos via `z.stringbool()`.
-Ele aceita valores booleanos, numéricos e strings que representam estados verdadeiros ou falsos.
+Zard provides a convenient schema to interpret strings as booleans via `z.stringbool()`.
 
-Tokens reconhecidos (case-insensitive, com trim):
+It accepts boolean, numeric, and string values that represent true or false states.
 
-- Verdadeiros: `1`, `true`, `yes`, `on`, `y`, `enabled`
-- Falsos: `0`, `false`, `no`, `off`, `n`, `disabled`
+Recognized tokens (case-insensitive, with trim):
 
-Exemplos:
+- True: `1`, `true`, `yes`, `on`, `y`, `enabled`
+- False: `0`, `false`, `no`, `off`, `n`, `disabled`
+
+Examples:
 
 ```dart
 import 'package:zard/zard.dart';
 
 void main() {
   final strbool = z.stringbool();
-
-  print(strbool.parse('1'));         // true
-  print(strbool.parse('yes'));       // true
-  print(strbool.parse('ON'));        // true
+  print(strbool.parse('1')); // true
+  print(strbool.parse('yes')); // true
+  print(strbool.parse('ON')); // true
   print(strbool.parse(' enabled ')); // true (trim + case-insensitive)
-  print(strbool.parse('0'));         // false
-  print(strbool.parse('no'));        // false
-  print(strbool.parse(true));        // true
-  print(strbool.parse(0));           // false
+  print(strbool.parse('0')); // false
+  print(strbool.parse('no')); // false
+  print(strbool.parse(true)); // true
+  print(strbool.parse(0)); // false
 
-  // Valores não reconhecidos lançam ZardError
+  // Unrecognized values throw ZardError
   // strbool.parse('maybe'); // throws ZardError
 }
 ```
@@ -263,38 +262,38 @@ void main() {
 
 #### Advanced String Validators
 
-Zard fornece uma série de validadores especializados para tipos comuns de strings (URLs, IPs, hashes, etc.):
+Zard provides a series of specialized validators for common string types (URLs, IPs, hashes, etc.):
 
-**Identificadores e UUIDs:**
+**Identifiers and UUIDs:**
 
 - `guid()` — GUID/UUID v4
-- `uuid(version)` — UUID genérico (v1-v8) ou versão específica
-- `nanoid()` — Nano ID (21 caracteres)
+- `uuid(version)` — Generic UUID (v1-v8) or specific version
+- `nanoid()` — Nano ID (21 characters)
 - `ulid()` — ULID (Universally Unique Lexicographically Sortable Identifier)
 
-**Redes e Protocolos:**
+**Networks and Protocols:**
 
-- `httpUrl()` — URLs HTTP/HTTPS apenas
-- `hostname()` — Hostname válido
-- `ipv4()` — Endereço IPv4
-- `ipv6()` — Endereço IPv6
-- `mac()` — Endereço MAC (ex: `AA:BB:CC:DD:EE:FF`)
-- `cidrv4()` — Bloco CIDR IPv4 (ex: `192.168.1.0/24`)
-- `cidrv6()` — Bloco CIDR IPv6
+- `httpUrl()` — HTTP/HTTPS URLs only
+- `hostname()` — Valid hostname
+- `ipv4()` — IPv4 address
+- `ipv6()` — IPv6 address
+- `mac()` — MAC address (e.g.: `AA:BB:CC:DD:EE:FF`)
+- `cidrv4()` — IPv4 CIDR block (e.g.: `192.168.1.0/24`)
+- `cidrv6()` — IPv6 CIDR block
 
-**Codificações e Hashes:**
+**Encodings and Hashes:**
 
-- `base64()` — Base64 padrão
+- `base64()` — Standard Base64
 - `base64url()` — Base64 URL-safe
 - `hex()` — Hexadecimal
-- `hash(algorithm)` — Hash validado por algoritmo (suporta `sha1`, `sha256`, `sha384`, `sha512`, `md5`)
+- `hash(algorithm)` — Hash validated by algorithm (supports `sha1`, `sha256`, `sha384`, `sha512`, `md5`)
 - `jwt()` — JSON Web Token
 
-**Outros Formatos:**
+**Other Formats:**
 
-- `emoji()` — Um único caractere emoji
+- `emoji()` — A single emoji character
 
-Exemplos:
+Examples:
 
 ```dart
 import 'package:zard/zard.dart';
@@ -320,23 +319,23 @@ void main() {
 
 #### ISO 8601 Date/Time Validators
 
-Zard fornece validadores especializados para formatos ISO 8601, acessíveis via namespace `z.iso.*`:
+Zard provides specialized validators for ISO 8601 formats, accessible via the `z.iso.*` namespace:
 
-- `z.iso.date()` — Data ISO (YYYY-MM-DD)
-- `z.iso.time()` — Hora ISO (HH:mm:ss ou com milissegundos)
-- `z.iso.datetime()` — Data e hora ISO 8601 (com ou sem Z)
-- `z.iso.duration()` — Duração ISO 8601 (ex: P1DT2H3M4S)
+- `z.iso.date()` — ISO Date (YYYY-MM-DD)
+- `z.iso.time()` — ISO Time (HH:mm:ss or with milliseconds)
+- `z.iso.datetime()` — ISO 8601 Date and Time (with or without Z)
+- `z.iso.duration()` — ISO 8601 Duration (e.g.: P1DT2H3M4S)
 
-Exemplos:
+Examples:
 
 ```dart
 import 'package:zard/zard.dart';
 
 void main() {
-  print(z.iso.date().parse('2021-01-01'));           // válido
-  print(z.iso.time().parse('12:30:45'));             // válido
-  print(z.iso.datetime().parse('2021-01-01T12:30:45Z')); // válido
-  print(z.iso.duration().parse('P1Y2M3DT4H5M6S')); // válido
+  print(z.iso.date().parse('2021-01-01')); // valid
+  print(z.iso.time().parse('12:30:45')); // valid
+  print(z.iso.datetime().parse('2021-01-01T12:30:45Z')); // valid
+  print(z.iso.duration().parse('P1Y2M3DT4H5M6S')); // valid
 }
 ```
 
@@ -349,7 +348,6 @@ import 'package:zard/zard.dart';
 
 void main() {
   final schema = z.int().min(1).max(100);
-
   print(schema.parse(50)); // 50
 
   final result = schema.safeParse(0); // below min
@@ -368,7 +366,6 @@ import 'package:zard/zard.dart';
 
 void main() {
   final schema = z.double().min(1.0).max(100.0);
-
   print(schema.parse(50.5)); // 50.5
 
   final result = schema.safeParse(0.5);
@@ -403,7 +400,6 @@ import 'package:zard/zard.dart';
 
 void main() {
   final schema = z.list(z.string().min(3));
-
   print(schema.parse(['abc', 'def'])); // [abc, def]
 
   final result = schema.safeParse(['ab', 'def']); // 'ab' too short
@@ -524,7 +520,6 @@ import 'package:zard/zard.dart';
 
 void main() {
   final schema = z.$enum(['pending', 'active', 'inactive']);
-
   print(schema.parse('active')); // active
 
   final result = schema.safeParse('unknown');
@@ -568,10 +563,10 @@ void main() {
 import 'package:zard/zard.dart';
 
 void main() {
-  print(z.coerce.int().parse('123'));    // 123
+  print(z.coerce.int().parse('123')); // 123
   print(z.coerce.double().parse('3.14')); // 3.14
-  print(z.coerce.bool().parse('true'));  // true
-  print(z.coerce.string().parse(123));   // "123"
+  print(z.coerce.bool().parse('true')); // true
+  print(z.coerce.string().parse(123)); // "123"
   print(z.coerce.date().parse('2025-11-26')); // DateTime
 }
 ```
@@ -586,7 +581,6 @@ import 'package:zard/zard.dart';
 void main() {
   // Recursive schema for a tree structure
   late Schema<Map<String, dynamic>> nodeSchema;
-
   nodeSchema = z.map({
     'value': z.string(),
     'children': z.list(z.lazy(() => nodeSchema)).optional(),
@@ -604,6 +598,7 @@ void main() {
       },
     ],
   });
+
   print(tree['value']); // root
   print((tree['children'] as List).length); // 2
 }
@@ -632,7 +627,6 @@ void main() {
     'email': z.string().email().transform((v) => v.toLowerCase()),
     'name': z.string().transform((v) => v.toUpperCase()),
   });
-
   print(schema.parse({'email': 'JOHN@X.COM', 'name': 'john'}));
   // {email: john@x.com, name: JOHN}
 }
@@ -773,9 +767,8 @@ Collapses all issues into a flat `{formErrors, fieldErrors}` structure. `fieldEr
 
 ```dart
 final flattened = z.flattenError(result.error!);
-print(flattened.formErrors);  // root-level errors
+print(flattened.formErrors); // root-level errors
 print(flattened.fieldErrors); // {'name': [...], 'age': [...]}
-
 // firstErrors: one message per field (handy for form hints)
 print(flattened.firstErrors); // {'name': 'Value must be at least 2 characters long', ...}
 ```
@@ -786,9 +779,9 @@ Builds a nested tree reflecting the path structure of the issues.
 
 ```dart
 final tree = z.treeifyError(result.error!);
-print(tree.errors);                          // root-level error messages
-print(tree.properties?['name']?.errors);    // field-level messages
-print(tree.items?[0]?.errors);              // list-item-level messages
+print(tree.errors); // root-level error messages
+print(tree.properties?['name']?.errors); // field-level messages
+print(tree.items?[0]?.errors); // list-item-level messages
 ```
 
 #### `z.prettifyError(error)`
@@ -798,9 +791,9 @@ Returns a human-readable multi-line string.
 ```dart
 print(z.prettifyError(result.error!));
 // ✖ Value must be at least 2 characters long
-//   → at name
+// → at name
 // ✖ Value must be at least 0
-//   → at age
+// → at age
 ```
 
 <br>
@@ -866,33 +859,31 @@ Two parsing methods:
 
 1. **`parse()`** — throws `ZardError` on failure.
 2. **`safeParse()`** — returns `ZardResult<T>`; never throws.
-
-<br>
+   <br>
 
 ### Similarity to Zod
 
 Zard was inspired by Zod, a powerful schema validation library for JavaScript. Just like Zod, Zard provides an easy-to-use API for defining and transforming schemas. The main difference is that Zard is built specifically for Dart and Flutter, harnessing the power of Dart's language features.
-
 <br>
 
 ## Contribution
 
 Contributions are welcome! Feel free to open issues and pull requests on the [GitHub repository](https://github.com/evandersondev/zard).
-
 <br>
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
-
----
+## This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
 
 Made with ❤️ for Dart/Flutter developers! 🎯✨
 
+<br />
+
+## Contributors
+
 <div style={{textAlign: 'center', margin: '2rem 0'}}>
   <a href="https://github.com/evandersondev/zard/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=evandersondev/zard" alt="Contributors" />
+    <img style={{width: 24, height: 24}} src="https://contrib.rocks/image?repo=evandersondev/zard" alt="Contributors" />
   </a>
 </div>
-
-</div>
+```
