@@ -92,9 +92,6 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
 
   @override
   Map<String, dynamic> parse(dynamic value, {String path = ''}) {
-    // Use a LOCAL issues list so that recursive schema invocations (e.g. via
-    // lazy circular references) cannot corrupt this call's error state by
-    // replacing the shared _ctx via clearErrors().
     final localIssues = <ZardIssue>[];
 
     if (value == null) {
@@ -117,54 +114,38 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
       throw ZardError(localIssues);
     }
 
-    final Map<String, dynamic> result = {};
+    final result = <String, dynamic>{};
 
     schemas.forEach((key, schema) {
       final fieldPath = joinPath(path, key);
 
-      if (!value.containsKey(key)) {
-        // Field is absent.
-        if (!schema.isOptional) {
-          localIssues.add(ZardIssue(
-            message: 'Field "$key" is required',
-            type: 'required_error',
-            value: null,
-            path: fieldPath,
-          ));
-        } else {
-          // Optional field — attempt to get a default value if one exists.
-          try {
-            final defaultVal = schema.parse(null, path: fieldPath);
-            if (defaultVal != null) result[key] = defaultVal;
-          } on ZardError {
-            // No default; field simply absent from result.
-          }
-        }
-      } else {
-        final fieldValue = value[key];
+      final hasKey = value.containsKey(key);
+      final fieldValue = hasKey ? value[key] : null;
 
-        if (fieldValue == null) {
-          // Field is present but null.
-          if (schema.isNullable || schema.isOptional) {
-            result[key] = null;
-          } else {
-            localIssues.add(ZardIssue(
-              message: 'Field "$key" cannot be null',
-              type: 'null_error',
-              value: null,
-              path: fieldPath,
-            ));
-          }
-        } else {
-          try {
-            result[key] = schema.parse(fieldValue, path: fieldPath);
-          } on ZardError catch (e) {
-            localIssues.addAll(e.issues);
-          }
+      try {
+        // 🔥 SEMPRE tenta parse — isso resolve default automaticamente
+        final parsed = schema.parse(fieldValue, path: fieldPath);
+
+        // só adiciona se não for undefined (caso queira no futuro)
+        if (parsed != null || hasKey) {
+          result[key] = parsed;
         }
+      } on ZardError catch (e) {
+        // 🔥 aqui decidimos se é erro ou não
+
+        final isMissing = !hasKey;
+
+        if (isMissing && schema.isOptional) {
+          // optional → ignora
+          return;
+        }
+
+        // se chegou aqui → erro real
+        localIssues.addAll(e.issues);
       }
     });
 
+    // STRICT MODE
     if (_strict) {
       for (var key in value.keys) {
         if (!schemas.containsKey(key)) {
@@ -178,6 +159,7 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
       }
     }
 
+    // REFINE
     if (_refineValidator != null && !_refineValidator!(result)) {
       localIssues.add(ZardIssue(
         message: _refineMessage ?? 'Refinement failed',
@@ -237,8 +219,7 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
           ));
         } else {
           try {
-            final defaultVal =
-                await schema.parseAsync(null, path: fieldPath);
+            final defaultVal = await schema.parseAsync(null, path: fieldPath);
             if (defaultVal != null) result[key] = defaultVal;
           } on ZardError {
             // No default; field simply absent.
@@ -260,8 +241,7 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
           }
         } else {
           try {
-            result[key] =
-                await schema.parseAsync(fieldValue, path: fieldPath);
+            result[key] = await schema.parseAsync(fieldValue, path: fieldPath);
           } on ZardError catch (e) {
             localIssues.addAll(e.issues);
           }

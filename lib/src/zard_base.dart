@@ -2,6 +2,7 @@ import 'package:zard/src/schemas/z_string_bool.dart';
 import 'package:zard/src/utils/iso.dart';
 import 'package:zard/zard.dart';
 
+import 'schemas/z_union.dart';
 import 'types/zard_error_formatter.dart' as formatter;
 import 'utils/regexes.dart';
 
@@ -290,6 +291,10 @@ class Zard {
   /// final isoDurationSchema = z.iso.duration();
   /// ```
   Iso get iso => Iso();
+
+  ZUnion union(List<Schema> schemas) {
+    return ZUnion(schemas);
+  }
 }
 
 final z = Zard();

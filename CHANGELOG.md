@@ -1,3 +1,7 @@
+## 1.0.0
+
+- Add more validation rules, refine, parseAsync, safeParseAsync, coerce, strict.
+
 ## 0.0.26
 
 - Fix optional schema from ZMap.

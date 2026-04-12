@@ -5,6 +5,8 @@ import '../types/zard_issue.dart';
 import '../types/zard_result.dart';
 import 'schemas.dart';
 import 'transformed_schema.dart';
+import 'z_nullable.dart';
+import 'z_optional.dart';
 
 typedef Validator<T> = ZardIssue? Function(T value);
 typedef Transformer<T> = T Function(T value);
@@ -12,16 +14,18 @@ typedef Transformer<T> = T Function(T value);
 abstract class Schema<T> {
   final List<Validator<T>> _validators = [];
   final List<Transformer<T>> _transforms = [];
-  bool _isOptional = false;
-  bool _nullable = false;
 
   // ParseContext for the current parse invocation.
   // Replaced on every clearErrors() call (i.e., at the start of each parse()).
   // Subclasses and containers read/write through addError() / issues.
   ParseContext _ctx = ParseContext();
 
-  bool get isOptional => _isOptional;
-  bool get isNullable => _nullable;
+  // ✅ NOVO (dinâmico)
+  bool get isOptional => this is ZOptional;
+  bool get isNullable => this is ZNullable;
+
+  /// 🔥 MUITO IMPORTANTE
+  bool get isOptionalLike => this is ZOptional || this is ZDefault;
 
   // ----- Backward-compatible accessors backed by the current context -----
 
@@ -57,25 +61,28 @@ abstract class Schema<T> {
     return TransformedSchemaImpl<T, R>(this, transformer);
   }
 
-  Schema<T> optional() {
-    _isOptional = true;
-    return this;
+  Schema<T?> optional() {
+    return ZOptional<T>(this);
   }
 
-  Schema<T> nullable() {
-    _nullable = true;
-    return this;
+  Schema<T?> nullable() {
+    return ZNullable<T>(this);
   }
 
-  Schema<T> nullish() {
-    _nullable = true;
-    _isOptional = true;
-    return this;
+  Schema<T?> nullish() {
+    return ZNullable(ZOptional<T>(this));
   }
 
   /// Marks this schema as required (removes optional flag).
-  Schema<T> markRequired() {
-    _isOptional = false;
+  Schema markRequired() {
+    if (this is ZOptional) {
+      return (this as ZOptional).inner.markRequired();
+    }
+
+    if (this is ZNullable) {
+      return ZNullable((this as ZNullable).inner.markRequired());
+    }
+
     return this;
   }
 
@@ -85,8 +92,8 @@ abstract class Schema<T> {
   /// final result = schema.parse(null);
   /// print(result); // "Hello World"
   /// ```
-  Schema $default(T defaultValue) {
-    return ZDefaultImpl(this, defaultValue);
+  Schema<T> $default(T defaultValue) {
+    return ZDefault<T>(this, defaultValue);
   }
 
   ZList list({String? message}) {

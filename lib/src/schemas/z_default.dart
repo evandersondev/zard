@@ -1,27 +1,34 @@
-import 'package:zard/zard.dart';
+import '../types/zard_error.dart';
+import 'schema.dart';
 
-abstract interface class ZDefault<T> extends Schema<T> {
+class ZDefault<T> extends Schema<T> {
+  final Schema<T> inner;
   final T defaultValue;
-  final Schema<T> schema;
 
-  ZDefault(this.schema, this.defaultValue) {
-    nullish();
-  }
+  ZDefault(this.inner, this.defaultValue);
+
+  bool get hasDefault => true;
 
   @override
   T parse(dynamic value, {String path = ''}) {
-    // If value is null or missing, use the default.
-    final valueToParse = value ?? defaultValue;
-    return schema.parse(valueToParse, path: path);
+    clearErrors();
+
+    // 🔥 AQUI ESTÁ A MÁGICA
+    if (value == null) {
+      return defaultValue;
+    }
+
+    try {
+      return inner.parse(value, path: path);
+    } on ZardError catch (e) {
+      issues.addAll(e.issues);
+      throw ZardError(List.of(issues));
+    }
   }
 
   @override
   Future<T> parseAsync(dynamic value, {String path = ''}) async {
-    final valueToParse = value ?? defaultValue;
-    return schema.parseAsync(valueToParse, path: path);
+    if (value == null) return defaultValue;
+    return await inner.parseAsync(value, path: path);
   }
-}
-
-class ZDefaultImpl<T> extends ZDefault<T> {
-  ZDefaultImpl(super.schema, super.defaultValue);
 }

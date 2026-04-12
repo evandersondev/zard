@@ -36,12 +36,7 @@ abstract interface class ZBool extends Schema<bool> {
     for (final validator in getValidators()) {
       final error = validator(value);
       if (error != null) {
-        addError(ZardIssue(
-          message: error.message,
-          type: error.type,
-          value: value,
-          path: path.isEmpty ? null : path,
-        ));
+        addError(error);
       }
     }
 

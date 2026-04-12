@@ -23,7 +23,7 @@ Add the following line to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  zard: ^0.0.26
+  zard: ^1.0.0
 ```
 
 Then, run:
@@ -76,6 +76,35 @@ void main() {
   }
 }
 ```
+
+<br>
+
+## ⚡ Performance
+
+| Library | Small Object | Complex Object |
+| ------- | ------------ | -------------- |
+| Zard    | ~0.93 µs     | ~7.3 µs        |
+| Zod     | ~0.13 µs     | ~1.3 µs        |
+| Yup     | ~5.7 µs      | ~66 µs         |
+
+Zard is:
+
+- ~6-7x slower than Zod (JS engine advantage)
+- ~6-10x faster than Yup
+
+---
+
+<br>
+
+## 📊 Benchmark
+
+Zard achieves:
+
+- ~1M ops/sec (objects)
+- ~4M ops/sec (primitives)
+- ~100k ops/sec (complex nested)
+
+---
 
 <br>
 
@@ -694,14 +723,14 @@ void main() {
 
 `safeParse()` and `safeParseAsync()` return a `ZardResult<T>` with the following interface:
 
-| Member | Description |
-|---|---|
-| `result.success` | `true` if parsing succeeded |
-| `result.data` | The parsed value (non-null when `success` is `true`) |
-| `result.error` | The `ZardError` (non-null when `success` is `false`) |
-| `result.unwrap()` | Returns `data` or throws `ZardError` |
-| `result.unwrapOrNull()` | Returns `data` or `null` — never throws |
-| `result.when(success:, error:)` | Pattern-match on success/failure |
+| Member                          | Description                                          |
+| ------------------------------- | ---------------------------------------------------- |
+| `result.success`                | `true` if parsing succeeded                          |
+| `result.data`                   | The parsed value (non-null when `success` is `true`) |
+| `result.error`                  | The `ZardError` (non-null when `success` is `false`) |
+| `result.unwrap()`               | Returns `data` or throws `ZardError`                 |
+| `result.unwrapOrNull()`         | Returns `data` or `null` — never throws              |
+| `result.when(success:, error:)` | Pattern-match on success/failure                     |
 
 ```dart
 import 'package:zard/zard.dart';

@@ -962,6 +962,22 @@ abstract interface class ZString extends Schema<String> {
   String parse(dynamic value, {String? path}) {
     clearErrors();
 
+    if (value == null) {
+      if (isNullable) {
+        return null as String;
+      }
+      addError(
+        ZardIssue(
+          message: message ?? 'Expected a string value',
+          type: 'type_error',
+          value: value,
+          path: path,
+        ),
+      );
+
+      throw ZardError(issues);
+    }
+
     if (value is! String) {
       addError(
         ZardIssue(
