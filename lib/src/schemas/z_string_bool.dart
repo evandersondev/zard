@@ -5,12 +5,10 @@ import 'schemas.dart';
 abstract interface class ZStringBool extends Schema<bool> {
   final String? message;
 
-  ZStringBool({this.message}) {
-    // Accept various string/boolean-like inputs; actual validation is performed in parse().
-  }
+  ZStringBool({this.message});
 
   @override
-  bool parse(dynamic value, {String? path}) {
+  bool parse(dynamic value, {String path = ''}) {
     clearErrors();
 
     bool? parsed;
@@ -32,16 +30,14 @@ abstract interface class ZStringBool extends Schema<bool> {
           parsed = false;
         }
       }
-    } catch (_) {
-      // ignore and let parsed remain null
-    }
+    } catch (_) {}
 
     if (parsed == null) {
       addError(ZardIssue(
         message: message ?? 'Expected a boolean-like string',
         type: 'type_error',
         value: value,
-        path: path,
+        path: path.isEmpty ? null : path,
       ));
       throw ZardError(issues);
     }
@@ -50,33 +46,27 @@ abstract interface class ZStringBool extends Schema<bool> {
   }
 
   @override
-  Future<bool> parseAsync(dynamic value, {String? path}) async {
-    clearErrors();
+  Future<bool> parseAsync(dynamic value, {String path = ''}) async {
     final resolvedValue = value is Future ? await value : value;
-    return parse(resolvedValue);
+    return parse(resolvedValue, path: path);
   }
 }
 
+/// Coercion boolean: falsy values → false, everything else → true.
 class ZCoerceBoolean extends ZStringBool {
   ZCoerceBoolean({super.message});
 
   @override
-  bool parse(dynamic value, {String? path}) {
+  bool parse(dynamic value, {String path = ''}) {
     clearErrors();
-    try {
-      if (value == 0 ||
-          value == '0' ||
-          value == false ||
-          value == null ||
-          value == '') {
-        return false;
-      }
-      return true;
-    } catch (e) {
-      // This logic is simple enough that it shouldn't throw.
-      // The super.parse will handle any final type checks.
+    if (value == 0 ||
+        value == '0' ||
+        value == false ||
+        value == null ||
+        value == '') {
+      return false;
     }
-    return super.parse(value, path: path);
+    return true;
   }
 }
 

@@ -2,6 +2,7 @@ import 'package:zard/src/schemas/z_string_bool.dart';
 import 'package:zard/src/utils/iso.dart';
 import 'package:zard/zard.dart';
 
+import 'schemas/z_union.dart';
 import 'types/zard_error_formatter.dart' as formatter;
 import 'utils/regexes.dart';
 
@@ -98,6 +99,7 @@ class Zard {
   /// final value3 = schema.parse(5); // returns 5.0 (double)
   /// final value4 = schema.parse(3.14); // returns 3.14 (double)
   /// ```
+  @Deprecated('Use z.coerce.double() instead. Will be removed in v1.0.0.')
   ZCoerceDouble coerceDouble({String? message}) =>
       ZCoerceDouble(message: message);
 
@@ -274,7 +276,8 @@ class Zard {
   /// ```
   ZFile file({String? message}) => ZFileImpl(message: message);
 
-  Regexes get regexes => Regexes();
+  // Singleton — RegExp compilation is expensive; reuse the same instance.
+  final regexes = Regexes();
 
   ZStringBool stringbool({String? message}) =>
       ZStringBoolImpl(message: message);
@@ -288,6 +291,10 @@ class Zard {
   /// final isoDurationSchema = z.iso.duration();
   /// ```
   Iso get iso => Iso();
+
+  ZUnion union(List<Schema> schemas) {
+    return ZUnion(schemas);
+  }
 }
 
 final z = Zard();

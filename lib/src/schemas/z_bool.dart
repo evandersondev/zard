@@ -6,31 +6,30 @@ import 'schema.dart';
 abstract interface class ZBool extends Schema<bool> {
   final String? message;
 
-  ZBool({this.message}) {
-    addValidator((bool? value) {
-      if (value != true && value != false) {
-        return ZardIssue(
-          message: message ?? 'Expected a boolean value',
-          type: 'type_error',
-          value: value,
-        );
-      }
-      return null;
-    });
-  }
+  ZBool({this.message});
+  // No constructor validator needed — the parse() override handles type checking.
 
   @override
-  bool parse(dynamic value, {String? path}) {
+  bool parse(dynamic value, {String path = ''}) {
     clearErrors();
 
+    if (value == null) {
+      addError(ZardIssue(
+        message: message ?? 'Value is required and cannot be null',
+        type: 'required_error',
+        value: value,
+        path: path.isEmpty ? null : path,
+      ));
+      throw ZardError(issues);
+    }
+
     if (value is! bool) {
-      addError(
-        ZardIssue(
-          message: message ?? 'Expected a boolean value',
-          type: 'type_error',
-          value: value,
-        ),
-      );
+      addError(ZardIssue(
+        message: message ?? 'Expected a boolean value',
+        type: 'type_error',
+        value: value,
+        path: path.isEmpty ? null : path,
+      ));
       throw ZardError(issues);
     }
 
@@ -54,10 +53,9 @@ abstract interface class ZBool extends Schema<bool> {
   }
 
   @override
-  Future<bool> parseAsync(dynamic value, {String? path}) async {
-    clearErrors();
+  Future<bool> parseAsync(dynamic value, {String path = ''}) async {
     final resolvedValue = value is Future ? await value : value;
-    return parse(resolvedValue);
+    return parse(resolvedValue, path: path);
   }
 }
 
@@ -65,22 +63,16 @@ class ZCoerceBoolean extends ZBool {
   ZCoerceBoolean({super.message});
 
   @override
-  bool parse(dynamic value, {String? path}) {
+  bool parse(dynamic value, {String path = ''}) {
     clearErrors();
-    try {
-      if (value == 0 ||
-          value == '0' ||
-          value == false ||
-          value == null ||
-          value == '') {
-        return false;
-      }
-      return true;
-    } catch (e) {
-      // This logic is simple enough that it shouldn't throw.
-      // The super.parse will handle any final type checks.
+    if (value == 0 ||
+        value == '0' ||
+        value == false ||
+        value == null ||
+        value == '') {
+      return false;
     }
-    return super.parse(value, path: path);
+    return true;
   }
 }
 

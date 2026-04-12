@@ -8,19 +8,14 @@ abstract interface class TransformedSchema<T, R> extends Schema<R> {
 
   @override
   R parse(dynamic value, {String path = ''}) {
-    final T? originalResult = inner.parse(value, path: path);
-    if (originalResult == null) {
-      throw Exception("Transformation error: inner.parse returned null");
-    }
+    // Parse the inner schema first; errors propagate via ZardError.
+    final T originalResult = inner.parse(value, path: path);
     return transformer(originalResult);
   }
 
   @override
   Future<R> parseAsync(dynamic value, {String path = ''}) async {
-    final T? originalResult = await inner.parseAsync(value, path: path);
-    if (originalResult == null) {
-      throw Exception("Transformation error: inner.parseAsync returned null");
-    }
+    final T originalResult = await inner.parseAsync(value, path: path);
     return transformer(originalResult);
   }
 }

@@ -57,6 +57,16 @@ abstract interface class ZEnum extends Schema<String> {
   String parse(dynamic value, {String path = ''}) {
     clearErrors();
 
+    if (value == null) {
+      addError(ZardIssue(
+        message: message ?? 'Value is required and cannot be null',
+        type: 'required_error',
+        value: value,
+        path: path.isEmpty ? null : path,
+      ));
+      throw ZardError(issues);
+    }
+
     // Verifica se o valor é uma string
     if (value is! String) {
       addError(ZardIssue(

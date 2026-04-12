@@ -1,4 +1,5 @@
 import 'package:zard/src/schemas/schemas.dart';
+import 'package:zard/src/types/parse_context.dart';
 
 import '../types/zard_error.dart';
 import '../types/zard_issue.dart';
@@ -12,21 +13,10 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
 
   ZMap(this.schemas, {this.message});
 
-  /// Returns a map of field names to their expected types
-  /// Example:
-  /// ```dart
-  /// final dogSchema = z.map({
-  ///   'name': z.string(),
-  ///   'age': z.int(),
-  /// });
-  ///
-  /// dogSchema.shape['name']; // => String
-  /// dogSchema.shape['age']; // => int
-  /// ```
+  /// Returns a map of field names to their expected Dart types.
   Map<String, Type> get shape {
     return schemas.map((key, schema) {
-      Type schemaType = String; // default fallback
-
+      Type schemaType = String;
       if (schema is ZInt) {
         schemaType = int;
       } else if (schema is ZDouble) {
@@ -42,7 +32,6 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
       } else if (schema is ZMap) {
         schemaType = Map;
       }
-
       return MapEntry(key, schemaType);
     });
   }
@@ -60,85 +49,128 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
     return this;
   }
 
+  // -----------------------------------------------------------------------
+  // Zod-parity object methods
+  // -----------------------------------------------------------------------
+
+  /// Returns a new schema where all (or the specified) fields are optional.
+  ZMap partial({List<String>? keys}) {
+    final newSchemas = schemas.map((k, s) {
+      if (keys == null || keys.contains(k)) {
+        return MapEntry(k, s.optional());
+      }
+      return MapEntry(k, s);
+    });
+    return ZMapImpl(newSchemas, message: message);
+  }
+
+  /// Returns a new schema where all (or the specified) fields are required.
+  ZMap required({List<String>? keys}) {
+    final newSchemas = schemas.map((k, s) {
+      if (keys == null || keys.contains(k)) {
+        return MapEntry(k, s.markRequired());
+      }
+      return MapEntry(k, s);
+    });
+    return ZMapImpl(newSchemas, message: message);
+  }
+
+  /// Merges another [ZMap]'s fields into this schema.
+  /// Fields from [other] win on key conflicts.
+  ZMap merge(ZMap other) {
+    return ZMapImpl({...schemas, ...other.schemas}, message: message);
+  }
+
+  /// Adds [extra] fields to the schema.
+  ZMap extend(Map<String, Schema> extra) {
+    return ZMapImpl({...schemas, ...extra}, message: message);
+  }
+
+  // -----------------------------------------------------------------------
+  // Parsing
+  // -----------------------------------------------------------------------
+
   @override
   Map<String, dynamic> parse(dynamic value, {String path = ''}) {
-    clearErrors();
+    final localIssues = <ZardIssue>[];
+
+    if (value == null) {
+      localIssues.add(ZardIssue(
+        message: message ?? 'Value is required and cannot be null',
+        type: 'required_error',
+        value: value,
+        path: path.isEmpty ? null : path,
+      ));
+      throw ZardError(localIssues);
+    }
 
     if (value is! Map) {
-      addError(ZardIssue(
+      localIssues.add(ZardIssue(
         message: message ?? 'Expected a Map',
         type: 'type_error',
         value: value,
-        path: path,
+        path: path.isEmpty ? null : path,
       ));
-      throw ZardError(issues);
+      throw ZardError(localIssues);
     }
 
-    Map<String, dynamic> result = {};
+    final result = <String, dynamic>{};
 
     schemas.forEach((key, schema) {
-      final fieldPath = path.isEmpty ? key : '$path.$key';
+      final fieldPath = joinPath(path, key);
 
-      if (!value.containsKey(key)) {
-        // Campo não fornecido
-        if (!schema.isOptional) {
-          addError(ZardIssue(
-            message: 'Field "$key" is required',
-            type: 'required_error',
-            value: null,
-            path: fieldPath,
-          ));
-        } else {
-          // Campo opcional - aplicar default
-          try {
-            result[key] = schema.parse(null, path: fieldPath);
-          } catch (e) {
-            if (e is! ZardError) {
-              rethrow;
-            }
-          }
+      final hasKey = value.containsKey(key);
+      final fieldValue = hasKey ? value[key] : null;
+
+      try {
+        // 🔥 SEMPRE tenta parse — isso resolve default automaticamente
+        final parsed = schema.parse(fieldValue, path: fieldPath);
+
+        // só adiciona se não for undefined (caso queira no futuro)
+        if (parsed != null || hasKey) {
+          result[key] = parsed;
         }
-      } else {
-        dynamic fieldValue = value[key];
-        try {
-          // Se o valor é null, deixar o schema lidar com ele (seja nullable ou default)
-          result[key] = schema.parse(fieldValue, path: fieldPath);
-        } catch (e) {
-          if (e is ZardError) {
-            issues.addAll(e.issues);
-          } else {
-            rethrow;
-          }
+      } on ZardError catch (e) {
+        // 🔥 aqui decidimos se é erro ou não
+
+        final isMissing = !hasKey;
+
+        if (isMissing && schema.isOptional) {
+          // optional → ignora
+          return;
         }
+
+        // se chegou aqui → erro real
+        localIssues.addAll(e.issues);
       }
     });
 
+    // STRICT MODE
     if (_strict) {
       for (var key in value.keys) {
         if (!schemas.containsKey(key)) {
-          addError(ZardIssue(
+          localIssues.add(ZardIssue(
             message: 'Unexpected key "$key" found in object',
             type: 'strict_error',
             value: value[key],
-            path: path.isEmpty ? key : '$path.$key',
+            path: joinPath(path, key.toString()),
           ));
         }
       }
     }
 
-    if (_refineValidator != null) {
-      if (!_refineValidator!(result)) {
-        addError(ZardIssue(
-          message: _refineMessage ?? "Refinement failed",
-          type: "refine_error",
-          value: result,
-          path: path,
-        ));
-      }
+    // REFINE
+    if (_refineValidator != null && !_refineValidator!(result)) {
+      localIssues.add(ZardIssue(
+        message: _refineMessage ?? 'Refinement failed',
+        type: 'refine_error',
+        value: result,
+        path: path.isEmpty ? null : path,
+      ));
     }
 
-    if (issues.isNotEmpty) {
-      throw ZardError(issues);
+    if (localIssues.isNotEmpty) {
+      throw ZardError(localIssues);
     }
 
     return result;
@@ -147,89 +179,109 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
   @override
   Future<Map<String, dynamic>> parseAsync(dynamic value,
       {String path = ''}) async {
-    clearErrors();
-    try {
-      final resolvedValue = value is Future ? await value : value;
+    final localIssues = <ZardIssue>[];
 
-      if (resolvedValue is! Map) {
-        addError(ZardIssue(
-          message: message ?? 'Expected a Map',
-          type: 'type_error',
-          value: resolvedValue,
-          path: path,
-        ));
-        throw ZardError(issues);
-      }
+    if (value == null) {
+      localIssues.add(ZardIssue(
+        message: message ?? 'Value is required and cannot be null',
+        type: 'required_error',
+        value: value,
+        path: path.isEmpty ? null : path,
+      ));
+      throw ZardError(localIssues);
+    }
 
-      Map<String, dynamic> result = {};
+    final resolvedValue = value is Future ? await value : value;
 
-      for (var key in schemas.keys) {
-        final schema = schemas[key]!;
-        final fieldPath = path.isEmpty ? key : '$path.$key';
+    if (resolvedValue is! Map) {
+      localIssues.add(ZardIssue(
+        message: message ?? 'Expected a Map',
+        type: 'type_error',
+        value: resolvedValue,
+        path: path.isEmpty ? null : path,
+      ));
+      throw ZardError(localIssues);
+    }
 
-        if (!resolvedValue.containsKey(key)) {
-          // Campo não fornecido
-          if (!schema.isOptional) {
-            addError(ZardIssue(
-              message: 'Field "$key" is required',
-              type: 'required_error',
+    final Map<String, dynamic> result = {};
+
+    for (final key in schemas.keys) {
+      final schema = schemas[key]!;
+      final fieldPath = joinPath(path, key);
+
+      if (!resolvedValue.containsKey(key)) {
+        if (!schema.isOptional) {
+          localIssues.add(ZardIssue(
+            message: 'Field "$key" is required',
+            type: 'required_error',
+            value: null,
+            path: fieldPath,
+          ));
+        } else {
+          try {
+            final defaultVal = await schema.parseAsync(null, path: fieldPath);
+            if (defaultVal != null) result[key] = defaultVal;
+          } on ZardError {
+            // No default; field simply absent.
+          }
+        }
+      } else {
+        final fieldValue = resolvedValue[key];
+
+        if (fieldValue == null) {
+          if (schema.isNullable || schema.isOptional) {
+            result[key] = null;
+          } else {
+            localIssues.add(ZardIssue(
+              message: 'Field "$key" cannot be null',
+              type: 'null_error',
               value: null,
               path: fieldPath,
             ));
-          } else {
-            // Campo opcional - aplicar default
-            try {
-              result[key] = await schema.parseAsync(null, path: fieldPath);
-            } catch (e) {
-              if (e is! ZardError) {
-                rethrow;
-              }
-            }
           }
         } else {
-          dynamic fieldValue = resolvedValue[key];
           try {
-            // Se o valor é null, deixar o schema lidar com ele (seja nullable ou default)
             result[key] = await schema.parseAsync(fieldValue, path: fieldPath);
-          } catch (e) {
-            if (e is ZardError) {
-              issues.addAll(e.issues);
-            } else {
-              rethrow;
-            }
+          } on ZardError catch (e) {
+            localIssues.addAll(e.issues);
           }
         }
       }
-
-      if (_strict) {
-        for (var key in resolvedValue.keys) {
-          if (!schemas.containsKey(key)) {
-            addError(ZardIssue(
-              message: 'Unexpected key "$key" found in object',
-              type: 'strict_error',
-              value: resolvedValue[key],
-              path: path.isEmpty ? key : '$path.$key',
-            ));
-          }
-        }
-      }
-
-      if (issues.isNotEmpty) {
-        throw ZardError(issues);
-      }
-
-      return result;
-    } catch (e) {
-      return Future.error(ZardError(issues));
     }
+
+    if (_strict) {
+      for (var key in resolvedValue.keys) {
+        if (!schemas.containsKey(key)) {
+          localIssues.add(ZardIssue(
+            message: 'Unexpected key "$key" found in object',
+            type: 'strict_error',
+            value: resolvedValue[key],
+            path: joinPath(path, key.toString()),
+          ));
+        }
+      }
+    }
+
+    if (_refineValidator != null && !_refineValidator!(result)) {
+      localIssues.add(ZardIssue(
+        message: _refineMessage ?? 'Refinement failed',
+        type: 'refine_error',
+        value: result,
+        path: path.isEmpty ? null : path,
+      ));
+    }
+
+    if (localIssues.isNotEmpty) {
+      throw ZardError(localIssues);
+    }
+
+    return result;
   }
 
-  /// Use .keyOf to create a ZodEnum schema from the keys of an object schema.
   ZEnum keyof() {
     return ZEnumImpl(schemas.keys.toList());
   }
 
-  /// Use .pick to create a new schema that only includes the specified keys.
   ZMap pick(List<String> keys) {
     final newSchemas = <String, Schema>{};
     for (final key in keys) {
@@ -240,7 +292,6 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
     return ZMapImpl(newSchemas);
   }
 
-  /// Use .omit to create a new schema that excludes the specified keys.
   ZMap omit(List<String> keys) {
     final newSchemas = <String, Schema>{};
     for (final key in schemas.keys) {
@@ -252,9 +303,7 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
   }
 
   @override
-  String toString() {
-    return 'ZMap(${schemas.toString()})';
-  }
+  String toString() => 'ZMap(${schemas.toString()})';
 }
 
 class ZMapImpl extends ZMap {
