@@ -91,63 +91,133 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
   // -----------------------------------------------------------------------
 
   @override
-  Map<String, dynamic> parse(dynamic value, {String path = ''}) {
-    final localIssues = <ZardIssue>[];
+  Map<String, dynamic>? parseInto(
+      dynamic value, String path, List<ZardIssue> sink) {
+    final pathOrNull = path.isEmpty ? null : path;
 
     if (value == null) {
-      localIssues.add(ZardIssue(
+      sink.add(ZardIssue(
         message: message ?? 'Value is required and cannot be null',
         type: 'required_error',
         value: value,
-        path: path.isEmpty ? null : path,
+        path: pathOrNull,
       ));
-      throw ZardError(localIssues);
+      return null;
     }
-
     if (value is! Map) {
-      localIssues.add(ZardIssue(
+      sink.add(ZardIssue(
         message: message ?? 'Expected a Map',
         type: 'type_error',
         value: value,
-        path: path.isEmpty ? null : path,
+        path: pathOrNull,
       ));
-      throw ZardError(localIssues);
+      return null;
     }
 
     final result = <String, dynamic>{};
+    final beforeOuter = sink.length;
 
-    schemas.forEach((key, schema) {
+    for (final entry in schemas.entries) {
+      final key = entry.key;
+      final schema = entry.value;
       final fieldPath = joinPath(path, key);
 
-      final hasKey = value.containsKey(key);
-      final fieldValue = hasKey ? value[key] : null;
+      final fieldValue = value[key];
+      final hasKey = fieldValue != null || value.containsKey(key);
 
-      try {
-        // 🔥 SEMPRE tenta parse — isso resolve default automaticamente
-        final parsed = schema.parse(fieldValue, path: fieldPath);
+      final before = sink.length;
+      final parsed = schema.parseInto(fieldValue, fieldPath, sink);
 
-        // só adiciona se não for undefined (caso queira no futuro)
+      if (sink.length == before) {
         if (parsed != null || hasKey) {
           result[key] = parsed;
         }
-      } on ZardError catch (e) {
-        // 🔥 aqui decidimos se é erro ou não
-
-        final isMissing = !hasKey;
-
-        if (isMissing && schema.isOptional) {
-          // optional → ignora
-          return;
-        }
-
-        // se chegou aqui → erro real
-        localIssues.addAll(e.issues);
+      } else if (!hasKey && schema.isOptional) {
+        sink.length = before;
       }
-    });
+    }
 
-    // STRICT MODE
     if (_strict) {
-      for (var key in value.keys) {
+      for (final key in value.keys) {
+        if (!schemas.containsKey(key)) {
+          sink.add(ZardIssue(
+            message: 'Unexpected key "$key" found in object',
+            type: 'strict_error',
+            value: value[key],
+            path: joinPath(path, key.toString()),
+          ));
+        }
+      }
+    }
+
+    if (_refineValidator != null && !_refineValidator!(result)) {
+      sink.add(ZardIssue(
+        message: _refineMessage ?? 'Refinement failed',
+        type: 'refine_error',
+        value: result,
+        path: pathOrNull,
+      ));
+    }
+
+    return sink.length == beforeOuter ? result : null;
+  }
+
+  @override
+  Map<String, dynamic> parse(dynamic value, {String path = ''}) {
+    final pathOrNull = path.isEmpty ? null : path;
+
+    if (value == null) {
+      throw ZardError([
+        ZardIssue(
+          message: message ?? 'Value is required and cannot be null',
+          type: 'required_error',
+          value: value,
+          path: pathOrNull,
+        )
+      ]);
+    }
+
+    if (value is! Map) {
+      throw ZardError([
+        ZardIssue(
+          message: message ?? 'Expected a Map',
+          type: 'type_error',
+          value: value,
+          path: pathOrNull,
+        )
+      ]);
+    }
+
+    final result = <String, dynamic>{};
+    // Single sink reused across all fields — `parseInto` writes errors here.
+    // No per-field try/catch overhead.
+    final localIssues = <ZardIssue>[];
+
+    for (final entry in schemas.entries) {
+      final key = entry.key;
+      final schema = entry.value;
+      final fieldPath = joinPath(path, key);
+
+      // Single lookup: read once, then disambiguate "missing" vs "present-but-null".
+      final fieldValue = value[key];
+      final hasKey = fieldValue != null || value.containsKey(key);
+
+      final before = localIssues.length;
+      final parsed = schema.parseInto(fieldValue, fieldPath, localIssues);
+
+      if (localIssues.length == before) {
+        // Success — include the field unless it was both missing AND null.
+        if (parsed != null || hasKey) {
+          result[key] = parsed;
+        }
+      } else if (!hasKey && schema.isOptional) {
+        // Missing optional field: rollback any issues the schema reported.
+        localIssues.length = before;
+      }
+    }
+
+    if (_strict) {
+      for (final key in value.keys) {
         if (!schemas.containsKey(key)) {
           localIssues.add(ZardIssue(
             message: 'Unexpected key "$key" found in object',
@@ -159,13 +229,12 @@ abstract interface class ZMap extends Schema<Map<String, dynamic>> {
       }
     }
 
-    // REFINE
     if (_refineValidator != null && !_refineValidator!(result)) {
       localIssues.add(ZardIssue(
         message: _refineMessage ?? 'Refinement failed',
         type: 'refine_error',
         value: result,
-        path: path.isEmpty ? null : path,
+        path: pathOrNull,
       ));
     }
 

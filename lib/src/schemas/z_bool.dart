@@ -10,43 +10,87 @@ abstract interface class ZBool extends Schema<bool> {
   // No constructor validator needed — the parse() override handles type checking.
 
   @override
-  bool parse(dynamic value, {String path = ''}) {
-    clearErrors();
+  bool? parseInto(dynamic value, String path, List<ZardIssue> sink) {
+    final pathOrNull = path.isEmpty ? null : path;
 
     if (value == null) {
-      addError(ZardIssue(
+      sink.add(ZardIssue(
         message: message ?? 'Value is required and cannot be null',
         type: 'required_error',
         value: value,
-        path: path.isEmpty ? null : path,
+        path: pathOrNull,
       ));
-      throw ZardError(issues);
+      return null;
     }
 
     if (value is! bool) {
-      addError(ZardIssue(
+      sink.add(ZardIssue(
         message: message ?? 'Expected a boolean value',
         type: 'type_error',
         value: value,
-        path: path.isEmpty ? null : path,
+        path: pathOrNull,
       ));
-      throw ZardError(issues);
+      return null;
     }
 
-    for (final validator in getValidators()) {
-      final error = validator(value);
+    final beforeLen = sink.length;
+    final validators = validatorsInternal;
+    for (var i = 0; i < validators.length; i++) {
+      final error = validators[i](value);
+      if (error != null) sink.add(error);
+    }
+    if (sink.length != beforeLen) return null;
+
+    var result = value;
+    final transforms = transformsInternal;
+    for (var i = 0; i < transforms.length; i++) {
+      result = transforms[i](result);
+    }
+    return result;
+  }
+
+  @override
+  bool parse(dynamic value, {String path = ''}) {
+    clearErrors();
+    final pathOrNull = path.isEmpty ? null : path;
+    final sink = issuesInternal;
+
+    if (value == null) {
+      sink.add(ZardIssue(
+        message: message ?? 'Value is required and cannot be null',
+        type: 'required_error',
+        value: value,
+        path: pathOrNull,
+      ));
+      throw ZardError(sink);
+    }
+
+    if (value is! bool) {
+      sink.add(ZardIssue(
+        message: message ?? 'Expected a boolean value',
+        type: 'type_error',
+        value: value,
+        path: pathOrNull,
+      ));
+      throw ZardError(sink);
+    }
+
+    final validators = validatorsInternal;
+    for (var i = 0; i < validators.length; i++) {
+      final error = validators[i](value);
       if (error != null) {
-        addError(error);
+        sink.add(error);
       }
     }
 
-    if (issues.isNotEmpty) {
-      throw ZardError(issues);
+    if (sink.isNotEmpty) {
+      throw ZardError(sink);
     }
 
     var transformedValue = value;
-    for (final transform in getTransforms()) {
-      transformedValue = transform(transformedValue);
+    final transforms = transformsInternal;
+    for (var i = 0; i < transforms.length; i++) {
+      transformedValue = transforms[i](transformedValue);
     }
 
     return transformedValue;

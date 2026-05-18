@@ -3,6 +3,9 @@ import { z } from "zod";
 const iterations = 100000;
 
 function benchmark(name, fn) {
+    // Warmup to let V8 optimize (matches the Dart and Yup benchmarks).
+    for (let i = 0; i < 5000; i++) fn();
+
     const start = performance.now();
 
     for (let i = 0; i < iterations; i++) {

@@ -1,0 +1,55 @@
+📊 Zard - String valid
+Total: 5 ms
+Per op: 0.0508 µs
+Ops/sec: 19669552
+
+📊 Zard - String invalid
+Total: 54 ms
+Per op: 0.5463 µs
+Ops/sec: 1830396
+
+📊 Zard - Small object
+Total: 36 ms
+Per op: 0.3643 µs
+Ops/sec: 2745141
+
+📊 Zard - Medium object
+Total: 126 ms
+Per op: 1.2694 µs
+Ops/sec: 787774
+
+📊 Zard - Complex object
+Total: 292 ms
+Per op: 2.9285 µs
+Ops/sec: 341474
+
+📊 Zard - Transform
+Total: 6 ms
+Per op: 0.0647 µs
+Ops/sec: 15451174
+
+📊 Zard - Default
+Total: 0 ms
+Per op: 0.0090 µs
+Ops/sec: 111482720
+
+📊 Zard - Nullable
+Total: 1 ms
+Per op: 0.0133 µs
+Ops/sec: 75131480
+
+📊 Zard - Union (string)
+Total: 6 ms
+Per op: 0.0634 µs
+Ops/sec: 15765411
+
+📊 Zard - Union (int)
+Total: 7 ms
+Per op: 0.0778 µs
+Ops/sec: 12856776
+
+📊 Zard - safeParse
+Total: 27 ms
+Per op: 0.2797 µs
+Ops/sec: 3574748
+

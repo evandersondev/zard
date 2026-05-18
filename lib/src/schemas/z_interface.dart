@@ -44,34 +44,43 @@ abstract interface class ZInterface extends Schema<Map<String, dynamic>> {
 
   @override
   Map<String, dynamic> parse(dynamic value, {String path = ''}) {
-    final localIssues = <ZardIssue>[];
+    List<ZardIssue> localIssues;
+    final pathOrNull = path.isEmpty ? null : path;
 
     if (value == null) {
-      localIssues.add(ZardIssue(
-        message: message ?? 'Value is required and cannot be null',
-        type: 'required_error',
-        value: value,
-        path: path.isEmpty ? null : path,
-      ));
-      throw ZardError(localIssues);
+      throw ZardError([
+        ZardIssue(
+          message: message ?? 'Value is required and cannot be null',
+          type: 'required_error',
+          value: value,
+          path: pathOrNull,
+        )
+      ]);
     }
 
     if (value is! Map) {
-      localIssues.add(ZardIssue(
-        message: message ?? 'Expected a Map',
-        type: 'type_error',
-        value: value,
-        path: path.isEmpty ? null : path,
-      ));
-      throw ZardError(localIssues);
+      throw ZardError([
+        ZardIssue(
+          message: message ?? 'Expected a Map',
+          type: 'type_error',
+          value: value,
+          path: pathOrNull,
+        )
+      ]);
     }
 
     final Map<String, dynamic> result = {};
+    localIssues = <ZardIssue>[];
 
-    schemas.forEach((key, schema) {
+    for (final entry in schemas.entries) {
+      final key = entry.key;
+      final schema = entry.value;
       final fieldPath = joinPath(path, key);
 
-      if (!value.containsKey(key)) {
+      final fieldValue = value[key];
+      final hasKey = fieldValue != null || value.containsKey(key);
+
+      if (!hasKey) {
         if (!schema.isOptional) {
           localIssues.add(ZardIssue(
             message: 'Field "$key" is required',
@@ -80,32 +89,28 @@ abstract interface class ZInterface extends Schema<Map<String, dynamic>> {
             path: fieldPath,
           ));
         }
-      } else {
-        final fieldValue = value[key];
-
-        if (fieldValue == null) {
-          if (schema.isNullable || schema.isOptional) {
-            result[key] = null;
-          } else {
-            localIssues.add(ZardIssue(
-              message: 'Field "$key" cannot be null',
-              type: 'null_error',
-              value: null,
-              path: fieldPath,
-            ));
-          }
+      } else if (fieldValue == null) {
+        if (schema.isNullable || schema.isOptional) {
+          result[key] = null;
         } else {
-          try {
-            result[key] = schema.parse(fieldValue, path: fieldPath);
-          } on ZardError catch (e) {
-            localIssues.addAll(e.issues);
-          }
+          localIssues.add(ZardIssue(
+            message: 'Field "$key" cannot be null',
+            type: 'null_error',
+            value: null,
+            path: fieldPath,
+          ));
+        }
+      } else {
+        final before = localIssues.length;
+        final parsed = schema.parseInto(fieldValue, fieldPath, localIssues);
+        if (localIssues.length == before) {
+          result[key] = parsed;
         }
       }
-    });
+    }
 
     if (_strict) {
-      for (var key in value.keys) {
+      for (final key in value.keys) {
         if (!schemas.containsKey(key)) {
           localIssues.add(ZardIssue(
             message: 'Unexpected key "$key" found in object',

@@ -1,0 +1,66 @@
+
+📊 Zod - String valid
+Total: 11.44 ms
+Per op: 0.1144 µs
+Ops/sec: 8742468
+
+
+📊 Zod - String invalid
+Total: 1967.38 ms
+Per op: 19.6738 µs
+Ops/sec: 50829
+
+
+📊 Zod - Small object
+Total: 36.53 ms
+Per op: 0.3653 µs
+Ops/sec: 2737261
+
+
+📊 Zod - Medium object
+Total: 82.51 ms
+Per op: 0.8251 µs
+Ops/sec: 1211954
+
+
+📊 Zod - Complex object
+Total: 88.85 ms
+Per op: 0.8885 µs
+Ops/sec: 1125527
+
+
+📊 Zod - Transform
+Total: 23.83 ms
+Per op: 0.2383 µs
+Ops/sec: 4196687
+
+
+📊 Zod - Default
+Total: 5.54 ms
+Per op: 0.0554 µs
+Ops/sec: 18050792
+
+
+📊 Zod - Nullable
+Total: 4.07 ms
+Per op: 0.0407 µs
+Ops/sec: 24571727
+
+
+📊 Zod - Union (string)
+Total: 13.63 ms
+Per op: 0.1363 µs
+Ops/sec: 7335382
+
+
+📊 Zod - Union (int)
+Total: 15.75 ms
+Per op: 0.1575 µs
+Ops/sec: 6349703
+
+
+📊 Zod - safeParse
+Total: 8.47 ms
+Per op: 0.0847 µs
+Ops/sec: 11804182
+

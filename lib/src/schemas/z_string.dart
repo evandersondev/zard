@@ -4,21 +4,118 @@ import '../types/zard_error.dart';
 import '../types/zard_issue.dart';
 import 'schema.dart';
 
+// Precompiled RegExp patterns. Compiling regex is one of the most expensive
+// operations in the hot path; hoisting these to static finals lets every
+// `.email()` / `.uuid()` / etc. validator reuse the same compiled pattern
+// across every parse() call.
+class _StringPatterns {
+  static final RegExp defaultEmail = RegExp(
+    r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$",
+    caseSensitive: false,
+  );
+
+  static final RegExp uuidGeneric = RegExp(
+    r'^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+    caseSensitive: false,
+  );
+
+  static final Map<String, RegExp> uuidByVersion = {
+    for (final v in ['1', '2', '3', '4', '5', '6', '7', '8'])
+      'v$v': RegExp(
+        '^[0-9a-f]{8}-[0-9a-f]{4}-$v[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\$',
+        caseSensitive: false,
+      )
+  };
+
+  static final RegExp cuid = RegExp(r'^[a-z0-9]{20}$');
+  static final RegExp cuid2 = RegExp(r'^[a-z0-9]{24}$');
+
+  static final RegExp datetime = RegExp(
+    r'^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)((-(\d{2}):(\d{2})|Z)?)$',
+  );
+  static final RegExp date = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$');
+  static final RegExp time =
+      RegExp(r'^(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)$');
+
+  static final RegExp guid = RegExp(
+    r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+    caseSensitive: false,
+  );
+
+  static final RegExp httpUrl = RegExp(
+    r'^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$',
+    caseSensitive: false,
+  );
+
+  static final RegExp hostname = RegExp(
+    r'^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\.[a-zA-Z0-9-]{1,63})*$',
+  );
+
+  static final RegExp emoji = RegExp(
+    r'^[\u{1F300}-\u{1F9FF}]$|^[\u{2600}-\u{27BF}]$|^[\u{2300}-\u{23FF}]$|^[\u{2B50}]$|^[\u{1F600}-\u{1F64F}]$',
+    unicode: true,
+  );
+
+  static final RegExp base64 = RegExp(r'^[A-Za-z0-9+/]*={0,2}$');
+  static final RegExp base64url = RegExp(r'^[A-Za-z0-9_-]*$');
+  static final RegExp hex = RegExp(r'^[0-9a-fA-F]*$');
+  static final RegExp hexAny = RegExp(r'^[a-fA-F0-9]+$');
+
+  static final RegExp jwt = RegExp(
+    r'^eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$',
+  );
+
+  static final RegExp nanoid = RegExp(r'^[V-Za-z0-9_-]{21}$');
+  static final RegExp ulid = RegExp(r'^[0-7][0-9A-HJKMNP-TV-Z]{25}$');
+
+  static final RegExp ipv4 =
+      RegExp(r'^((25[0-5]|(2[0-4]|1\d?)\d)\.?\b){4}$');
+
+  static final RegExp ipv6 = RegExp(
+    r'^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$',
+    caseSensitive: false,
+  );
+
+  static final RegExp mac =
+      RegExp(r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$');
+
+  static final RegExp cidrv4 = RegExp(
+    r'^((25[0-5]|(2[0-4]|1\d?)\d)\.?\b){4}\/([0-9]|[1-2][0-9]|3[0-2])$',
+  );
+
+  static final RegExp cidrv6 = RegExp(
+    r'^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))\/([0-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8])$',
+    caseSensitive: false,
+  );
+
+  static final RegExp isoDate = RegExp(r'^\d{4}-\d{2}-\d{2}$');
+  static final RegExp isoTime = RegExp(r'^\d{2}:\d{2}:\d{2}(\.\d{3})?$');
+  static final RegExp isoDatetime =
+      RegExp(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$');
+  static final RegExp isoDuration =
+      RegExp(r'^P(\d+Y)?(\d+M)?(\d+W)?(\d+D)?(T(\d+H)?(\d+M)?(\d+(\.\d+)?S)?)?$');
+
+  static final RegExp controlChars =
+      RegExp('[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]+');
+  static final RegExp whitespace = RegExp(r'\s+');
+
+  static final RegExp urlStartAnchors = RegExp(r'^\^+');
+
+  // Default URL pattern (no custom hostname/protocol). Mirrors the inline
+  // pattern that z.string().url() previously built per parse() call.
+  static final RegExp defaultUrl = RegExp(
+    r'^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.-]*)*\/?$',
+    caseSensitive: false,
+  );
+}
+
 abstract interface class ZString extends Schema<String> {
   final String? message;
 
-  ZString({this.message}) {
-    addValidator((String? value) {
-      if (value == null) {
-        return ZardIssue(
-          message: message ?? 'Expected a string value',
-          type: 'type_error',
-          value: value,
-        );
-      }
-      return null;
-    });
-  }
+  // No constructor validator: the base Schema.parse() already rejects null
+  // and non-string values before iterating validators, so a duplicated
+  // null/type check here would just allocate an extra closure per schema.
+  ZString({this.message});
 
   /// Min validation
   /// Example:
@@ -74,11 +171,7 @@ abstract interface class ZString extends Schema<String> {
       String? value,
     ) {
       if (value != null) {
-        final emailRegExp = pattern ??
-            RegExp(
-              r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$",
-              caseSensitive: false,
-            );
+        final emailRegExp = pattern ?? _StringPatterns.defaultEmail;
         if (!emailRegExp.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid email format',
@@ -108,47 +201,53 @@ abstract interface class ZString extends Schema<String> {
   /// final url = customSchema.parse('http://other.com'); // throws with error details
   /// ```
   ZString url({String? message, RegExp? hostname, RegExp? protocol}) {
-    addValidator((String? value) {
-      if (value != null) {
-        // Helper to remove start/end anchors from user-supplied patterns so they
-        // can be safely embedded into a larger combined pattern.
-        String stripAnchors(String p) {
-          var s = p;
-          s = s.replaceFirst(RegExp(r'^\^+'), '');
-          if (s.endsWith(r'$')) {
-            s = s.substring(0, s.length - 1);
-          }
-          return s;
-        }
-
-        final protocolPattern = protocol != null
-            ? stripAnchors(protocol.pattern)
-            : r'(https?:\/\/)?';
-
-        // Build the hostname portion: use custom pattern if provided, otherwise use a permissive default.
-        final hostnamePattern = hostname != null
-            ? stripAnchors(hostname.pattern)
-            : r'([\da-z\.-]+)\.([a-z\.]{2,6})';
-
-        // Remainder of path
-        final pathPattern = r'([\/\w\.-]*)*\/?$';
-
-        final urlPattern =
-            '^' + protocolPattern + hostnamePattern + pathPattern;
-
-        // Respect case sensitivity from provided patterns when available; default to case-insensitive.
-        final caseSensitive =
-            protocol?.isCaseSensitive ?? hostname?.isCaseSensitive ?? false;
-
-        final urlRegExp = RegExp(urlPattern, caseSensitive: caseSensitive);
-
-        if (!urlRegExp.hasMatch(value)) {
+    // Fast path: no custom patterns → reuse the precompiled default URL regex.
+    if (hostname == null && protocol == null) {
+      addValidator((String? value) {
+        if (value != null && !_StringPatterns.defaultUrl.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid URL format',
             type: 'url_error',
             value: value,
           );
         }
+        return null;
+      });
+      return this;
+    }
+
+    // Slow path: caller passed a custom hostname/protocol — build a composed
+    // pattern once at schema-construction time (NOT per parse call).
+    String stripAnchors(String p) {
+      var s = p;
+      s = s.replaceFirst(_StringPatterns.urlStartAnchors, '');
+      if (s.endsWith(r'$')) {
+        s = s.substring(0, s.length - 1);
+      }
+      return s;
+    }
+
+    final protocolPattern = protocol != null
+        ? stripAnchors(protocol.pattern)
+        : r'(https?:\/\/)?';
+    final hostnamePattern = hostname != null
+        ? stripAnchors(hostname.pattern)
+        : r'([\da-z\.-]+)\.([a-z\.]{2,6})';
+    final pathPattern = r'([\/\w\.-]*)*\/?$';
+    final caseSensitive =
+        protocol?.isCaseSensitive ?? hostname?.isCaseSensitive ?? false;
+    final composedUrl = RegExp(
+      '^' + protocolPattern + hostnamePattern + pathPattern,
+      caseSensitive: caseSensitive,
+    );
+
+    addValidator((String? value) {
+      if (value != null && !composedUrl.hasMatch(value)) {
+        return ZardIssue(
+          message: message ?? 'Invalid URL format',
+          type: 'url_error',
+          value: value,
+        );
       }
       return null;
     });
@@ -189,46 +288,9 @@ abstract interface class ZString extends Schema<String> {
 
     addValidator((String? value) {
       if (value != null) {
-        final uuidRegExp = switch (version) {
-          // explicit version checks: ensure the version nibble matches the requested version
-          'v1' => RegExp(
-              r'^[0-9a-f]{8}-[0-9a-f]{4}-1[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
-              caseSensitive: false,
-            ),
-          'v2' => RegExp(
-              r'^[0-9a-f]{8}-[0-9a-f]{4}-2[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
-              caseSensitive: false,
-            ),
-          'v3' => RegExp(
-              r'^[0-9a-f]{8}-[0-9a-f]{4}-3[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
-              caseSensitive: false,
-            ),
-          'v4' => RegExp(
-              r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
-              caseSensitive: false,
-            ),
-          'v5' => RegExp(
-              r'^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
-              caseSensitive: false,
-            ),
-          'v6' => RegExp(
-              r'^[0-9a-f]{8}-[0-9a-f]{4}-6[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
-              caseSensitive: false,
-            ),
-          'v7' => RegExp(
-              r'^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
-              caseSensitive: false,
-            ),
-          'v8' => RegExp(
-              r'^[0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
-              caseSensitive: false,
-            ),
-          // generic: accept any valid UUID version nibble between 1 and 8
-          _ => RegExp(
-              r'^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
-              caseSensitive: false,
-            )
-        };
+        final uuidRegExp = version == null
+            ? _StringPatterns.uuidGeneric
+            : (_StringPatterns.uuidByVersion[version] ?? _StringPatterns.uuidGeneric);
         if (!uuidRegExp.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid UUID format',
@@ -285,8 +347,7 @@ abstract interface class ZString extends Schema<String> {
   ZString cuid({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final cuidRegExp = RegExp(r'^[a-z0-9]{20}$');
-        if (!cuidRegExp.hasMatch(value)) {
+        if (!_StringPatterns.cuid.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid CUID format',
             type: 'cuid_error',
@@ -309,8 +370,7 @@ abstract interface class ZString extends Schema<String> {
   ZString cuid2({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final cuid2RegExp = RegExp(r'^[a-z0-9]{24}$');
-        if (!cuid2RegExp.hasMatch(value)) {
+        if (!_StringPatterns.cuid2.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid CUID2 format',
             type: 'cuid2_error',
@@ -417,10 +477,7 @@ abstract interface class ZString extends Schema<String> {
   ZString datetime({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final datetimeRegExp = RegExp(
-          r'^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)((-(\d{2}):(\d{2})|Z)?)$',
-        );
-        if (!datetimeRegExp.hasMatch(value)) {
+        if (!_StringPatterns.datetime.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid datetime format',
             type: 'datetime_error',
@@ -443,8 +500,7 @@ abstract interface class ZString extends Schema<String> {
   ZString date({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final dateRegExp = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$');
-        if (!dateRegExp.hasMatch(value)) {
+        if (!_StringPatterns.date.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid date format',
             type: 'date_error',
@@ -467,8 +523,7 @@ abstract interface class ZString extends Schema<String> {
   ZString time({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final timeRegExp = RegExp(r'^(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)$');
-        if (!timeRegExp.hasMatch(value)) {
+        if (!_StringPatterns.time.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid time format',
             type: 'time_error',
@@ -519,12 +574,11 @@ abstract interface class ZString extends Schema<String> {
 
       // Remove control characters (except common whitespace) that may interfere
       // with comparisons/storage.
-      normalized = normalized.replaceAll(
-          RegExp(r'[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]+'), '');
+      normalized = normalized.replaceAll(_StringPatterns.controlChars, '');
 
       // Trim and collapse all whitespace (spaces, tabs, newlines) into single spaces
       normalized = normalized.trim();
-      normalized = normalized.replaceAll(RegExp(r'\s+'), ' ');
+      normalized = normalized.replaceAll(_StringPatterns.whitespace, ' ');
 
       return normalized;
     });
@@ -550,11 +604,7 @@ abstract interface class ZString extends Schema<String> {
   ZString guid({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final guidRegex = RegExp(
-          r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
-          caseSensitive: false,
-        );
-        if (!guidRegex.hasMatch(value)) {
+        if (!_StringPatterns.guid.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid GUID format',
             type: 'guid_error',
@@ -571,11 +621,7 @@ abstract interface class ZString extends Schema<String> {
   ZString httpUrl({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final httpUrlRegex = RegExp(
-          r'^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$',
-          caseSensitive: false,
-        );
-        if (!httpUrlRegex.hasMatch(value)) {
+        if (!_StringPatterns.httpUrl.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid HTTP(S) URL format',
             type: 'http_url_error',
@@ -592,10 +638,7 @@ abstract interface class ZString extends Schema<String> {
   ZString hostname({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final hostnameRegex = RegExp(
-          r'^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\.[a-zA-Z0-9-]{1,63})*$',
-        );
-        if (!hostnameRegex.hasMatch(value)) {
+        if (!_StringPatterns.hostname.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid hostname format',
             type: 'hostname_error',
@@ -612,12 +655,7 @@ abstract interface class ZString extends Schema<String> {
   ZString emoji({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        // Simplified emoji validation for common emoji ranges
-        final emojiRegex = RegExp(
-          r'^[\u{1F300}-\u{1F9FF}]$|^[\u{2600}-\u{27BF}]$|^[\u{2300}-\u{23FF}]$|^[\u{2B50}]$|^[\u{1F600}-\u{1F64F}]$',
-          unicode: true,
-        );
-        if (!emojiRegex.hasMatch(value)) {
+        if (!_StringPatterns.emoji.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid emoji format',
             type: 'emoji_error',
@@ -634,9 +672,8 @@ abstract interface class ZString extends Schema<String> {
   ZString base64({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final base64Regex = RegExp(r'^[A-Za-z0-9+/]*={0,2}$');
         if (value.isEmpty ||
-            !base64Regex.hasMatch(value) ||
+            !_StringPatterns.base64.hasMatch(value) ||
             value.length % 4 != 0) {
           return ZardIssue(
             message: message ?? 'Invalid Base64 format',
@@ -654,8 +691,7 @@ abstract interface class ZString extends Schema<String> {
   ZString base64url({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final base64urlRegex = RegExp(r'^[A-Za-z0-9_-]*$');
-        if (value.isEmpty || !base64urlRegex.hasMatch(value)) {
+        if (value.isEmpty || !_StringPatterns.base64url.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid Base64 URL format',
             type: 'base64url_error',
@@ -672,9 +708,8 @@ abstract interface class ZString extends Schema<String> {
   ZString hex({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final hexRegex = RegExp(r'^[0-9a-fA-F]*$');
         if (value.isEmpty ||
-            !hexRegex.hasMatch(value) ||
+            !_StringPatterns.hex.hasMatch(value) ||
             value.length % 2 != 0) {
           return ZardIssue(
             message: message ?? 'Invalid hexadecimal format',
@@ -692,10 +727,7 @@ abstract interface class ZString extends Schema<String> {
   ZString jwt({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final jwtRegex = RegExp(
-          r'^eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$',
-        );
-        if (!jwtRegex.hasMatch(value)) {
+        if (!_StringPatterns.jwt.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid JWT format',
             type: 'jwt_error',
@@ -712,8 +744,7 @@ abstract interface class ZString extends Schema<String> {
   ZString nanoid({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final nanoidRegex = RegExp(r'^[V-Za-z0-9_-]{21}$');
-        if (!nanoidRegex.hasMatch(value)) {
+        if (!_StringPatterns.nanoid.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid Nano ID format',
             type: 'nanoid_error',
@@ -730,8 +761,7 @@ abstract interface class ZString extends Schema<String> {
   ZString ulid({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final ulidRegex = RegExp(r'^[0-7][0-9A-HJKMNP-TV-Z]{25}$');
-        if (!ulidRegex.hasMatch(value)) {
+        if (!_StringPatterns.ulid.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid ULID format',
             type: 'ulid_error',
@@ -748,10 +778,7 @@ abstract interface class ZString extends Schema<String> {
   ZString ipv4({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final ipv4Regex = RegExp(
-          r'^((25[0-5]|(2[0-4]|1\d?)\d)\.?\b){4}$',
-        );
-        if (!ipv4Regex.hasMatch(value)) {
+        if (!_StringPatterns.ipv4.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid IPv4 format',
             type: 'ipv4_error',
@@ -768,11 +795,7 @@ abstract interface class ZString extends Schema<String> {
   ZString ipv6({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final ipv6Regex = RegExp(
-          r'^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$',
-          caseSensitive: false,
-        );
-        if (!ipv6Regex.hasMatch(value)) {
+        if (!_StringPatterns.ipv6.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid IPv6 format',
             type: 'ipv6_error',
@@ -789,10 +812,7 @@ abstract interface class ZString extends Schema<String> {
   ZString mac({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final macRegex = RegExp(
-          r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$',
-        );
-        if (!macRegex.hasMatch(value)) {
+        if (!_StringPatterns.mac.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid MAC address format',
             type: 'mac_error',
@@ -809,10 +829,7 @@ abstract interface class ZString extends Schema<String> {
   ZString cidrv4({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final cidrv4Regex = RegExp(
-          r'^((25[0-5]|(2[0-4]|1\d?)\d)\.?\b){4}\/([0-9]|[1-2][0-9]|3[0-2])$',
-        );
-        if (!cidrv4Regex.hasMatch(value)) {
+        if (!_StringPatterns.cidrv4.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid IPv4 CIDR format',
             type: 'cidrv4_error',
@@ -829,11 +846,7 @@ abstract interface class ZString extends Schema<String> {
   ZString cidrv6({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final cidrv6Regex = RegExp(
-          r'^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))\/([0-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8])$',
-          caseSensitive: false,
-        );
-        if (!cidrv6Regex.hasMatch(value)) {
+        if (!_StringPatterns.cidrv6.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid IPv6 CIDR format',
             type: 'cidrv6_error',
@@ -867,8 +880,7 @@ abstract interface class ZString extends Schema<String> {
           );
         }
 
-        final hashRegex = RegExp(r'^[a-fA-F0-9]+$');
-        if (!hashRegex.hasMatch(value) || value.length != expectedLength) {
+        if (!_StringPatterns.hexAny.hasMatch(value) || value.length != expectedLength) {
           return ZardIssue(
             message: message ?? 'Invalid $algorithm hash format',
             type: 'hash_error',
@@ -885,8 +897,7 @@ abstract interface class ZString extends Schema<String> {
   ZString isoDate({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final isoDateRegex = RegExp(r'^\d{4}-\d{2}-\d{2}$');
-        if (!isoDateRegex.hasMatch(value)) {
+        if (!_StringPatterns.isoDate.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid ISO date format (YYYY-MM-DD)',
             type: 'iso_date_error',
@@ -903,8 +914,7 @@ abstract interface class ZString extends Schema<String> {
   ZString isoTime({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final isoTimeRegex = RegExp(r'^\d{2}:\d{2}:\d{2}(\.\d{3})?$');
-        if (!isoTimeRegex.hasMatch(value)) {
+        if (!_StringPatterns.isoTime.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid ISO time format (HH:mm:ss)',
             type: 'iso_time_error',
@@ -921,10 +931,7 @@ abstract interface class ZString extends Schema<String> {
   ZString isoDatetime({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final isoDatetimeRegex = RegExp(
-          r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$',
-        );
-        if (!isoDatetimeRegex.hasMatch(value)) {
+        if (!_StringPatterns.isoDatetime.hasMatch(value)) {
           return ZardIssue(
             message: message ?? 'Invalid ISO datetime format (ISO 8601)',
             type: 'iso_datetime_error',
@@ -941,10 +948,7 @@ abstract interface class ZString extends Schema<String> {
   ZString isoDuration({String? message}) {
     addValidator((String? value) {
       if (value != null) {
-        final isoDurationRegex = RegExp(
-          r'^P(\d+Y)?(\d+M)?(\d+W)?(\d+D)?(T(\d+H)?(\d+M)?(\d+(\.\d+)?S)?)?$',
-        );
-        if (!isoDurationRegex.hasMatch(value)) {
+        if (!_StringPatterns.isoDuration.hasMatch(value)) {
           return ZardIssue(
             message:
                 message ?? 'Invalid ISO duration format (e.g., P1DT2H3M4S)',
@@ -959,58 +963,110 @@ abstract interface class ZString extends Schema<String> {
   }
 
   @override
+  String? parseInto(dynamic value, String path, List<ZardIssue> sink) {
+    // ZString accepts an Optional<String>? path; convert empty → null.
+    final pathOrNull = path.isEmpty ? null : path;
+
+    if (value == null) {
+      if (isNullable) return null;
+      sink.add(ZardIssue(
+        message: message ?? 'Expected a string value',
+        type: 'type_error',
+        value: value,
+        path: pathOrNull,
+      ));
+      return null;
+    }
+
+    if (value is! String) {
+      sink.add(ZardIssue(
+        message: message ?? 'Expected a string value',
+        type: 'type_error',
+        value: value,
+        path: pathOrNull,
+      ));
+      return null;
+    }
+
+    final beforeLen = sink.length;
+    final validators = validatorsInternal;
+    for (var i = 0; i < validators.length; i++) {
+      final error = validators[i](value);
+      if (error != null) {
+        if (pathOrNull == null && error.value == value) {
+          sink.add(error);
+        } else {
+          sink.add(ZardIssue(
+            message: error.message,
+            type: error.type,
+            value: value,
+            path: pathOrNull,
+          ));
+        }
+      }
+    }
+    if (sink.length != beforeLen) return null;
+
+    String result = value;
+    final transforms = transformsInternal;
+    for (var i = 0; i < transforms.length; i++) {
+      result = transforms[i](result);
+    }
+    return result;
+  }
+
+  @override
   String parse(dynamic value, {String? path}) {
     clearErrors();
+    final sink = issuesInternal;
 
     if (value == null) {
       if (isNullable) {
         return null as String;
       }
-      addError(
-        ZardIssue(
-          message: message ?? 'Expected a string value',
-          type: 'type_error',
-          value: value,
-          path: path,
-        ),
-      );
-
-      throw ZardError(issues);
+      sink.add(ZardIssue(
+        message: message ?? 'Expected a string value',
+        type: 'type_error',
+        value: value,
+        path: path,
+      ));
+      throw ZardError(sink);
     }
 
     if (value is! String) {
-      addError(
-        ZardIssue(
-          message: message ?? 'Expected a string value',
-          type: 'type_error',
-          value: value,
-          path: path,
-        ),
-      );
-
-      throw ZardError(issues);
+      sink.add(ZardIssue(
+        message: message ?? 'Expected a string value',
+        type: 'type_error',
+        value: value,
+        path: path,
+      ));
+      throw ZardError(sink);
     }
 
-    for (final validator in getValidators()) {
-      final error = validator(value);
+    final validators = validatorsInternal;
+    for (var i = 0; i < validators.length; i++) {
+      final error = validators[i](value);
       if (error != null) {
-        addError(
-          ZardIssue(
+        if (path == null && error.value == value) {
+          sink.add(error);
+        } else {
+          sink.add(ZardIssue(
             message: error.message,
             type: error.type,
             value: value,
             path: path,
-          ),
-        );
+          ));
+        }
       }
     }
 
-    if (issues.isNotEmpty) {
-      throw ZardError(issues);
+    if (sink.isNotEmpty) {
+      throw ZardError(sink);
     }
 
-    for (final transform in getTransforms()) {
-      value = transform(value);
+    final transforms = transformsInternal;
+    for (var i = 0; i < transforms.length; i++) {
+      value = transforms[i](value);
     }
 
     return value;

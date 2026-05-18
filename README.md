@@ -23,7 +23,7 @@ Add the following line to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  zard: ^1.0.0
+  zard: ^1.1.0
 ```
 
 Then, run:
@@ -81,16 +81,36 @@ void main() {
 
 ## ⚡ Performance
 
-| Library | Small Object | Complex Object |
-| ------- | ------------ | -------------- |
-| Zard    | ~0.93 µs     | ~7.3 µs        |
-| Zod     | ~0.13 µs     | ~1.3 µs        |
-| Yup     | ~5.7 µs      | ~66 µs         |
+After a substantial perf refactor (precompiled regex, no-throw internal parse
+path, lazy issues lists, single-lookup map access, etc.) Zard now meets or
+beats Zod on most common operations. Numbers below come from
+`test/src/benchmarks/run-all.sh` (Dart 3.x JIT, Node 24, manual Stopwatch
+with 5k warmup + 100k measured iterations).
 
-Zard is:
+| Scenario               | Zard (Dart) | Zod (JS) | Yup (JS) |
+| ---------------------- | ----------- | -------- | -------- |
+| String valid           | **0.05 µs** | 0.11 µs  | 1.27 µs  |
+| String invalid (throw) | **0.55 µs** | 19.67 µs | 29.28 µs |
+| Small object (2 keys)  | **0.36 µs** | 0.37 µs  | 3.82 µs  |
+| Medium object (5 keys) | 1.27 µs     | 0.83 µs  | 12.04 µs |
+| Complex nested         | 2.93 µs     | 0.89 µs  | 40.62 µs |
+| Transform              | **0.06 µs** | 0.24 µs  | 0.81 µs  |
+| Default                | **0.01 µs** | 0.06 µs  | 0.74 µs  |
+| Nullable               | **0.01 µs** | 0.04 µs  | 0.68 µs  |
+| Union (string)         | **0.06 µs** | 0.14 µs  | 1.21 µs  |
+| Union (int)            | **0.08 µs** | 0.16 µs  | 1.19 µs  |
+| safeParse              | 0.28 µs     | 0.08 µs  | 4.92 µs  |
 
-- ~6-7x slower than Zod (JS engine advantage)
-- ~6-10x faster than Yup
+**Summary:**
+
+- Faster than Zod on 8/11 scenarios (and orders of magnitude faster on the
+  error path because Dart exceptions are cheaper than V8's).
+- 6–60× faster than Yup across the board.
+- Roughly 2–3× slower than Zod on medium/complex objects — the remaining gap
+  is mostly V8 inline-cache magic on object access patterns that the Dart VM
+  can't match (yet).
+
+Run it yourself: `./test/src/benchmarks/run-all.sh`.
 
 ---
 
@@ -98,11 +118,27 @@ Zard is:
 
 ## 📊 Benchmark
 
-Zard achieves:
+Three benchmark surfaces ship with the package — pick the one that matches
+your need:
 
-- ~1M ops/sec (objects)
-- ~4M ops/sec (primitives)
-- ~100k ops/sec (complex nested)
+- `test/src/benchmarks/zard_benchmark.dart` — manual Stopwatch, 5k warmup +
+  100k timed iterations. Closest apples-to-apples comparison with the
+  JS benchmarks (which use the same closure pattern). Run with `dart run`.
+- `test/src/benchmarks/zard_harness_benchmark.dart` — uses
+  [`benchmark_harness`](https://pub.dev/packages/benchmark_harness),
+  auto-calibrated, polymorphic dispatch (numbers are higher because the JIT
+  can't inline through `BenchmarkBase.run`). The canonical reference. Run
+  with `dart run` for JIT, or `dart compile exe …` for AOT (closer to a
+  Flutter release build).
+- `test/src/benchmarks/zod_benchmark.js` / `yup_benchmark.js` — reference
+  implementations in TypeScript for cross-engine comparison. Install with
+  `npm install` (inside that directory) then `node …`.
+
+Zard achieves on a typical laptop (Dart JIT):
+
+- **~20M ops/sec** primitives (`z.string().min(3)`)
+- **~2.7M ops/sec** small objects
+- **~340k ops/sec** complex nested objects
 
 ---
 

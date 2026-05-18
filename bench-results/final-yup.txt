@@ -1,0 +1,66 @@
+
+📊 Yup - String valid
+Total: 127.20 ms
+Per op: 1.2720 µs
+Ops/sec: 786138
+
+
+📊 Yup - String invalid
+Total: 2928.45 ms
+Per op: 29.2845 µs
+Ops/sec: 34148
+
+
+📊 Yup - Small object
+Total: 382.08 ms
+Per op: 3.8208 µs
+Ops/sec: 261725
+
+
+📊 Yup - Medium object
+Total: 1203.79 ms
+Per op: 12.0379 µs
+Ops/sec: 83071
+
+
+📊 Yup - Complex object
+Total: 4061.96 ms
+Per op: 40.6196 µs
+Ops/sec: 24619
+
+
+📊 Yup - Transform
+Total: 80.75 ms
+Per op: 0.8075 µs
+Ops/sec: 1238407
+
+
+📊 Yup - Default
+Total: 73.62 ms
+Per op: 0.7362 µs
+Ops/sec: 1358405
+
+
+📊 Yup - Nullable
+Total: 67.61 ms
+Per op: 0.6761 µs
+Ops/sec: 1479171
+
+
+📊 Yup - Union (string)
+Total: 120.70 ms
+Per op: 1.2070 µs
+Ops/sec: 828529
+
+
+📊 Yup - Union (int)
+Total: 118.89 ms
+Per op: 1.1889 µs
+Ops/sec: 841125
+
+
+📊 Yup - safeParse
+Total: 491.56 ms
+Per op: 4.9156 µs
+Ops/sec: 203434
+

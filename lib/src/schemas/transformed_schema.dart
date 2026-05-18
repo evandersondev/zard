@@ -1,3 +1,4 @@
+import '../types/zard_issue.dart';
 import 'schema.dart';
 
 abstract interface class TransformedSchema<T, R> extends Schema<R> {
@@ -17,6 +18,14 @@ abstract interface class TransformedSchema<T, R> extends Schema<R> {
   Future<R> parseAsync(dynamic value, {String path = ''}) async {
     final T originalResult = await inner.parseAsync(value, path: path);
     return transformer(originalResult);
+  }
+
+  @override
+  R? parseInto(dynamic value, String path, List<ZardIssue> sink) {
+    final beforeLen = sink.length;
+    final inner_ = inner.parseInto(value, path, sink);
+    if (sink.length != beforeLen) return null;
+    return transformer(inner_ as T);
   }
 }
 

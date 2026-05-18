@@ -16,9 +16,9 @@ abstract class Schema<T> {
   final List<Transformer<T>> _transforms = [];
 
   // ParseContext for the current parse invocation.
-  // Replaced on every clearErrors() call (i.e., at the start of each parse()).
-  // Subclasses and containers read/write through addError() / issues.
-  ParseContext _ctx = ParseContext();
+  // The context's issues list is cleared in-place at the start of each parse()
+  // call (see [clearErrors]) — no allocation on the success path.
+  final ParseContext _ctx = ParseContext();
 
   // ✅ NOVO (dinâmico)
   bool get isOptional => this is ZOptional;
@@ -35,8 +35,9 @@ abstract class Schema<T> {
 
   void addError(ZardIssue error) => _ctx.addIssue(error);
 
-  /// Resets the current parse context.  Called at the start of every parse().
-  void clearErrors() => _ctx = ParseContext();
+  /// Resets the current parse context. Called at the start of every parse().
+  /// Uses [List.clear] in-place to avoid allocating a fresh context per call.
+  void clearErrors() => _ctx.issues.clear();
 
   List<ZardIssue> getErrors() => List.unmodifiable(issues);
 
@@ -50,8 +51,20 @@ abstract class Schema<T> {
     _transforms.add(transform);
   }
 
+  /// Public, backward-compatible accessor — returns an unmodifiable view.
+  /// Internal hot paths should iterate [validatorsInternal] / [transformsInternal] directly.
   List<Validator<T>> getValidators() => List.unmodifiable(_validators);
   List<Transformer<T>> getTransforms() => List.unmodifiable(_transforms);
+
+  /// Non-allocating raw lists. Library-internal use only — never expose
+  /// these to consumers because they bypass the unmodifiable contract.
+  /// Used by specialized schema implementations (ZInt, ZDouble, etc.) to
+  /// avoid creating an [List.unmodifiable] wrapper per parse() call.
+  List<Validator<T>> get validatorsInternal => _validators;
+  List<Transformer<T>> get transformsInternal => _transforms;
+
+  /// Direct access to the parse context's issues list — internal use only.
+  List<ZardIssue> get issuesInternal => _ctx.issues;
 
   TransformedSchema<T, R> transform<R>(R Function(T value) transformer) {
     return TransformedSchemaImpl<T, R>(this, transformer);
@@ -117,53 +130,82 @@ abstract class Schema<T> {
   }
 
   // -----------------------------------------------------------------------
+  // Internal no-throw parse path
+  // -----------------------------------------------------------------------
+
+  /// Internal entry point used by container schemas (ZMap, ZList, ZUnion,
+  /// ZInterface, etc.) to avoid the per-field/per-item try/catch overhead
+  /// of public [parse]. On success returns the parsed value and leaves
+  /// [sink] unchanged. On failure appends at least one issue to [sink]
+  /// (callers determine success by comparing `sink.length` before/after).
+  ///
+  /// The default implementation simply wraps [parse]; specialized schemas
+  /// override this to skip exceptions entirely on the failure path.
+  T? parseInto(dynamic value, String path, List<ZardIssue> sink) {
+    try {
+      return parse(value, path: path);
+    } on ZardError catch (e) {
+      sink.addAll(e.issues);
+      return null;
+    }
+  }
+
+  // -----------------------------------------------------------------------
   // Core parse methods
   // -----------------------------------------------------------------------
 
   T parse(dynamic value, {String path = ''}) {
     clearErrors();
+    final pathOrNull = path.isEmpty ? null : path;
 
     if (value == null) {
-      addError(ZardIssue(
+      _ctx.issues.add(ZardIssue(
         message: 'Value is required and cannot be null',
         type: 'required_error',
         value: value,
-        path: path.isEmpty ? null : path,
+        path: pathOrNull,
       ));
-      throw ZardError(List.of(issues));
+      throw ZardError(_ctx.issues);
     }
 
     // Safe type check — prevents a raw `value as T` crash before validation.
     if (value is! T) {
-      addError(ZardIssue(
+      _ctx.issues.add(ZardIssue(
         message: 'Invalid type: expected $T, got ${value.runtimeType}',
         type: 'type_error',
         value: value,
-        path: path.isEmpty ? null : path,
+        path: pathOrNull,
       ));
-      throw ZardError(List.of(issues));
+      throw ZardError(_ctx.issues);
     }
 
     T result = value; // Safe: passed is! check above
 
-    for (final validator in _validators) {
-      final error = validator(result);
+    final validators = _validators;
+    for (var i = 0; i < validators.length; i++) {
+      final error = validators[i](result);
       if (error != null) {
-        addError(ZardIssue(
-          message: error.message,
-          type: error.type,
-          value: value,
-          path: path.isEmpty ? null : path,
-        ));
+        // Reuse the issue when path is empty — saves one allocation per error.
+        if (pathOrNull == null && error.value == value) {
+          _ctx.issues.add(error);
+        } else {
+          _ctx.issues.add(ZardIssue(
+            message: error.message,
+            type: error.type,
+            value: value,
+            path: pathOrNull,
+          ));
+        }
       }
     }
 
-    if (issues.isNotEmpty) {
-      throw ZardError(List.of(issues));
+    if (_ctx.issues.isNotEmpty) {
+      throw ZardError(_ctx.issues);
     }
 
-    for (final transform in _transforms) {
-      result = transform(result);
+    final transforms = _transforms;
+    for (var i = 0; i < transforms.length; i++) {
+      result = transforms[i](result);
     }
 
     return result;
@@ -175,8 +217,6 @@ abstract class Schema<T> {
       return ZardResult<T>(success: true, data: parsed);
     } on ZardError catch (e) {
       return ZardResult<T>(success: false, error: e);
-    } catch (_) {
-      return ZardResult<T>(success: false, error: ZardError(List.of(issues)));
     }
   }
 

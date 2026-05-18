@@ -17,51 +17,120 @@ abstract interface class ZList extends Schema<List<dynamic>> {
   }
 
   @override
-  List<dynamic> parse(dynamic value, {String path = ''}) {
-    // Use a LOCAL issues list so that recursive schema invocations (e.g. via
-    // lazy circular references) cannot corrupt this call's error state by
-    // replacing the shared _ctx via clearErrors().
-    final localIssues = <ZardIssue>[];
+  List<dynamic>? parseInto(
+      dynamic value, String path, List<ZardIssue> sink) {
+    final pathOrNull = path.isEmpty ? null : path;
 
     if (value == null) {
-      localIssues.add(ZardIssue(
+      sink.add(ZardIssue(
         message: message ?? 'Value is required and cannot be null',
         type: 'required_error',
         value: value,
-        path: path.isEmpty ? null : path,
+        path: pathOrNull,
       ));
-      throw ZardError(localIssues);
+      return null;
     }
-
     if (value is! List) {
-      localIssues.add(ZardIssue(
+      sink.add(ZardIssue(
         message: message ?? 'Must be a list',
         type: 'type_error',
         value: value,
-        path: path.isEmpty ? null : path,
+        path: pathOrNull,
       ));
-      throw ZardError(localIssues);
+      return null;
     }
 
-    final result = <dynamic>[];
-    for (var i = 0; i < value.length; i++) {
-      final item = value[i];
-      final itemPath = path.isEmpty ? '[$i]' : '$path[$i]';
-      try {
-        result.add(_itemSchema.parse(item, path: itemPath));
-      } on ZardError catch (e) {
-        localIssues.addAll(e.issues);
+    final beforeOuter = sink.length;
+    final len = value.length;
+    final result = List<dynamic>.filled(len, null, growable: false);
+    for (var i = 0; i < len; i++) {
+      final before = sink.length;
+      final parsed = _itemSchema.parseInto(
+        value[i],
+        path.isEmpty ? '[$i]' : '$path[$i]',
+        sink,
+      );
+      if (sink.length == before) {
+        result[i] = parsed;
       }
     }
 
-    for (final validator in _listValidators) {
-      final error = validator(result);
+    final listValidators = _listValidators;
+    for (var i = 0; i < listValidators.length; i++) {
+      final error = listValidators[i](result);
+      if (error != null) {
+        sink.add(ZardIssue(
+          message: error.message,
+          type: error.type,
+          value: result,
+          path: pathOrNull,
+        ));
+      }
+    }
+
+    if (sink.length != beforeOuter) return null;
+
+    var transformedResult = result;
+    final transforms = transformsInternal;
+    for (var i = 0; i < transforms.length; i++) {
+      transformedResult = transforms[i](transformedResult);
+    }
+    return transformedResult;
+  }
+
+  @override
+  List<dynamic> parse(dynamic value, {String path = ''}) {
+    // A LOCAL issues list is intentional — recursive schema invocations
+    // (e.g. via lazy circular references) reset the shared _ctx, which would
+    // otherwise wipe this call's errors mid-iteration.
+    final localIssues = <ZardIssue>[];
+    final pathOrNull = path.isEmpty ? null : path;
+
+    if (value == null) {
+      throw ZardError([
+        ZardIssue(
+          message: message ?? 'Value is required and cannot be null',
+          type: 'required_error',
+          value: value,
+          path: pathOrNull,
+        )
+      ]);
+    }
+
+    if (value is! List) {
+      throw ZardError([
+        ZardIssue(
+          message: message ?? 'Must be a list',
+          type: 'type_error',
+          value: value,
+          path: pathOrNull,
+        )
+      ]);
+    }
+
+    final len = value.length;
+    final result = List<dynamic>.filled(len, null, growable: false);
+    for (var i = 0; i < len; i++) {
+      final before = localIssues.length;
+      final parsed = _itemSchema.parseInto(
+        value[i],
+        path.isEmpty ? '[$i]' : '$path[$i]',
+        localIssues,
+      );
+      if (localIssues.length == before) {
+        result[i] = parsed;
+      }
+    }
+
+    final listValidators = _listValidators;
+    for (var i = 0; i < listValidators.length; i++) {
+      final error = listValidators[i](result);
       if (error != null) {
         localIssues.add(ZardIssue(
           message: error.message,
           type: error.type,
           value: result,
-          path: path.isEmpty ? null : path,
+          path: pathOrNull,
         ));
       }
     }
@@ -71,8 +140,9 @@ abstract interface class ZList extends Schema<List<dynamic>> {
     }
 
     var transformedResult = result;
-    for (final transform in getTransforms()) {
-      transformedResult = transform(transformedResult);
+    final transforms = transformsInternal;
+    for (var i = 0; i < transforms.length; i++) {
+      transformedResult = transforms[i](transformedResult);
     }
 
     return transformedResult;

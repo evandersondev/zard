@@ -3,6 +3,13 @@ import 'package:zard/zard.dart';
 const iterations = 100000;
 
 void benchmark(String name, void Function() fn) {
+  // Warm-up: a few thousand iterations to let the JIT/AOT optimizer settle
+  // before we start timing. Without warmup, the first ~1k iterations dominate
+  // the average and produce misleading numbers.
+  for (int i = 0; i < 5000; i++) {
+    fn();
+  }
+
   final stopwatch = Stopwatch()..start();
 
   for (int i = 0; i < iterations; i++) {
@@ -26,12 +33,21 @@ Ops/sec: ${opsPerSec.toStringAsFixed(0)}
 
 void main() {
   // -----------------------------
-  // Primitive (equivalente Zod)
+  // Primitive valid
   // -----------------------------
   final stringSchema = z.string().min(3);
-
   benchmark("Zard - String valid", () {
     stringSchema.parse("hello");
+  });
+
+  // -----------------------------
+  // Primitive invalid (with try/catch — matches Zod's pattern)
+  // -----------------------------
+  final invalidSchema = z.string().min(10);
+  benchmark("Zard - String invalid", () {
+    try {
+      invalidSchema.parse("hi");
+    } catch (_) {}
   });
 
   // -----------------------------
@@ -41,11 +57,30 @@ void main() {
     'name': z.string(),
     'age': z.int(),
   });
-
   benchmark("Zard - Small object", () {
     objectSchema.parse({
       'name': 'John',
       'age': 30,
+    });
+  });
+
+  // -----------------------------
+  // Medium object
+  // -----------------------------
+  final mediumSchema = z.map({
+    'name': z.string(),
+    'email': z.string().email(),
+    'age': z.int().min(18),
+    'active': z.bool(),
+    'tags': z.list(z.string()),
+  });
+  benchmark("Zard - Medium object", () {
+    mediumSchema.parse({
+      'name': 'John',
+      'email': 'john@example.com',
+      'age': 30,
+      'active': true,
+      'tags': ['dart', 'flutter'],
     });
   });
 
@@ -87,17 +122,31 @@ void main() {
   });
 
   // -----------------------------
-  // Extra: safeParse (vantagem do Zard)
+  // Transform
   // -----------------------------
-  benchmark("Zard - safeParse", () {
-    objectSchema.safeParse({
-      'name': 'John',
-      'age': 30,
-    });
+  final transformSchema = z.string().transform((v) => v.toUpperCase());
+  benchmark("Zard - Transform", () {
+    transformSchema.parse('hello');
   });
 
   // -----------------------------
-  // Extra: Union
+  // Default
+  // -----------------------------
+  final defaultSchema = z.int().$default(10);
+  benchmark("Zard - Default", () {
+    defaultSchema.parse(null);
+  });
+
+  // -----------------------------
+  // Nullable
+  // -----------------------------
+  final nullableSchema = z.string().nullable();
+  benchmark("Zard - Nullable", () {
+    nullableSchema.parse(null);
+  });
+
+  // -----------------------------
+  // Union
   // -----------------------------
   final unionSchema = z.union([
     z.string(),
@@ -109,24 +158,13 @@ void main() {
   });
 
   benchmark("Zard - Union (int)", () {
-    unionSchema.parse(123);
+    unionSchema.parse(10);
   });
 
   // -----------------------------
-  // Extra: Default
+  // safeParse
   // -----------------------------
-  final defaultSchema = z.int().$default(10);
-
-  benchmark("Zard - Default", () {
-    defaultSchema.parse(null);
-  });
-
-  // -----------------------------
-  // Extra: Nullable
-  // -----------------------------
-  final nullableSchema = z.string().nullable();
-
-  benchmark("Zard - Nullable", () {
-    nullableSchema.parse(null);
+  benchmark("Zard - safeParse", () {
+    objectSchema.safeParse({'name': 'John', 'age': 30});
   });
 }

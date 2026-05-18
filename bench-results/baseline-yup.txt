@@ -1,0 +1,30 @@
+
+📊 Yup - String valid
+Total: 91.38 ms
+Per op: 0.9138 µs
+Ops/sec: 1094390
+
+
+📊 Yup - String invalid
+Total: 2041.11 ms
+Per op: 20.4111 µs
+Ops/sec: 48993
+
+
+📊 Yup - Small object
+Total: 492.85 ms
+Per op: 4.9285 µs
+Ops/sec: 202901
+
+
+📊 Yup - Medium object
+Total: 1536.40 ms
+Per op: 15.3640 µs
+Ops/sec: 65087
+
+
+📊 Yup - Complex object
+Total: 4680.35 ms
+Per op: 46.8035 µs
+Ops/sec: 21366
+

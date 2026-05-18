@@ -1,6 +1,9 @@
 import 'zard_error.dart';
 import 'zard_issue.dart';
 
+// Precompiled — used in _parsePath, which can be called many times.
+final RegExp _arrayIndexRegExp = RegExp(r'\[(\d+)\]');
+
 /// Estrutura de erro em árvore
 abstract interface class ZardErrorTree {
   final List<String> errors;
@@ -228,7 +231,7 @@ List<_PathPart> _parsePath(String path) {
     if (segment.isEmpty) continue;
 
     // Verifica se é um índice de array [n]
-    final indexMatch = RegExp(r'\[(\d+)\]').firstMatch(segment);
+    final indexMatch = _arrayIndexRegExp.firstMatch(segment);
     if (indexMatch != null) {
       final index = indexMatch.group(1)!;
       parts.add(_PathPart(index, true));

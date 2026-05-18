@@ -1,33 +1,14 @@
 import '../types/zard_error.dart';
 import '../types/zard_issue.dart';
-import '../types/zard_result.dart';
 import 'schema.dart';
 
 abstract interface class ZEnum extends Schema<String> {
   final List<String> _allowedValues;
   final String? message;
 
-  ZEnum(this._allowedValues, {this.message}) {
-    addValidator((String? value) {
-      if (value == null) {
-        return ZardIssue(
-          message: message ?? 'Expected a string',
-          type: 'type_error',
-          value: value,
-        );
-      }
-
-      if (!_allowedValues.contains(value)) {
-        return ZardIssue(
-          message: message ?? 'Value must be one of $_allowedValues',
-          type: 'enum_error',
-          value: value,
-        );
-      }
-
-      return null;
-    });
-  }
+  ZEnum(this._allowedValues, {this.message});
+  // No constructor validator: parse() below does the null + type + allowed
+  // checks directly. Adding the same logic here would just allocate a closure.
 
   /// Extract value from enum transform.
   /// Example:
@@ -54,56 +35,116 @@ abstract interface class ZEnum extends Schema<String> {
   }
 
   @override
-  String parse(dynamic value, {String path = ''}) {
-    clearErrors();
+  String? parseInto(dynamic value, String path, List<ZardIssue> sink) {
+    final pathOrNull = path.isEmpty ? null : path;
 
     if (value == null) {
-      addError(ZardIssue(
+      sink.add(ZardIssue(
         message: message ?? 'Value is required and cannot be null',
         type: 'required_error',
         value: value,
-        path: path.isEmpty ? null : path,
+        path: pathOrNull,
       ));
-      throw ZardError(issues);
+      return null;
     }
 
-    // Verifica se o valor é uma string
     if (value is! String) {
-      addError(ZardIssue(
+      sink.add(ZardIssue(
         message: 'Expected a string',
         type: 'type_error',
         value: value,
-        path: path.isEmpty ? null : path,
+        path: pathOrNull,
       ));
-      throw ZardError(issues);
+      return null;
     }
 
-    // Verifica se o valor está nos valores permitidos
     if (!_allowedValues.contains(value)) {
-      addError(ZardIssue(
+      sink.add(ZardIssue(
         message: 'Value must be one of $_allowedValues',
         type: 'enum_error',
         value: value,
-        path: path.isEmpty ? null : path,
+        path: pathOrNull,
       ));
-      throw ZardError(issues);
+      return null;
     }
 
-    // Validações adicionais
-    for (final validator in getValidators()) {
-      final error = validator(value);
+    final beforeLen = sink.length;
+    final validators = validatorsInternal;
+    for (var i = 0; i < validators.length; i++) {
+      final error = validators[i](value);
       if (error != null) {
-        addError(ZardIssue(
-          message: error.message,
-          type: error.type,
-          value: value,
-          path: path.isEmpty ? null : path,
-        ));
+        if (pathOrNull == null && error.value == value) {
+          sink.add(error);
+        } else {
+          sink.add(ZardIssue(
+            message: error.message,
+            type: error.type,
+            value: value,
+            path: pathOrNull,
+          ));
+        }
+      }
+    }
+    if (sink.length != beforeLen) return null;
+
+    return value;
+  }
+
+  @override
+  String parse(dynamic value, {String path = ''}) {
+    clearErrors();
+    final pathOrNull = path.isEmpty ? null : path;
+    final sink = issuesInternal;
+
+    if (value == null) {
+      sink.add(ZardIssue(
+        message: message ?? 'Value is required and cannot be null',
+        type: 'required_error',
+        value: value,
+        path: pathOrNull,
+      ));
+      throw ZardError(sink);
+    }
+
+    if (value is! String) {
+      sink.add(ZardIssue(
+        message: 'Expected a string',
+        type: 'type_error',
+        value: value,
+        path: pathOrNull,
+      ));
+      throw ZardError(sink);
+    }
+
+    if (!_allowedValues.contains(value)) {
+      sink.add(ZardIssue(
+        message: 'Value must be one of $_allowedValues',
+        type: 'enum_error',
+        value: value,
+        path: pathOrNull,
+      ));
+      throw ZardError(sink);
+    }
+
+    final validators = validatorsInternal;
+    for (var i = 0; i < validators.length; i++) {
+      final error = validators[i](value);
+      if (error != null) {
+        if (pathOrNull == null && error.value == value) {
+          sink.add(error);
+        } else {
+          sink.add(ZardIssue(
+            message: error.message,
+            type: error.type,
+            value: value,
+            path: pathOrNull,
+          ));
+        }
       }
     }
 
-    if (issues.isNotEmpty) {
-      throw ZardError(issues);
+    if (sink.isNotEmpty) {
+      throw ZardError(sink);
     }
 
     return value;
@@ -111,46 +152,8 @@ abstract interface class ZEnum extends Schema<String> {
 
   @override
   Future<String> parseAsync(dynamic value, {String path = ''}) async {
-    clearErrors();
-    try {
-      final resolvedValue = value is Future ? await value : value;
-      return parse(resolvedValue, path: path);
-    } catch (e) {
-      return Future.error(ZardError(issues));
-    }
-  }
-
-  @override
-  ZardResult<String> safeParse(dynamic value, {String path = ''}) {
-    try {
-      final parsed = parse(value, path: path);
-      return ZardResult<String>(
-        success: true,
-        data: parsed,
-      );
-    } catch (e) {
-      return ZardResult<String>(
-        success: false,
-        error: ZardError(issues),
-      );
-    }
-  }
-
-  @override
-  Future<ZardResult<String>> safeParseAsync(dynamic value,
-      {String path = ''}) async {
-    try {
-      final parsed = await parseAsync(value, path: path);
-      return ZardResult<String>(
-        success: true,
-        data: parsed,
-      );
-    } catch (e) {
-      return ZardResult<String>(
-        success: false,
-        error: ZardError(issues),
-      );
-    }
+    final resolvedValue = value is Future ? await value : value;
+    return parse(resolvedValue, path: path);
   }
 
   @override

@@ -1,3 +1,41 @@
+## 1.1.0
+
+Major performance refactor — zero breaking changes, all existing tests pass.
+
+### Performance
+- Precompiled all built-in `RegExp` patterns (email, uuid, cuid, ipv4/6, iso*, hex, base64, jwt, nanoid, ulid, mac, cidr, etc.) as `static final` — previously recompiled on every `parse()` call.
+- New no-throw internal `parseInto` path: container schemas (`ZMap`, `ZList`, `ZUnion`, `ZInterface`, `TransformedSchema`) and primitives (`ZInt`, `ZDouble`, `ZNum`, `ZBool`, `ZString`, `ZEnum`) write errors directly into a caller-provided sink instead of throwing per field/item. Eliminates the dominant try/catch cost in nested validation.
+- Reused `ParseContext` across calls via in-place `issues.clear()` (no allocation per `parse()`).
+- Replaced `List.unmodifiable` wrappers in hot paths with direct `validatorsInternal` / `transformsInternal` getters.
+- Removed redundant `ZardIssue` re-wrap when `path` is empty.
+- `ZMap.parse` uses `for-in` over `entries` (no closure allocation per field) and a single `value[key]` lookup instead of `containsKey` + index.
+- `ZUnion.parse` skips the inner `safeParse` indirection.
+- `ZDefault.parse` uses `rethrow` (one allocation instead of three).
+
+### Benchmarks
+- Added `benchmark_harness` as dev dependency.
+- New canonical benchmark suite at [`test/src/benchmarks/zard_harness_benchmark.dart`](test/src/benchmarks/zard_harness_benchmark.dart).
+- Expanded Stopwatch-based suite at [`test/src/benchmarks/zard_benchmark.dart`](test/src/benchmarks/zard_benchmark.dart) (5k warmup + 100k iterations, parity with Zod).
+- Expanded `yup_benchmark.js` to match Zod's full scenario list (Transform, Default, Nullable, Union, safeParse).
+- New `run-all.sh` orchestrator runs Dart (JIT + AOT) + Node (Zod + Yup) in one shot.
+
+### Results (µs/op, Dart 3.11 JIT vs Node 24 V8)
+| Scenario | Zard 1.0.0 | Zard 1.1.0 | Zod | Yup |
+|---|---|---|---|---|
+| String valid | 0.36 | **0.05** | 0.11 | 1.27 |
+| String invalid | — | **0.55** | 19.67 | 29.28 |
+| Small object | 1.11 | **0.36** | 0.37 | 3.82 |
+| Complex nested | 6.69 | **2.93** | 0.89 | 40.62 |
+| Transform | — | **0.06** | 0.24 | 0.81 |
+| Default | 0.04 | **0.01** | 0.06 | 0.74 |
+| Union (int) | 0.83 | **0.08** | 0.16 | 1.19 |
+
+Zard now beats Zod on **8 of 11 scenarios** and is **6–60× faster than Yup** across the board.
+
+### Notes
+- All public API preserved: `getValidators()`, `getTransforms()`, `getErrors()`, `addError()`, `clearErrors()`, the `issues` getter, etc.
+- New (additive) API: `Schema.parseInto(value, path, sink)` — internal use, callable but intended for container schemas.
+
 ## 1.0.0
 
 - Add more validation rules, refine, parseAsync, safeParseAsync, coerce, strict.

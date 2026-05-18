@@ -2,6 +2,12 @@ import '../types/zard_error.dart';
 import '../types/zard_issue.dart';
 import 'schema.dart';
 
+// Precompiled patterns shared across all ZDate instances.
+final RegExp _dateRegExp = RegExp(
+  r'^(\d{4})-(\d{2})-(\d{2})$|^(\d{1,2})/(\d{1,2})/(\d{2,4})$|^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)((?:[+-](\d{2}):(\d{2})|Z)?)$',
+);
+final RegExp _dateSplit = RegExp(r'[-T:/\.Z+]');
+
 abstract interface class ZDate extends Schema<DateTime> {
   final String? message;
 
@@ -21,11 +27,7 @@ abstract interface class ZDate extends Schema<DateTime> {
     String valueStr =
         value is DateTime ? value.toIso8601String() : value.toString();
 
-    // Regex pattern supporting various date formats.
-    final dateRegExp = RegExp(
-      r'^(\d{4})-(\d{2})-(\d{2})$|^(\d{1,2})/(\d{1,2})/(\d{2,4})$|^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)((?:[+-](\d{2}):(\d{2})|Z)?)$',
-    );
-    if (!dateRegExp.hasMatch(valueStr)) {
+    if (!_dateRegExp.hasMatch(valueStr)) {
       return ZardIssue(
         message: message ?? 'Invalid datetime format',
         type: 'datetime',
@@ -45,7 +47,7 @@ abstract interface class ZDate extends Schema<DateTime> {
 
     // Additional validation: Check individual date components.
     final components = valueStr
-        .split(RegExp(r'[-T:/\.Z+]'))
+        .split(_dateSplit)
         .where((c) => c.isNotEmpty)
         .toList();
     if (components.length >= 3) {
@@ -68,44 +70,47 @@ abstract interface class ZDate extends Schema<DateTime> {
   @override
   DateTime parse(dynamic value, {String path = ''}) {
     clearErrors();
+    final pathOrNull = path.isEmpty ? null : path;
+    final sink = issuesInternal;
 
     if (value == null) {
-      addError(ZardIssue(
+      sink.add(ZardIssue(
         message: message ?? 'Value is required and cannot be null',
         type: 'required_error',
         value: value,
-        path: path.isEmpty ? null : path,
+        path: pathOrNull,
       ));
-      throw ZardError(issues);
+      throw ZardError(sink);
     }
 
     final validationResult = _validate(value);
     if (validationResult != null) {
-      addError(ZardIssue(
+      sink.add(ZardIssue(
         message: validationResult.message,
         type: validationResult.type,
         value: value,
-        path: path.isEmpty ? null : path,
+        path: pathOrNull,
       ));
-      throw ZardError(issues);
+      throw ZardError(sink);
     }
 
     if (value is String) {
       try {
         final date = DateTime.parse(value);
         DateTime transformedValue = date;
-        for (final transform in getTransforms()) {
-          transformedValue = transform(transformedValue);
+        final transforms = transformsInternal;
+        for (var i = 0; i < transforms.length; i++) {
+          transformedValue = transforms[i](transformedValue);
         }
         return transformedValue;
       } catch (e) {
-        addError(ZardIssue(
+        sink.add(ZardIssue(
           message: message ?? 'Invalid date format',
           type: 'datetime',
           value: value,
-          path: path.isEmpty ? null : path,
+          path: pathOrNull,
         ));
-        throw ZardError(issues);
+        throw ZardError(sink);
       }
     }
     // Value is already a DateTime — delegate to base (handles transforms).

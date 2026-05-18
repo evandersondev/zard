@@ -97,48 +97,107 @@ abstract interface class ZDouble extends Schema<double> {
   }
 
   @override
-  double parse(dynamic value, {String path = ''}) {
-    clearErrors();
+  double? parseInto(dynamic value, String path, List<ZardIssue> sink) {
+    final pathOrNull = path.isEmpty ? null : path;
 
     if (value == null) {
-      addError(ZardIssue(
+      sink.add(ZardIssue(
         message: message ?? 'Value is required and cannot be null',
         type: 'required_error',
         value: value,
-        path: path.isEmpty ? null : path,
+        path: pathOrNull,
       ));
-      throw ZardError(issues);
+      return null;
     }
 
     if (value is! double) {
-      addError(ZardIssue(
+      sink.add(ZardIssue(
         message: message ?? 'Expected a double value',
         type: 'type_error',
         value: value,
-        path: path.isEmpty ? null : path,
+        path: pathOrNull,
       ));
-      throw ZardError(issues);
+      return null;
     }
 
-    for (final validator in getValidators()) {
-      final error = validator(value);
+    final beforeLen = sink.length;
+    final validators = validatorsInternal;
+    for (var i = 0; i < validators.length; i++) {
+      final error = validators[i](value);
       if (error != null) {
-        addError(ZardIssue(
-          message: error.message,
-          type: error.type,
-          value: value,
-          path: path.isEmpty ? null : path,
-        ));
+        if (pathOrNull == null && error.value == value) {
+          sink.add(error);
+        } else {
+          sink.add(ZardIssue(
+            message: error.message,
+            type: error.type,
+            value: value,
+            path: pathOrNull,
+          ));
+        }
+      }
+    }
+    if (sink.length != beforeLen) return null;
+
+    var result = value;
+    final transforms = transformsInternal;
+    for (var i = 0; i < transforms.length; i++) {
+      result = transforms[i](result);
+    }
+    return result;
+  }
+
+  @override
+  double parse(dynamic value, {String path = ''}) {
+    clearErrors();
+    final pathOrNull = path.isEmpty ? null : path;
+    final sink = issuesInternal;
+
+    if (value == null) {
+      sink.add(ZardIssue(
+        message: message ?? 'Value is required and cannot be null',
+        type: 'required_error',
+        value: value,
+        path: pathOrNull,
+      ));
+      throw ZardError(sink);
+    }
+
+    if (value is! double) {
+      sink.add(ZardIssue(
+        message: message ?? 'Expected a double value',
+        type: 'type_error',
+        value: value,
+        path: pathOrNull,
+      ));
+      throw ZardError(sink);
+    }
+
+    final validators = validatorsInternal;
+    for (var i = 0; i < validators.length; i++) {
+      final error = validators[i](value);
+      if (error != null) {
+        if (pathOrNull == null && error.value == value) {
+          sink.add(error);
+        } else {
+          sink.add(ZardIssue(
+            message: error.message,
+            type: error.type,
+            value: value,
+            path: pathOrNull,
+          ));
+        }
       }
     }
 
-    if (issues.isNotEmpty) {
-      throw ZardError(issues);
+    if (sink.isNotEmpty) {
+      throw ZardError(sink);
     }
 
     var result = value;
-    for (final transform in getTransforms()) {
-      result = transform(result);
+    final transforms = transformsInternal;
+    for (var i = 0; i < transforms.length; i++) {
+      result = transforms[i](result);
     }
 
     return result;

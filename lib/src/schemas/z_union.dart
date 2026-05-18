@@ -9,28 +9,48 @@ class ZUnion extends Schema<dynamic> {
 
   @override
   dynamic parse(dynamic value, {String path = ''}) {
-    clearErrors();
+    final pathOrNull = path.isEmpty ? null : path;
+    final unionErrors = <ZardIssue>[];
 
-    final List<ZardIssue> unionErrors = [];
-
-    for (final schema in schemas) {
-      final result = schema.safeParse(value, path: path);
-
-      if (result.success) {
-        return result.data;
-      } else {
-        unionErrors.addAll(result.error?.issues ?? []);
+    for (var i = 0; i < schemas.length; i++) {
+      final before = unionErrors.length;
+      final r = schemas[i].parseInto(value, path, unionErrors);
+      if (unionErrors.length == before) {
+        return r;
       }
     }
 
-    addError(ZardIssue(
+    unionErrors.add(ZardIssue(
       message: 'Value does not match any union type',
       type: 'union_error',
       value: value,
-      path: path.isEmpty ? null : path,
+      path: pathOrNull,
     ));
 
-    throw ZardError(List.of(issues + unionErrors));
+    throw ZardError(unionErrors);
+  }
+
+  @override
+  Object? parseInto(dynamic value, String path, List<ZardIssue> sink) {
+    final pathOrNull = path.isEmpty ? null : path;
+    final localErrors = <ZardIssue>[];
+
+    for (var i = 0; i < schemas.length; i++) {
+      final before = localErrors.length;
+      final r = schemas[i].parseInto(value, path, localErrors);
+      if (localErrors.length == before) {
+        return r;
+      }
+    }
+
+    sink.addAll(localErrors);
+    sink.add(ZardIssue(
+      message: 'Value does not match any union type',
+      type: 'union_error',
+      value: value,
+      path: pathOrNull,
+    ));
+    return null;
   }
 
   @override
