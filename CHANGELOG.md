@@ -1,3 +1,33 @@
+## 1.1.2
+
+Additive introspection — no breaking changes.
+
+- Export the wrapper schema types `ZOptional`, `ZNullable` and `ZUnion` so their
+  `inner` / `schemas` can be introspected (e.g. for OpenAPI / JSON Schema
+  generation). `ZDefault` was already exported.
+
+## 1.1.1
+
+Introspection getters and small fixes — no breaking changes.
+
+### Added
+- `ZList.element` — the item schema of a list.
+- `ZEnum.values` — the allowed values of an enum.
+
+These enable schema introspection (e.g. generating OpenAPI / JSON Schema from
+zard schemas). Object shape (`ZMap.schemas`), `ZOptional.inner`,
+`ZNullable.inner`, `ZDefault.inner`/`defaultValue` and `ZUnion.schemas` were
+already public.
+
+### Fixed
+- `isNullable` / `isOptional` now look *through* wrapper schemas, so a schema
+  that is both nullable and optional reports `true` for both — whether built
+  with `nullish()` (`ZNullable(ZOptional(x))`) or `nullable().optional()`
+  (`ZOptional(ZNullable(x))`).
+- Removed an unreachable, always-throwing `null as String` cast in
+  `ZString.parse` (a bare `ZString` is never nullable; nullability is handled by
+  the `ZNullable` wrapper).
+
 ## 1.1.0
 
 Major performance refactor — zero breaking changes, all existing tests pass.

@@ -1021,9 +1021,8 @@ abstract interface class ZString extends Schema<String> {
     final sink = issuesInternal;
 
     if (value == null) {
-      if (isNullable) {
-        return null as String;
-      }
+      // A bare ZString is never nullable — `nullable()` returns a ZNullable
+      // wrapper that handles null itself, so null here is always a type error.
       sink.add(ZardIssue(
         message: message ?? 'Expected a string value',
         type: 'type_error',

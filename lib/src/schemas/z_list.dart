@@ -11,6 +11,11 @@ abstract interface class ZList extends Schema<List<dynamic>> {
 
   ZList(this._itemSchema, {this.message});
 
+  /// The schema applied to each item.
+  ///
+  /// Exposed for introspection (e.g. generating OpenAPI / JSON Schema).
+  Schema get element => _itemSchema;
+
   @override
   void addValidator(covariant ListValidator validator) {
     _listValidators.add(validator);

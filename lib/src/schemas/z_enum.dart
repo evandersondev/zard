@@ -10,6 +10,11 @@ abstract interface class ZEnum extends Schema<String> {
   // No constructor validator: parse() below does the null + type + allowed
   // checks directly. Adding the same logic here would just allocate a closure.
 
+  /// The allowed values of this enum.
+  ///
+  /// Exposed for introspection (e.g. generating OpenAPI / JSON Schema).
+  List<String> get values => List.unmodifiable(_allowedValues);
+
   /// Extract value from enum transform.
   /// Example:
   /// ```dart

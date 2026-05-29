@@ -20,12 +20,25 @@ abstract class Schema<T> {
   // call (see [clearErrors]) — no allocation on the success path.
   final ParseContext _ctx = ParseContext();
 
-  // ✅ NOVO (dinâmico)
-  bool get isOptional => this is ZOptional;
-  bool get isNullable => this is ZNullable;
+  // Optionality/nullability look *through* wrapper schemas, so a schema that is
+  // both — e.g. `nullish()` = `ZNullable(ZOptional(x))`, or the equivalent
+  // `nullable().optional()` = `ZOptional(ZNullable(x))` — reports true for both.
+  bool get isOptional {
+    if (this is ZOptional) return true;
+    if (this is ZNullable) return (this as ZNullable).inner.isOptional;
+    if (this is ZDefault) return (this as ZDefault).inner.isOptional;
+    return false;
+  }
+
+  bool get isNullable {
+    if (this is ZNullable) return true;
+    if (this is ZOptional) return (this as ZOptional).inner.isNullable;
+    if (this is ZDefault) return (this as ZDefault).inner.isNullable;
+    return false;
+  }
 
   /// 🔥 MUITO IMPORTANTE
-  bool get isOptionalLike => this is ZOptional || this is ZDefault;
+  bool get isOptionalLike => isOptional || this is ZDefault;
 
   // ----- Backward-compatible accessors backed by the current context -----
 

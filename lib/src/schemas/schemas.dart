@@ -11,5 +11,8 @@ export 'z_interface.dart';
 export 'z_lazy.dart';
 export 'z_list.dart';
 export 'z_map.dart';
+export 'z_nullable.dart';
 export 'z_num.dart';
+export 'z_optional.dart';
 export 'z_string.dart';
+export 'z_union.dart';
