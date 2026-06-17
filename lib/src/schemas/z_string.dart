@@ -1075,6 +1075,19 @@ abstract interface class ZString extends Schema<String> {
 class ZCoerceString extends ZString {
   ZCoerceString({super.message});
 
+  // ZString overrides parseInto with a non-coercing fast path, so container
+  // schemas (ZMap, ZList) would bypass coercion. Delegate back to our
+  // coercing parse() — mirrors the default Schema.parseInto behavior.
+  @override
+  String? parseInto(dynamic value, String path, List<ZardIssue> sink) {
+    try {
+      return parse(value, path: path);
+    } on ZardError catch (e) {
+      sink.addAll(e.issues);
+      return null;
+    }
+  }
+
   @override
   String parse(dynamic value, {String? path}) {
     clearErrors();

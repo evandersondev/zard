@@ -106,6 +106,19 @@ abstract interface class ZBool extends Schema<bool> {
 class ZCoerceBoolean extends ZBool {
   ZCoerceBoolean({super.message});
 
+  // ZBool overrides parseInto with a non-coercing fast path, so container
+  // schemas (ZMap, ZList) would bypass coercion. Delegate back to our
+  // coercing parse() — mirrors the default Schema.parseInto behavior.
+  @override
+  bool? parseInto(dynamic value, String path, List<ZardIssue> sink) {
+    try {
+      return parse(value, path: path);
+    } on ZardError catch (e) {
+      sink.addAll(e.issues);
+      return null;
+    }
+  }
+
   @override
   bool parse(dynamic value, {String path = ''}) {
     clearErrors();

@@ -16,9 +16,11 @@ void main() {
   print(strCoerce.parse(true)); // 'true'
 
   // --- coerce.int(): coerces string digits to int ---
-  final intCoerce = z.coerce.int();
-  print(intCoerce.parse('7')); // 7
-  print(intCoerce.parse(42)); // 42
+  final intCoerce = z.map({
+    'num': z.coerce.int(),
+  });
+  print(intCoerce.parse({'num': '7'})); // 7
+  print(intCoerce.parse({'num': 42})); // 42
 
   // --- coerce.double() ---
   final dblCoerce = z.coerce.double();
@@ -37,10 +39,6 @@ void main() {
   print(dateCoerce.parse('2024-01-15').year); // 2024
 
   // --- Chaining transforms ---
-  final pipeline = z
-      .string()
-      .trim()
-      .toLowerCase()
-      .transform((s) => 'user:$s');
+  final pipeline = z.string().trim().toLowerCase().transform((s) => 'user:$s');
   print(pipeline.parse('  ALICE  ')); // user:alice
 }

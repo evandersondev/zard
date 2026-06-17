@@ -207,6 +207,19 @@ abstract interface class ZNum extends Schema<num> {
 class ZCoerceNum extends ZNum {
   ZCoerceNum({super.message});
 
+  // ZNum overrides parseInto with a non-coercing fast path, so container
+  // schemas (ZMap, ZList) would bypass coercion. Delegate back to our
+  // coercing parse() — mirrors the default Schema.parseInto behavior.
+  @override
+  num? parseInto(dynamic value, String path, List<ZardIssue> sink) {
+    try {
+      return parse(value, path: path);
+    } on ZardError catch (e) {
+      sink.addAll(e.issues);
+      return null;
+    }
+  }
+
   @override
   num parse(dynamic value, {String path = ''}) {
     clearErrors();

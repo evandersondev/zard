@@ -207,6 +207,19 @@ abstract interface class ZDouble extends Schema<double> {
 class ZCoerceDouble extends ZDouble {
   ZCoerceDouble({super.message});
 
+  // ZDouble overrides parseInto with a non-coercing fast path, so container
+  // schemas (ZMap, ZList) would bypass coercion. Delegate back to our
+  // coercing parse() — mirrors the default Schema.parseInto behavior.
+  @override
+  double? parseInto(dynamic value, String path, List<ZardIssue> sink) {
+    try {
+      return parse(value, path: path);
+    } on ZardError catch (e) {
+      sink.addAll(e.issues);
+      return null;
+    }
+  }
+
   @override
   double parse(dynamic value, {String path = ''}) {
     clearErrors();

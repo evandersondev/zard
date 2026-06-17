@@ -206,6 +206,19 @@ abstract interface class ZInt extends Schema<int> {
 class ZCoerceInt extends ZInt {
   ZCoerceInt({super.message});
 
+  // ZInt overrides parseInto with a non-coercing fast path, so container
+  // schemas (ZMap, ZList) would bypass coercion. Delegate back to our
+  // coercing parse() — mirrors the default Schema.parseInto behavior.
+  @override
+  int? parseInto(dynamic value, String path, List<ZardIssue> sink) {
+    try {
+      return parse(value, path: path);
+    } on ZardError catch (e) {
+      sink.addAll(e.issues);
+      return null;
+    }
+  }
+
   @override
   int parse(dynamic value, {String path = ''}) {
     clearErrors();

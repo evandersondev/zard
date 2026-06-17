@@ -1,3 +1,15 @@
+## 1.1.3
+
+Bug fix — no breaking changes.
+
+### Fixed
+- Coercion schemas (`z.coerce.int()`, `z.coerce.double()`, `z.coerce.num()`,
+  `z.coerce.bool()`, `z.coerce.string()`) now coerce correctly when nested inside
+  container schemas such as `z.map({...})` and `z.list(...)`. Previously the
+  container's internal `parseInto` path dispatched to the non-coercing base type,
+  so coercion was silently skipped (e.g. `z.map({'n': z.coerce.int()}).parse({'n': '7'})`
+  threw a type error instead of returning `{'n': 7}`).
+
 ## 1.1.2
 
 Additive introspection — no breaking changes.
