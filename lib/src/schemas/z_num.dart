@@ -8,6 +8,7 @@ abstract interface class ZNum extends Schema<num> {
   ZNum({this.message});
 
   ZNum min(num minValue, {String? message}) {
+    addCheck('minimum', minValue);
     addValidator((num value) {
       if (value < minValue) {
         return ZardIssue(
@@ -22,6 +23,7 @@ abstract interface class ZNum extends Schema<num> {
   }
 
   ZNum max(num maxValue, {String? message}) {
+    addCheck('maximum', maxValue);
     addValidator((num value) {
       if (value > maxValue) {
         return ZardIssue(
@@ -36,6 +38,7 @@ abstract interface class ZNum extends Schema<num> {
   }
 
   ZNum positive({String? message}) {
+    addCheck('exclusiveMinimum', 0);
     addValidator((num value) {
       if (value <= 0) {
         return ZardIssue(
@@ -50,6 +53,7 @@ abstract interface class ZNum extends Schema<num> {
   }
 
   ZNum nonnegative({String? message}) {
+    addCheck('minimum', 0);
     addValidator((num value) {
       if (value < 0) {
         return ZardIssue(
@@ -64,6 +68,7 @@ abstract interface class ZNum extends Schema<num> {
   }
 
   ZNum negative({String? message}) {
+    addCheck('exclusiveMaximum', 0);
     addValidator((num value) {
       if (value >= 0) {
         return ZardIssue(
@@ -78,6 +83,7 @@ abstract interface class ZNum extends Schema<num> {
   }
 
   ZNum multipleOf(num divisor, {String? message}) {
+    addCheck('multipleOf', divisor);
     addValidator((num value) {
       final remainder = value % divisor;
       if (remainder.abs() > 1e-10) {

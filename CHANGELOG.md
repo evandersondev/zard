@@ -1,3 +1,29 @@
+## 1.2.0
+
+Introspectable constraints — no breaking changes.
+
+### Added
+- Constraint metadata is now recorded as introspectable data alongside each
+  validator, so a schema can be exported to JSON Schema / OpenAPI **without
+  executing it** (mirrors Zod's `_def`). New public API on `Schema`:
+  - `addCheck(check, [value])` — records a `{'check': <JSON Schema keyword>,
+    'value': v}` entry (called internally by the builder methods).
+  - `checks` getter — an unmodifiable view of those entries.
+- Builder methods now populate this metadata:
+  - `ZString`: `min`/`max`/`length` (→ `minLength`/`maxLength`), `regex`
+    (→ `pattern`), and `format` for `email`, `url` (→ `uri`), `uuid`, `date`,
+    `time`, `datetime` (→ `date-time`), `ipv4`, `ipv6`, `hostname` and the ISO
+    variants.
+  - `ZInt`/`ZDouble`/`ZNum`: `min`/`max` (→ `minimum`/`maximum`), `positive`
+    (→ `exclusiveMinimum: 0`), `nonnegative` (→ `minimum: 0`), `negative`
+    (→ `exclusiveMaximum: 0`), `multipleOf`.
+  - `ZList`: `min`/`max`/`noempty`/`lenght` (→ `minItems`/`maxItems`).
+
+### Notes
+- Fully additive: validation behavior and all method signatures are unchanged.
+- Closure-only constraints (`refine`/`transform`) carry no metadata by design —
+  they still validate at runtime but cannot be represented in an exported schema.
+
 ## 1.1.3
 
 Bug fix — no breaking changes.

@@ -76,6 +76,27 @@ abstract class Schema<T> {
   List<Validator<T>> get validatorsInternal => _validators;
   List<Transformer<T>> get transformsInternal => _transforms;
 
+  // ----- Introspectable constraint metadata (for schema export) -----
+
+  final List<Map<String, dynamic>> _checks = [];
+
+  /// Records introspectable metadata about a constraint as it is applied, so
+  /// the schema can be exported to JSON Schema / OpenAPI **without executing**
+  /// it. Builder methods (`.min`/`.max`/`.email`/`.regex`/...) call this
+  /// alongside [addValidator]. By convention [check] is the target JSON Schema
+  /// keyword (e.g. `'minLength'`, `'pattern'`, `'format'`) and [value] its
+  /// value, so a converter can map an entry to `node[check] = value` directly.
+  void addCheck(String check, [Object? value]) {
+    _checks.add(
+      value == null ? {'check': check} : {'check': check, 'value': value},
+    );
+  }
+
+  /// Unmodifiable view of the constraint metadata recorded via [addCheck].
+  /// Empty for schemas built without constraints, or for constraints not yet
+  /// annotated (which simply don't appear in the exported schema).
+  List<Map<String, dynamic>> get checks => List.unmodifiable(_checks);
+
   /// Direct access to the parse context's issues list — internal use only.
   List<ZardIssue> get issuesInternal => _ctx.issues;
 

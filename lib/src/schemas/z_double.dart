@@ -8,6 +8,7 @@ abstract interface class ZDouble extends Schema<double> {
   ZDouble({this.message});
 
   ZDouble min(num minValue, {String? message}) {
+    addCheck('minimum', minValue);
     addValidator((double value) {
       if (value < minValue) {
         return ZardIssue(
@@ -22,6 +23,7 @@ abstract interface class ZDouble extends Schema<double> {
   }
 
   ZDouble max(num maxValue, {String? message}) {
+    addCheck('maximum', maxValue);
     addValidator((double value) {
       if (value > maxValue) {
         return ZardIssue(
@@ -36,6 +38,7 @@ abstract interface class ZDouble extends Schema<double> {
   }
 
   ZDouble positive({String? message}) {
+    addCheck('exclusiveMinimum', 0);
     addValidator((double value) {
       if (value <= 0.0) {
         return ZardIssue(
@@ -50,6 +53,7 @@ abstract interface class ZDouble extends Schema<double> {
   }
 
   ZDouble nonnegative({String? message}) {
+    addCheck('minimum', 0);
     addValidator((double value) {
       if (value < 0.0) {
         return ZardIssue(
@@ -64,6 +68,7 @@ abstract interface class ZDouble extends Schema<double> {
   }
 
   ZDouble negative({String? message}) {
+    addCheck('exclusiveMaximum', 0);
     addValidator((double value) {
       if (value >= 0.0) {
         return ZardIssue(
@@ -78,6 +83,7 @@ abstract interface class ZDouble extends Schema<double> {
   }
 
   ZDouble multipleOf(double divisor, {String? message}) {
+    addCheck('multipleOf', divisor);
     addValidator((double value) {
       final remainder = value % divisor;
       if (remainder.abs() > 1e-10) {

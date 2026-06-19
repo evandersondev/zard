@@ -8,6 +8,7 @@ abstract interface class ZInt extends Schema<int> {
   ZInt({this.message});
 
   ZInt min(int minValue, {String? message}) {
+    addCheck('minimum', minValue);
     addValidator((int value) {
       if (value < minValue) {
         return ZardIssue(
@@ -22,6 +23,7 @@ abstract interface class ZInt extends Schema<int> {
   }
 
   ZInt max(int maxValue, {String? message}) {
+    addCheck('maximum', maxValue);
     addValidator((int value) {
       if (value > maxValue) {
         return ZardIssue(
@@ -36,6 +38,7 @@ abstract interface class ZInt extends Schema<int> {
   }
 
   ZInt positive({String? message}) {
+    addCheck('exclusiveMinimum', 0);
     addValidator((int value) {
       if (value <= 0) {
         return ZardIssue(
@@ -50,6 +53,7 @@ abstract interface class ZInt extends Schema<int> {
   }
 
   ZInt nonnegative({String? message}) {
+    addCheck('minimum', 0);
     addValidator((int value) {
       if (value < 0) {
         return ZardIssue(
@@ -64,6 +68,7 @@ abstract interface class ZInt extends Schema<int> {
   }
 
   ZInt negative({String? message}) {
+    addCheck('exclusiveMaximum', 0);
     addValidator((int value) {
       if (value >= 0) {
         return ZardIssue(
@@ -78,6 +83,7 @@ abstract interface class ZInt extends Schema<int> {
   }
 
   ZInt multipleOf(int divisor, {String? message}) {
+    addCheck('multipleOf', divisor);
     addValidator((int value) {
       if (value % divisor != 0) {
         return ZardIssue(

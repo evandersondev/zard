@@ -125,6 +125,7 @@ abstract interface class ZString extends Schema<String> {
   /// final name = minSchema.parse('Jo'); // throws with error details
   /// ```
   ZString min(int length, {String? message}) {
+    addCheck('minLength', length);
     addValidator((String? value) {
       if (value != null && value.length < length) {
         return ZardIssue(
@@ -146,6 +147,7 @@ abstract interface class ZString extends Schema<String> {
   /// final name = maxSchema.parse('this string is too long'); // throws with error details
   /// ```
   ZString max(int length, {String? message}) {
+    addCheck('maxLength', length);
     addValidator((String? value) {
       if (value != null && value.length > length) {
         return ZardIssue(
@@ -167,6 +169,7 @@ abstract interface class ZString extends Schema<String> {
   /// final email = emailSchema.parse('john@example'); // throws with error details
   /// ```
   ZString email({String? message, RegExp? pattern}) {
+    addCheck('format', 'email');
     addValidator((
       String? value,
     ) {
@@ -201,6 +204,7 @@ abstract interface class ZString extends Schema<String> {
   /// final url = customSchema.parse('http://other.com'); // throws with error details
   /// ```
   ZString url({String? message, RegExp? hostname, RegExp? protocol}) {
+    addCheck('format', 'uri');
     // Fast path: no custom patterns → reuse the precompiled default URL regex.
     if (hostname == null && protocol == null) {
       addValidator((String? value) {
@@ -262,6 +266,8 @@ abstract interface class ZString extends Schema<String> {
   /// final value = lengthSchema.parse('Hi'); // throws with error details
   /// ```
   ZString length(int length, {String? message}) {
+    addCheck('minLength', length);
+    addCheck('maxLength', length);
     addValidator((String? value) {
       if (value != null && value.length != length) {
         return ZardIssue(
@@ -286,6 +292,7 @@ abstract interface class ZString extends Schema<String> {
     // supports "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8"
     // z.uuid({ version: "v4" });
 
+    addCheck('format', 'uuid');
     addValidator((String? value) {
       if (value != null) {
         final uuidRegExp = version == null
@@ -391,6 +398,7 @@ abstract interface class ZString extends Schema<String> {
   /// final value = regexSchema.parse('John123'); // throws with error details
   /// ```
   ZString regex(RegExp regex, {String? message}) {
+    addCheck('pattern', regex.pattern);
     addValidator((String? value) {
       if (value != null && !regex.hasMatch(value)) {
         return ZardIssue(
@@ -475,6 +483,7 @@ abstract interface class ZString extends Schema<String> {
   /// final value = datetimeSchema.parse('2021-01-01 12:30:00'); // throws with error details
   /// ```
   ZString datetime({String? message}) {
+    addCheck('format', 'date-time');
     addValidator((String? value) {
       if (value != null) {
         if (!_StringPatterns.datetime.hasMatch(value)) {
@@ -498,6 +507,7 @@ abstract interface class ZString extends Schema<String> {
   /// final value = dateSchema.parse('2021-01-01T12:30:00'); // throws with error details
   /// ```
   ZString date({String? message}) {
+    addCheck('format', 'date');
     addValidator((String? value) {
       if (value != null) {
         if (!_StringPatterns.date.hasMatch(value)) {
@@ -521,6 +531,7 @@ abstract interface class ZString extends Schema<String> {
   /// final value = timeSchema.parse('12:00'); // throws with error details
   /// ```
   ZString time({String? message}) {
+    addCheck('format', 'time');
     addValidator((String? value) {
       if (value != null) {
         if (!_StringPatterns.time.hasMatch(value)) {
@@ -636,6 +647,7 @@ abstract interface class ZString extends Schema<String> {
 
   /// Hostname validation
   ZString hostname({String? message}) {
+    addCheck('format', 'hostname');
     addValidator((String? value) {
       if (value != null) {
         if (!_StringPatterns.hostname.hasMatch(value)) {
@@ -776,6 +788,7 @@ abstract interface class ZString extends Schema<String> {
 
   /// IPv4 validation
   ZString ipv4({String? message}) {
+    addCheck('format', 'ipv4');
     addValidator((String? value) {
       if (value != null) {
         if (!_StringPatterns.ipv4.hasMatch(value)) {
@@ -793,6 +806,7 @@ abstract interface class ZString extends Schema<String> {
 
   /// IPv6 validation
   ZString ipv6({String? message}) {
+    addCheck('format', 'ipv6');
     addValidator((String? value) {
       if (value != null) {
         if (!_StringPatterns.ipv6.hasMatch(value)) {
@@ -895,6 +909,7 @@ abstract interface class ZString extends Schema<String> {
 
   /// ISO date validation (YYYY-MM-DD)
   ZString isoDate({String? message}) {
+    addCheck('format', 'date');
     addValidator((String? value) {
       if (value != null) {
         if (!_StringPatterns.isoDate.hasMatch(value)) {
@@ -912,6 +927,7 @@ abstract interface class ZString extends Schema<String> {
 
   /// ISO time validation (HH:mm:ss or with milliseconds)
   ZString isoTime({String? message}) {
+    addCheck('format', 'time');
     addValidator((String? value) {
       if (value != null) {
         if (!_StringPatterns.isoTime.hasMatch(value)) {
@@ -929,6 +945,7 @@ abstract interface class ZString extends Schema<String> {
 
   /// ISO datetime validation (ISO 8601)
   ZString isoDatetime({String? message}) {
+    addCheck('format', 'date-time');
     addValidator((String? value) {
       if (value != null) {
         if (!_StringPatterns.isoDatetime.hasMatch(value)) {

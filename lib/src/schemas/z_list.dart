@@ -154,6 +154,7 @@ abstract interface class ZList extends Schema<List<dynamic>> {
   }
 
   ZList noempty({String? message}) {
+    addCheck('minItems', 1);
     addValidator((List<dynamic> value) {
       if (value.isEmpty) {
         return ZardIssue(
@@ -168,6 +169,7 @@ abstract interface class ZList extends Schema<List<dynamic>> {
   }
 
   ZList min(int min, {String? message}) {
+    addCheck('minItems', min);
     addValidator((List<dynamic> value) {
       if (value.length < min) {
         return ZardIssue(
@@ -182,6 +184,7 @@ abstract interface class ZList extends Schema<List<dynamic>> {
   }
 
   ZList max(int max, {String? message}) {
+    addCheck('maxItems', max);
     addValidator((List<dynamic> value) {
       if (value.length > max) {
         return ZardIssue(
@@ -196,6 +199,8 @@ abstract interface class ZList extends Schema<List<dynamic>> {
   }
 
   ZList lenght(int length, {String? message}) {
+    addCheck('minItems', length);
+    addCheck('maxItems', length);
     addValidator((List<dynamic> value) {
       if (value.length != length) {
         return ZardIssue(
