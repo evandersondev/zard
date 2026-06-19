@@ -20,7 +20,7 @@ lib/
   src/
     zard_base.dart           # class Zard + singleton `z`. TODA fábrica (z.string(), z.map(), z.coerce...) vive aqui
     schemas/
-      schema.dart            # Schema<T> base abstrata. parse(), parseInto(), safeParse(), optional(), refine(), transform()...
+      schema.dart            # Schema<T> base abstrata. parse(), parseInto(), safeParse(), optional(), refine(), transform(), addCheck()/checks...
       schemas.dart           # Barrel interno que reexporta todos os schemas
       z_string.dart          # ZString / ZStringImpl / ZCoerceString
       z_int.dart             # ZInt / ZIntImpl / ZCoerceInt
@@ -62,6 +62,7 @@ example/lib/                 # Exemplos executáveis de cada feature
 `Schema<T>` (`lib/src/schemas/schema.dart`) é a base abstrata. Conceitos-chave:
 
 - **`_validators` / `_transforms`**: listas de funções acumuladas por métodos encadeáveis (`.min()`, `.max()`, `.transform()`...). Validadores retornam `ZardIssue?` (null = ok); transforms mapeiam `T -> T`.
+- **`_checks` (via `addCheck`/getter `checks`)**: metadados introspectáveis das constraints, **paralelos** aos `_validators`. Veja a seção 5 — é o que permite exportar o schema para JSON Schema/OpenAPI sem executá-lo.
 - **`isOptional` / `isNullable`**: olham *através* dos wrappers (`ZOptional`, `ZNullable`, `ZDefault`) recursivamente. Não confie em `is ZOptional` direto — use esses getters.
 - **Wrappers** (`optional()`, `nullable()`, `nullish()`, `$default()`): cada um envolve o schema interno numa nova instância (`ZOptional<T>`, etc.). Eles delegam ao `inner`.
 
@@ -110,7 +111,34 @@ Cada schema tem **dois** métodos de parsing, e eles precisam concordar:
 
 `ZCoerceDate` e o `ZCoerceBoolean` de `z_string_bool.dart` funcionam só com o `parse()` sobrescrito porque suas pais (`ZDate`, `ZStringBool`) **não** sobrescrevem `parseInto` — herdam o wrapper default. Confirme isso antes de assumir.
 
-### 5. Como adicionar uma nova feature
+### 5. Metadados introspectáveis de constraints (`checks`) — desde 1.2.0
+
+Espelha o `_def` do Zod. Cada constraint (`min`, `max`, `email`, `regex`...) é, em runtime, um **closure opaco** dentro de `_validators` — não dá pra "abrir" e descobrir que era um `min(2)`. Para permitir exportar o schema (JSON Schema / OpenAPI / Structured Outputs) **sem executá-lo**, cada método de constraint também registra um metadado via `addCheck`:
+
+```dart
+void addCheck(String check, [Object? value]);   // base Schema<T>
+List<Map<String, dynamic>> get checks;            // view não-modificável
+```
+
+Convenção: **`check` é a keyword JSON Schema de destino** e `value` o seu valor, para o consumidor fazer `node[check] = value` direto. Mapeamentos atuais:
+
+| Builder | `addCheck(...)` |
+|---|---|
+| `ZString.min/max` | `minLength` / `maxLength` |
+| `ZString.length(n)` | `minLength` **e** `maxLength` (= n) |
+| `ZString.regex` | `pattern` (= `regex.pattern`) |
+| `ZString.email/url/uuid/date/time/datetime/ipv4/ipv6/hostname` (+ ISO) | `format` (`email`/`uri`/`uuid`/`date`/`time`/`date-time`/...) |
+| `ZInt/ZDouble/ZNum.min/max` | `minimum` / `maximum` |
+| `.positive` / `.nonnegative` / `.negative` | `exclusiveMinimum:0` / `minimum:0` / `exclusiveMaximum:0` |
+| `.multipleOf` | `multipleOf` |
+| `ZList.min/max/noempty/lenght` | `minItems` / `maxItems` |
+
+**Regras ao mexer:**
+- `addCheck` é **puramente aditivo** — NÃO toca o caminho de validação. Adicione-o como primeira linha do método, ao lado do `addValidator` existente.
+- `refine`/`transform` são lógica arbitrária: **não** têm (nem podem ter) `check`. Validam em runtime mas não aparecem no schema exportado. Isso é by-design.
+- Consumidor de referência: `darto_validator` (`zardToOpenApiSchema`) lê `schema.checks`. Wrappers (`ZOptional`/`ZNullable`/`ZDefault`) não têm checks próprios — o consumidor recursa no `inner`, então os checks vivem sempre no schema concreto.
+
+### 6. Como adicionar uma nova feature
 
 Para **um novo tipo de schema** (ex. `z.bigint()`):
 1. Crie `lib/src/schemas/z_bigint.dart` com a classe abstrata `ZBigInt extends Schema<BigInt>`, a `ZBigIntImpl`, e (se houver) `ZCoerceBigInt`.
@@ -120,7 +148,7 @@ Para **um novo tipo de schema** (ex. `z.bigint()`):
 5. Se for coercível, adicione `ZCoerceBigInt bigint() => ZCoerceBigInt();` em `z_coerce_container.dart`.
 6. Escreva testes em `test/src/schemas/z_bigint_test.dart` e um exemplo em `example/lib/`.
 
-Para **um novo validador** num tipo existente (ex. `.startsWith()` em ZString): adicione um método encadeável que chama `addValidator((v) => ... ? ZardIssue(...) : null)` e retorna `this`. Aceite um `{String? message}` para mensagem custom.
+Para **um novo validador** num tipo existente (ex. `.startsWith()` em ZString): adicione um método encadeável que chama `addValidator((v) => ... ? ZardIssue(...) : null)` e retorna `this`. Aceite um `{String? message}` para mensagem custom. **Se a constraint tiver representação em JSON Schema** (ex. um limite, formato ou padrão), chame também `addCheck('<keyword>', valor)` como primeira linha (ver seção 5) — caso contrário ela validará mas sumirá do schema exportado.
 
 ## Convenções de código
 
@@ -166,6 +194,7 @@ cd example && dart run lib/<arquivo>.dart
 
 - [ ] `parse()` e `parseInto()` concordam (sem divergência de caminho)?
 - [ ] Funciona isolado **e** dentro de `z.map`/`z.list`?
+- [ ] Constraint com equivalente JSON Schema também chama `addCheck(...)` (seção 5)?
 - [ ] `dart analyze lib/` sem novos erros?
 - [ ] `dart test` 100% verde?
 - [ ] Teste de regressão/cobertura adicionado?
