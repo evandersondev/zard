@@ -97,6 +97,38 @@ abstract class Schema<T> {
   /// annotated (which simply don't appear in the exported schema).
   List<Map<String, dynamic>> get checks => List.unmodifiable(_checks);
 
+  // ----- Documentation metadata (description / example) ------------------
+
+  String? _description;
+  Object? _example;
+  bool _hasExample = false;
+
+  /// Attaches a human-readable `description` to this schema, emitted into the
+  /// exported JSON Schema / OpenAPI. Purely documentational — it does not
+  /// affect validation. Chainable; call it after constraints:
+  /// `z.string().min(1).describe('Full name')`.
+  Schema<T> describe(String description) {
+    _description = description;
+    return this;
+  }
+
+  /// Attaches an `example` value, emitted into the exported schema. Like
+  /// [describe], it is documentation-only and does not affect validation.
+  Schema<T> example(Object? value) {
+    _example = value;
+    _hasExample = true;
+    return this;
+  }
+
+  /// The description set via [describe], or `null`.
+  String? get description => _description;
+
+  /// The example set via [example] (only meaningful when [hasExample]).
+  Object? get exampleValue => _example;
+
+  /// Whether an example was set via [example].
+  bool get hasExample => _hasExample;
+
   /// Direct access to the parse context's issues list — internal use only.
   List<ZardIssue> get issuesInternal => _ctx.issues;
 
