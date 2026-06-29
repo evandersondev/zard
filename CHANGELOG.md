@@ -1,3 +1,13 @@
+## 1.3.0
+
+Documentation metadata — no breaking changes.
+
+### Added
+- `Schema.describe(text)` and `Schema.example(value)` attach documentation
+  metadata (read by exporters such as `zardToOpenApiSchema`); both return the
+  schema for chaining and do not affect validation. Exposed via the getters
+  `description`, `exampleValue` and `hasExample`.
+
 ## 1.2.0
 
 Introspectable constraints — no breaking changes.
