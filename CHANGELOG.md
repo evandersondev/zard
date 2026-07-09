@@ -1,3 +1,26 @@
+## 1.4.0
+
+New composition & validation features — no breaking changes.
+
+### Added
+- `z.discriminatedUnion(discriminatorKey, variants)` — a union that reads a
+  discriminator field from the input map and dispatches directly to the
+  matching variant (vs. `z.union`'s sequential trial-and-error), producing a
+  precise `discriminated_union_error` when the discriminator matches no variant.
+  Each variant is expected to be a `z.map`/`z.interface` containing the
+  discriminator key. Honors both the throwing (`parse`) and no-throw
+  (`parseInto`) paths, plus `parseAsync`.
+- `Schema.pipe(next)` — composes two schemas linearly, feeding the
+  parsed/transformed output of the current schema into `next`
+  (e.g. `z.string().transform(int.parse).pipe(z.int().min(0))`). Implemented as
+  a wrapper schema that propagates issues with correct paths and respects the
+  no-throw `parseInto` hot path.
+- `Schema.refineAsync(predicate, {message, path})` — an asynchronous refinement
+  (predicate may return `Future<bool>`) honored by `parseAsync` /
+  `safeParseAsync`. Calling the synchronous `parse()` on a schema that carries
+  an async refinement throws a clear `StateError` directing the caller to use
+  `parseAsync`. Exposed via the `hasAsyncRefinements` getter.
+
 ## 1.3.0
 
 Documentation metadata — no breaking changes.

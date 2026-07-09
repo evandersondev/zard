@@ -2,7 +2,6 @@ import 'package:zard/src/schemas/z_string_bool.dart';
 import 'package:zard/src/utils/iso.dart';
 import 'package:zard/zard.dart';
 
-import 'schemas/z_union.dart';
 import 'types/zard_error_formatter.dart' as formatter;
 import 'utils/regexes.dart';
 
@@ -294,6 +293,27 @@ class Zard {
 
   ZUnion union(List<Schema> schemas) {
     return ZUnion(schemas);
+  }
+
+  /// A discriminated union — a union whose variants share a common
+  /// [discriminatorKey] (typically a `z.$enum` or literal field).
+  ///
+  /// Unlike [union], which tries each variant sequentially, this reads the
+  /// discriminator value from the input map and dispatches directly to the
+  /// matching variant, producing a precise error when no variant matches.
+  /// Each variant is expected to be a `z.map`/`z.interface` containing the
+  /// discriminator key.
+  ///
+  /// ```dart
+  /// final shape = z.discriminatedUnion('type', [
+  ///   z.map({'type': z.$enum(['circle']), 'radius': z.double()}),
+  ///   z.map({'type': z.$enum(['square']), 'side': z.double()}),
+  /// ]);
+  /// shape.parse({'type': 'circle', 'radius': 1.0});
+  /// ```
+  ZDiscriminatedUnion discriminatedUnion(
+      String discriminatorKey, List<Schema> variants) {
+    return ZDiscriminatedUnionImpl(discriminatorKey, variants);
   }
 }
 

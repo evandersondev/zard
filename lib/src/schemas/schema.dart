@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:zard/src/types/parse_context.dart';
 import 'package:zard/src/types/zard_error.dart';
 
@@ -5,8 +7,6 @@ import '../types/zard_issue.dart';
 import '../types/zard_result.dart';
 import 'schemas.dart';
 import 'transformed_schema.dart';
-import 'z_nullable.dart';
-import 'z_optional.dart';
 
 typedef Validator<T> = ZardIssue? Function(T value);
 typedef Transformer<T> = T Function(T value);
@@ -140,6 +140,20 @@ abstract class Schema<T> {
     return TransformedSchemaImpl<T, R>(this, transformer);
   }
 
+  /// Pipes the (parsed/transformed) output of this schema into [next],
+  /// composing two schemas linearly. The output type becomes that of [next].
+  ///
+  /// ```dart
+  /// final schema = z.string().transform(int.parse).pipe(z.int().min(0));
+  /// schema.parse('42'); // 42
+  /// ```
+  ///
+  /// Issues from either stage propagate with their original paths, and the
+  /// no-throw `parseInto` hot path is respected.
+  PipedSchema<T, R> pipe<R>(Schema<R> next) {
+    return PipedSchemaImpl<T, R>(this, next);
+  }
+
   Schema<T?> optional() {
     return ZOptional<T>(this);
   }
@@ -193,6 +207,33 @@ abstract class Schema<T> {
       return null;
     });
     return this;
+  }
+
+  /// Whether this schema carries an asynchronous refinement (added via
+  /// [refineAsync]). When `true`, the synchronous [parse] path throws a
+  /// [StateError] — use [parseAsync] / [safeParseAsync] instead.
+  bool get hasAsyncRefinements => false;
+
+  /// Attaches an **asynchronous** refinement predicate. Unlike [refine], the
+  /// predicate may return a `Future<bool>` and is only honored by
+  /// [parseAsync] / [safeParseAsync]. Calling the synchronous [parse] on the
+  /// returned schema throws a [StateError].
+  ///
+  /// ```dart
+  /// final schema = z.string().refineAsync(
+  ///   (v) async => await isUniqueInDb(v),
+  ///   message: 'Value already taken',
+  /// );
+  /// await schema.parseAsync('foo');
+  /// ```
+  Schema<T> refineAsync(FutureOr<bool> Function(T value) predicate,
+      {String? message, String? path}) {
+    return AsyncRefinedSchemaImpl<T>(
+      this,
+      predicate,
+      message: message ?? 'Refinement failed',
+      refinePath: path,
+    );
   }
 
   // -----------------------------------------------------------------------

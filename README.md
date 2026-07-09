@@ -749,6 +749,86 @@ void main() {
 
 <br>
 
+#### Async Refine (`refineAsync`)
+
+`refine()` is synchronous. When your validation needs to `await` something (a
+database lookup, an HTTP call), use `refineAsync()`. It is honored only by
+`parseAsync()` / `safeParseAsync()`. Calling the synchronous `parse()` on a
+schema that carries an async refinement throws a `StateError` telling you to use
+`parseAsync`.
+
+```dart
+import 'package:zard/zard.dart';
+
+Future<void> main() async {
+  final username = z.string().min(3).refineAsync(
+        (value) async => await isUsernameAvailable(value),
+        message: 'Username already taken',
+      );
+
+  print(await username.parseAsync('alice')); // alice (if available)
+
+  final result = await username.safeParseAsync('bob');
+  if (!result.success) {
+    print(result.error!.issues.first.message); // Username already taken
+  }
+
+  // Sync parse is not allowed on async-refined schemas:
+  // username.parse('alice'); // throws StateError
+}
+```
+
+<br>
+
+#### Pipe (Composing Schemas)
+
+`.pipe(next)` feeds the parsed/transformed output of one schema into another,
+composing them linearly. This is ideal for parsing then re-validating a
+transformed value:
+
+```dart
+import 'package:zard/zard.dart';
+
+void main() {
+  // Parse a string into an int, then validate the int is non-negative.
+  final schema = z.string().transform(int.parse).pipe(z.int().min(0));
+
+  print(schema.parse('42')); // 42
+  print(schema.safeParse('-1').success); // false
+}
+```
+
+Issues from either stage propagate with their original paths, and it works
+inside `z.map`/`z.list` (the no-throw hot path is respected).
+
+<br>
+
+#### Discriminated Union
+
+`z.union([...])` tries each variant sequentially. A **discriminated union**
+instead reads a discriminator field from the input and dispatches directly to
+the matching variant — faster, and with a precise error when the discriminator
+matches no variant. Each variant is expected to be a `z.map`/`z.interface`
+containing the discriminator key (typically a `z.$enum` or literal).
+
+```dart
+import 'package:zard/zard.dart';
+
+void main() {
+  final shape = z.discriminatedUnion('type', [
+    z.map({'type': z.$enum(['circle']), 'radius': z.double()}),
+    z.map({'type': z.$enum(['square']), 'side': z.double()}),
+  ]);
+
+  print(shape.parse({'type': 'circle', 'radius': 2.0})); // {type: circle, radius: 2.0}
+
+  final bad = shape.safeParse({'type': 'triangle'});
+  print(bad.error!.issues.first.type); // discriminated_union_error
+}
+```
+
+<br>
+
 ### ZardResult API
 
 `safeParse()` and `safeParseAsync()` return a `ZardResult<T>` with the following interface:
